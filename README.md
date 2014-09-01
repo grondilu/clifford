@@ -40,8 +40,8 @@ about this, so be warry.
 indexes, in which case it means the product of the corresponding vectors of the
 orthonormal basis.
 
-   my $a = e[1, 3, 5];  # fine
-   my $b = e[-1, 3, 5]; # WRONG (will die) : only non-negative indexes
-   my $c = e[4, 3, 5];  # WRONG (will die) : index list must be increasing
-   my $d = e[4, 4, 5];  # WRONG (will die) : index list must be strictly increasing
+    my $a = e[1, 3, 5];  # fine
+    my $b = e[-1, 3, 5]; # WRONG (will die) : only non-negative indexes
+    my $c = e[4, 3, 5];  # WRONG (will die) : index list must be increasing
+    my $d = e[4, 4, 5];  # WRONG (will die) : index list must be strictly increasing
 
