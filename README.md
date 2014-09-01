@@ -45,3 +45,18 @@ orthonormal basis.
     my $c = e[4, 3, 5];  # WRONG (will die) : index list must be increasing
     my $d = e[4, 4, 5];  # WRONG (will die) : index list must be strictly increasing
 
+
+## What can be done?
+
+Well, you can add and multiply vectors and multivectors:
+
+    my $a = e[1];
+    my $b = e[3, 4];
+    say $a + $b;
+    say ($a + $b)**2;
+
+You can get the grade projection of a multivector with `postcircumfix:<[ ]>($n)`:
+
+    say (1 + e[1])[0];  # 1
+
+Everything else follows.
