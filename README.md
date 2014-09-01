@@ -3,9 +3,9 @@
 This module is an attempt to implement basic Geometric Algebra in Perl 6.
 
 Geometric algebra is a mathematical formalism in which a vector space is given
-a multiplicative operation call "geometric product".  The geometric product is
-normally non-commutative and is usually seen as the oriented measure of the space
-described by two or more vectors.
+a multiplicative operation called "geometric product".  The geometric product
+is normally non-commutative and is usually seen as the oriented measure of the
+space described by two or more vectors.
 
 For instance, two vectors form a triangle and the product of these two vectors
 represents the oriented area of that triangle.  Kind of as with the cross product.
@@ -14,7 +14,7 @@ Geometric Algebras are sometimes called 'Clifford Algebras', thus the title of
 this module.
 
 
-## Getting started
+## Introduction
 
 The vector space is assumed to be given an orthonormal basis e[0], e[1], e[2] etc.
 
