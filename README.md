@@ -59,4 +59,14 @@ You can get the grade projection of a multivector with `postcircumfix:<[ ]>($n)`
 
     say (1 + e[1])[0];  # 1
 
-Everything else follows.
+Everything else (well, most of it) follows.
+
+
+## TODO
+
+Lots of things of course.  In the short term, `&circumfix:<e[ ]>` will accept only one argument
+so in order to create a unitary blade, instead of say `e[0, 3, 4]`, what will have to be written will be:
+
+    my $a = e[0] * e[3] * e[4];
+
+Notice that his notation already works, but it should eventually be made the default.
