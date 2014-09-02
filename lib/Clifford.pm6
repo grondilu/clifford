@@ -3,7 +3,6 @@ module Clifford;
 # Class predeclarations
 class Blade {...}
 class MultiVector {...}
-subset UnitBlade of Blade where *.magnitude == 1;
 
 # metric signature.  Euclidean by default.
 our @signature = 1 xx *;
