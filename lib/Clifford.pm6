@@ -14,9 +14,20 @@ subset Frame of Parcel where {
     
 class MultiVector {
     has Blade @.blades;
-    method Str { join ' + ', map *.gist, sort *.grade, @!blades }
-    method at_pos($n) {
+    method gist { join ' + ', map *.gist, sort *.grade, @!blades }
+    method Str { self.gist }
+    method grade-projection(Int $n) {
 	self.new: :blades(grep *.grade == $n, @!blades)
+    }
+    method reverse {
+	self.new: :blades(
+	    map {
+		Blade.new: :frame(.frame),
+		:magnitude(
+		    (-1)**(.grade*(.grade - 1)/2) * .magnitude
+		)
+	    }, @!blades
+	)
     }
     method narrow {
 	@!blades».grade.max == 0 ??
@@ -39,9 +50,10 @@ class Blade {
     }
 }
 
-proto circumfix:<e[ ]>($?) returns MultiVector is export {
-    MultiVector.new: :blades(my Blade @ = {*})
-}
+multi postcircumfix:<{ }>(MultiVector $M, Int $n) returns MultiVector is export { $M.grade-projection($n) }
+sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
+
+proto circumfix:<e[ ]>($?) returns MultiVector is export { MultiVector.new: :blades({*}) }
 multi circumfix:<e[ ]>(Int $n)       { Blade.new: :frame($n,) }
 multi circumfix:<e[ ]>(Frame $frame) { Blade.new: :$frame }
 multi circumfix:<e[ ]>(Range $range) { Blade.new: :frame((+«$range).Parcel) }
