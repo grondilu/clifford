@@ -17,6 +17,7 @@ class MultiVector {
     method grade-projection(Int $n) {
 	self.new: :blades(grep *.grade == $n, @!blades)
     }
+    method at_pos($n) { self.grade-projection($n) }
     method reverse {
 	self.new: :blades(
 	    map {
@@ -48,7 +49,6 @@ class Blade {
     }
 }
 
-multi postcircumfix:<{ }>(MultiVector $M, Int $n) returns MultiVector is export { $M.grade-projection($n) }
 sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
 
 proto circumfix:<e[ ]>($?) returns MultiVector is export { MultiVector.new: :blades({*}) }
