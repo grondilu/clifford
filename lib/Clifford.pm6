@@ -18,13 +18,17 @@ class MultiVector {
     method at_pos($n) {
 	self.new: :blades(grep *.grade == $n, @!blades)
     }
+    method narrow {
+	@!blades».grade.max == 0 ??
+	([+] @!blades».magnitude) !!
+	self
+    }
 }
 
 class Blade {
     has Frame $.frame;
     has Real  $.magnitude = 1;
     method grade { +$!frame }
-    method unit  { self.new: :$!frame }
     method gist {
 	if +$!frame {
 	    (
