@@ -1,182 +1,117 @@
 module Clifford;
 
+# Class predeclarations
+class Blade {...}
+class MultiVector {...}
+subset UnitBlade of Blade where *.magnitude == 1;
+
 # metric signature.  Euclidean by default.
 our @signature = 1 xx *;
 
-class BasisVector {
-    has Int @.index;
-    multi method new(Int @index where { none(@_) < 0 and [<] @_ }) {
-	self.new: :@index
-    }
-    method grade { +@!index }
-    method gist { @!index ?? <e[ ]>.join: @!index.join: "," !! 1 }
-    method WHICH { join '|', 'BasisVector', @.index }
+subset Frame of Parcel where {
+    [and] (map { $_ ~~ Int and $_ >= 0 }, @$_), [<] @$_
 }
-sub circumfix:<e[ ]>(*@i) is export { BasisVector.new: my Int @ = @i }
-
+    
 class MultiVector {
-    has %.h{BasisVector} handles <pairs>;
-    multi method new(%h where %h.elems == 0) { 0 }
-    multi method new(%h where {
-	[and] %h.elems > 0,
-	map -> $_ { .key ~~ BasisVector and .value ~~ Real }, %h.pairs
-    }) {
-	self.new: :h(my %_h{BasisVector} = %h);
+    has Blade @.blades;
+    method Str { join ' + ', map *.gist, sort *.grade, @!blades }
+    method at_pos($n) {
+	self.new: :blades(grep *.grade == $n, @!blades)
     }
-    multi method new(BasisVector $a) {
-	self.new: my %_h{BasisVector} = $a => 1;
-    }
-    method at_pos(Int $n where * >= 0) {
-	my %h{BasisVector};
-	for self.pairs {
-	    %h{.key} = .value if .key.grade == $n;
-	}
-	%h ?? self.new: :%h !! 0;
-    }
+}
+
+class Blade {
+    has Frame $.frame;
+    has Real  $.magnitude = 1;
+    method grade { +$!frame }
+    method unit  { self.new: :$!frame }
     method gist {
-	return '0' unless self.pairs;
-	join " + ",
-	map {
-	    .key.grade ?? (
-		.value < 0  ?? "({.value})*" !!
-		.value == 1 ?? '' !!
-		"{.value}*"
-	    ) ~ .key.gist
-	    !! .value
-	}, self.pairs
+	if +$!frame {
+	    (
+		$!magnitude  < 0 ?? "($!magnitude)*" !!
+		$!magnitude == 1 ?? "" !! "$!magnitude*"
+	    ) ~ <e[ ]>.join: $!frame.join(",")
+	} else { ~$!magnitude }
     }
 }
 
-multi prefix:<+>(MultiVector $a) {
-    if $a.pairs == 0 { return 0 }
-    elsif $a.pairs == 1 {
-	my $p = $a.pairs.pick;
-	return $p.value if $p.key.grade == 0;
-    }
-    return $a
+proto circumfix:<e[ ]>($?) returns MultiVector is export {
+    MultiVector.new: :blades(my Blade @ = {*})
 }
-multi infix:<+>(MultiVector $a, BasisVector $b) is export { $a + MultiVector.new($b) }
-multi infix:<+>(BasisVector $a, MultiVector $b) is export { MultiVector.new($a) + $b }
-multi infix:<+>(MultiVector $a) is export { $a }
-multi infix:<+>(MultiVector $a, MultiVector $b) is export {
-    my %h{BasisVector};
-    for $a.pairs, $b.pairs {
-	%h{.key} += .value;
-	%h{.key} :delete if %h{.key} == 0;
-    }
-    MultiVector.new: %h;
-}
-multi infix:<->(MultiVector $a, MultiVector $b) is export {
-    my %h{BasisVector};
-    %h{.key} += .value for $a.pairs;
-    for $b.pairs {
-	%h{.key} -= .value;
-	%h{.key} :delete if %h{.key} == 0;
-    }
-    MultiVector.new: %h;
-}
+multi circumfix:<e[ ]>(Int $n)       { Blade.new: :frame($n,) }
+multi circumfix:<e[ ]>(Frame $frame) { Blade.new: :$frame }
+multi circumfix:<e[ ]>(Range $range) { Blade.new: :frame((+«$range).Parcel) }
 
-multi infix:<+>(BasisVector $a, BasisVector $b) is export {
-    my %a{BasisVector};
-    my %b{BasisVector};
-    %a{$a} = 1; %b{$b} = 1;
-    MultiVector.new(%a) + MultiVector.new(%b);
-}
-
-multi infix:<->(BasisVector $a, BasisVector $b) is export {
-    my %a{BasisVector};
-    my %b{BasisVector};
-    %a{$a} = 1; %b{$b} = 1;
-    MultiVector.new(%a) - MultiVector.new(%b);
-}
-
-multi infix:<+>(Real $a, BasisVector $b) is export {
-    MultiVector.new(my %h{BasisVector} = e[] => $a) + $b
-}
-multi infix:<+>(Real $a, MultiVector $b) is export {
-    my %h{BasisVector};
-    %h{e[]} += $a;
-    for $b.pairs {
-	%h{.key} += .value;
-	%h{.key} :delete if %h{.key} == 0;
-    }
-    MultiVector.new: :%h;
-}
-multi infix:<+>(MultiVector $b, Real $a) is export { $a + $b }
-
-multi infix:<*>(BasisVector $a, BasisVector $b) is export {
-    my @ab = $a.index, $b.index;
-    my $end = @ab.end;
-    my $sign = 1;
-    for reverse ^$a.index -> $i {
-	for $i ..^ $end {
-	    if @ab[$_] == @ab[$_ + 1] {
-		$sign *= @signature[@ab[$_]];
-		@ab.splice($_, 2);
-		$end = $_;
-		last;
-	    } elsif @ab[$_] > @ab[$_ + 1] {
-		@ab[$_, $_ + 1] = @ab[$_ + 1, $_];
-		$sign *= -1;
+# This is the most important function because it does most of the heavy
+# lifting.  Yet, it is not exported because it operates only on Blades, which
+# are not supposed to be used directly.
+my multi infix:<*>( Blade $A, Blade $B ) returns Blade {
+    state %cache{Str}{Frame}{Frame};
+    my $signature = @signature[0 .. max($A.frame, $B.frame)];
+    my $unit = %cache{$signature.join('|')}{$A.frame}{$B.frame} //= do {
+	my @frame = ($A, $B)».frame».flat;
+	my $end = @frame.end;
+	my $sign = 1;
+	for reverse ^$A.frame -> $i {
+	    for $i ..^ $end {
+		if @frame[$_] == @frame[$_ + 1] {
+		    #note "entering signature check:";
+		    #note $_, ", ", @frame[$_], ", ", @signature[@frame[$_]];
+		    $sign *= @signature[@frame[$_]];
+		    @frame.splice($_, 2);
+		    $end = $_;
+		    last;
+		} elsif @frame[$_] > @frame[$_ + 1] {
+		    @frame[$_, $_ + 1] = @frame[$_ + 1, $_];
+		    $sign *= -1;
+		}
 	    }
 	}
-    }
-    if @ab {
-	my %h{BasisVector};
-	%h{e[ @ab ]} = $sign;
-	return MultiVector.new: %h;
-    } else { return $sign }
+	Blade.new: :frame((+«@frame).Parcel), :magnitude($sign);
+    };
+    Blade.new:
+    :frame($unit.frame),
+    :magnitude($unit.magnitude * $A.magnitude * $B.magnitude);
 }
 
 multi infix:<*>(0, MultiVector $) is export { 0 }
 multi infix:<*>(MultiVector $, 0) is export { 0 }
-multi infix:<*>(Real $x, MultiVector $a) is export {
-    my %h{BasisVector};
-    %h{.key} = .value * $x for $a.pairs;
-    MultiVector.new: %h;
-}
-multi infix:<*>(MultiVector $a, Real $x) is export { $x * $a }
-multi infix:<*>(Real $x, BasisVector $a) is export {
-    MultiVector.new: my %_h{BasisVector} = $a => $x
-}
-multi infix:<*>(BasisVector $a, Real $x) is export { $x * $a }
-multi infix:<*>(BasisVector $a, MultiVector $b) is export {
-    my %h{BasisVector};
-    for $b.pairs {
-	my $prod = .value * ($a * .key);
-	if $prod ~~ Real {
-	    %h{e[]} += $prod;
-	    %h{e[]} :delete if %h{e[]} == 0;
-	} elsif $prod ~~ MultiVector {
-	    die "unexpected size of MultiVector" unless $prod.elems == 1;
-	    $prod = $prod.pairs.pick;
-	    %h{$prod.key} += $prod.value;
-	    %h{$prod.key} :delete if %h{$prod.key} == 0;
-	} else { die "unexpected type" }
-    }
-    MultiVector.new: %h;
-}
-multi infix:<*>(MultiVector $b, BasisVector $a) is export {
-    my %h{BasisVector};
-    for $b.pairs {
-	my $prod = .value * (.key * $a);
-	if $prod ~~ Real {
-	    %h{e[]} += $prod;
-	    %h{e[]} :delete if %h{e[]} == 0;
-	} elsif $prod ~~ MultiVector {
-	    die "unexpected size of MultiVector" unless $prod.elems == 1;
-	    $prod = $prod.pairs.pick;
-	    %h{$prod.key} += $prod.value;
-	    %h{$prod.key} :delete if %h{$prod.key} == 0;
-	} else { die "unexpected type" }
-    }
-    MultiVector.new: %h;
+multi infix:<*>(1, MultiVector $M) is export { $M }
+multi infix:<*>(MultiVector $M, 1) is export { $M }
+multi infix:<*>(MultiVector $M, Real $r) returns MultiVector is export { $r * $M }
+multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
+    MultiVector.new: :blades(
+	map {
+	    Blade.new: :frame(.frame), :magnitude(.magnitude * $r)
+	}, $M.blades
+    )
 }
 
-multi infix:<*>(MultiVector $a) is export { $a }
-multi infix:<*>(MultiVector $a, MultiVector $b) is export {
-    +[+] map { .value * (.key * $b) }, $a.pairs
+multi prefix:<+>(MultiVector $M) returns MultiVector is export {
+    my %M{Frame};
+    %M{.frame} += .magnitude for $M.blades;
+    my Blade @blades = map {
+	Blade.new: :frame(.key), :magnitude(.value)
+    }, grep *.value != 0, %M.pairs;
+    MultiVector.new: :@blades;
 }
 
-multi infix:<**>(BasisVector $a, Int $n where $n > 0) is export { +[*] $a xx $n }
-multi infix:<**>(MultiVector $a, Int $n where $n > 0) is export { +[*] $a xx $n }
+multi infix:<+>(Real $r, MultiVector $M) returns MultiVector is export { $r * e[] + $M }
+multi infix:<+>(MultiVector $M, Real $r) returns MultiVector is export { $r * e[] + $M }
+multi infix:<->(Real $r, MultiVector $M) returns MultiVector is export { $r * e[] + (-1) * $M }
+multi infix:<->(MultiVector $M, Real $r) returns MultiVector is export { $M + (-1) * $r *e[] }
+
+multi infix:<->(MultiVector $P, MultiVector $Q) returns MultiVector is export { $P + (-1) * $Q }
+multi infix:<+>(MultiVector $P, MultiVector $Q) returns MultiVector is export {
+    +MultiVector.new: :blades($P.blades, $Q.blades);
+}
+
+multi infix:<*>(MultiVector $P, MultiVector $Q) returns MultiVector is export {
+    +MultiVector.new: :blades( $P.blades X* $Q.blades )
+}
+
+multi infix:<**>(MultiVector $M, Int $n where $n > 0) returns MultiVector is export {
+    [*] $M xx $n;
+}
+
+# vim: syntax=off
