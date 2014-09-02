@@ -8,9 +8,8 @@ subset UnitBlade of Blade where *.magnitude == 1;
 # metric signature.  Euclidean by default.
 our @signature = 1 xx *;
 
-subset Frame of Parcel where {
-    [and] (map { $_ ~~ Int and $_ >= 0 }, @$_), [<] @$_
-}
+subset Index of Int where * >= 0;
+subset Frame of Parcel where { [and] @$_ »~~» Index, [<] @$_ }
     
 class MultiVector {
     has Blade @.blades;
