@@ -5,7 +5,16 @@ my subset Index of Int where * >= 0;
 my subset RightFrame of Parcel where { !$_ or [and] @$_ »~~» Index, [<] @$_ }
 has Real %.canonical-decomposition{RightFrame};
 
-method grades { uniq %!canonical-decomposition.keys».elems }
+method clean {
+    for %!canonical-decomposition.pairs {
+	%!canonical-decomposition{.key} :delete
+	if .value == 0;
+    }
+}
+method grades {
+    self.clean;
+    uniq %!canonical-decomposition.keys».elems
+}
 
 method gist {
     ! %!canonical-decomposition ?? "0" !!
@@ -24,7 +33,7 @@ method gist {
 }
 method narrow {
     return 0 unless %!canonical-decomposition;
-    if none(%!canonical-decomposition.keys».elems) > 0 {
+    if none(self.grades) > 0 {
 	# normally there is only entry here
 	# but we'll sum all possibilities just in case
 	return [+] %!canonical-decomposition.values
