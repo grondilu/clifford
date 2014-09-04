@@ -214,7 +214,11 @@ multi infix:<**>(MultiVector $M, Int $n where $n > 2) returns MultiVector is exp
     ($M**($n div 2))**2 * $M**($n mod 2)
 }
 # Nb. for some reason rakudo does not accept a -1 literal as a parameter??
-multi infix:<**>(Vector $a, $ where -1) returns Vector is export { $a / ($a**2).narrow }
+multi infix:<**>(Vector $a, 2) returns Real is export { ($a*$a).narrow }
+multi infix:<**>(Vector $a, Int $ where -1) returns Vector is export { $a / ($a**2) }
+multi infix:<**>(Vector $a, Int $n where $n %% 2 && $n > 3) returns Real is export {
+    ($a**2)**($n div 2)
+}
 
 #
 #
@@ -295,3 +299,4 @@ multi infix:<==>(MultiVector $A, 0) returns Bool is export {...}
 
 #sub postfix:<*>(MultiVector $M) returns MultiVector is export { $M.conj }
 
+# vim: syntax=off
