@@ -62,14 +62,17 @@ my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     $@index but Frame($orientation);
 }
 
-multi e(Real) returns MultiVector is export {
+proto e($) returns MultiVector is export {
+    MultiVector.new: :canonical-decomposition({*})
+}
+multi e(Real) {
     (my Real %canonical-decomposition{RightFrame}){().Parcel.item}++;
-    MultiVector.new: :%canonical-decomposition;
+    %canonical-decomposition;
 }
 
-multi e(Int $n where $n >= 0) returns MultiVector is export {
+multi e(Int $n where $n >= 0) {
     (my Real %canonical-decomposition{RightFrame}){$(+$n,)}++;
-    MultiVector.new: :%canonical-decomposition;
+    %canonical-decomposition;
 }
 
 #
