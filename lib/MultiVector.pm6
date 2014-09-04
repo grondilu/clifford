@@ -141,7 +141,7 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     for $A.canonical-decomposition.pairs X $B.canonical-decomposition.pairs -> $a, $b {
 	my $ab = ($a.key but Frame) * ($b.key but Frame);
-	%canonical-decomposition{$ab.Parcel.item} = $a.value * $b.value * $ab.orientation;
+	%canonical-decomposition{$ab.Parcel.item} += $a.value * $b.value * $ab.orientation;
     }
     MultiVector.new: :%canonical-decomposition;
 }
