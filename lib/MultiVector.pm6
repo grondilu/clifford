@@ -194,6 +194,14 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     MultiVector.new(:%canonical-decomposition).clean;
 }
 
+# 
+#
+# DIVISION
+#
+#
+multi infix:</>(MultiVector $M, Real $r)    returns MultiVector is export { (1/$r) * $M }
+multi infix:</>(MultiVector $M, Vector $a) returns MultiVector is export { $M * $a**-1 }
+
 #
 #
 # EXPONENTIATION
@@ -201,34 +209,89 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 #
 multi infix:<**>(MultiVector $M, 0) returns Real is export { 1 }
 multi infix:<**>(MultiVector $M, 1) returns MultiVector is export { $M }
-multi infix:<**>(MultiVector $M, Int $n where $n > 1) returns MultiVector is export {
-    [*] $M xx $n
+multi infix:<**>(MultiVector $M, 2) returns MultiVector is export { $M * $M }
+multi infix:<**>(MultiVector $M, Int $n where $n > 2) returns MultiVector is export {
+    ($M**($n div 2))**2 * $M**($n mod 2)
 }
+# Nb. for some reason rakudo does not accept a -1 literal as a parameter??
+multi infix:<**>(Vector $a, $ where -1) returns Vector is export { $a / ($a**2).narrow }
 
+#
+#
+#  INNER PRODUCT
+#
+#
+multi innner-product(Vector $a, Vector $b) returns Real is export { 1/2*($a*$b + $b*$a).narrow }
+multi innner-product(Blade $A, Blade $B) returns Blade is export { ($A*$B)[abs($A.grade - $B.grade)] }
+multi infix:<⋅>(Vector $a, Vector $b) returns Real is export { innner-product $a, $b }
+multi infix:<cdot>(Vector $a, Vector $b) returns Real is export { innner-product $a, $b }
+
+#
+#
+#  OUTER PRODUCT
+#
+#
+multi outer-product(Vector $a, Vector $b) returns Blade is export { 1/2*($a*$b - $b*$a) }
+multi outer-product(Blade $A, Blade $B) returns Blade is export { ($A*$B)[$A.grade + $B.grade] }
+multi infix:<∧>(Vector $a, Vector $b) returns Blade is export { outer-product $a, $b }
+multi infix:<wedge>(Vector $a, Vector $b) returns Blade is export { outer-product $a, $b }
+
+#
+#
+#  REVERSION
+#
+#
 method reverse returns MultiVector {
     [+] map { (-1)**($_*($_ - 1) div 2) * self[$_] }, self.grades
 }
+sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
+
+#
+#
+# CONJUGATION
+#
+#
 method conj returns MultiVector {
     [+] map { (-1)**$_ * self[$_] }, self.grades
 }
-sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
+sub postfix:<∗>(MultiVector $M) returns MultiVector is export { $M.conj }
 
+#
+#
+# COMMUTATOR
+#
+#
 sub commutator(MultiVector $A, MultiVector $B) returns MultiVector is export {
     1/2 * ($A*$B - $B*$A)
 }
 multi infix:<×>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     commutator $A, $B
 }
+
+#
+#
+# SIGNATURE
+#
+#
+method signature(Vector $a:) returns Real { sign $a**2 }
+
+
+#
+#
+# MAGNITUDE, ABS, NORM
+#
+#
+multi method magnitude(Vector $a:) returns Real { sqrt ($a**2).narrow.abs }
+multi method magnitude returns Real {
+    sqrt [+] map { (self[$_]**2)[0].narrow.abs }, self.grades;
+}
+method abs returns Real { self.magnitude }
+method norm returns Real { self.magnitude }
+
 =finish
 
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, 0) returns Bool is export {...}
-
-multi inner-product(MultiVector $A, MultiVector $B) is export {...}
-multi outer-product(MultiVector $A, MultiVector $B) is export {...}
-
-multi infix:<*>(MultiVector $, MultiVector $) returns MultiVector is export {...}
-proto infix:<·>(MultiVector $, MultiVector $) is export {*}
 
 #sub postfix:<*>(MultiVector $M) returns MultiVector is export { $M.conj }
 
