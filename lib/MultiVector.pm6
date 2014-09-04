@@ -115,7 +115,7 @@ multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 # SOUSTRACTION
 #
 #
-multi infix:<->(MultiVector $A, Real $r) returns MultiVector is export { $A + -$r }
+multi infix:<->(MultiVector $A, Real $r) returns MultiVector is export { -$r + $A }
 multi infix:<->(Real $r, MultiVector $A) returns MultiVector is export { $r + (-1)*$A }
 multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { $A + (-1)*$B }
 multi prefix:<->(MultiVector $A) returns MultiVector is export { (-1)*$A }
@@ -131,7 +131,7 @@ multi infix:<*>(      0, MultiVector $M) returns Real is export { 0 }
 multi infix:<*>(      1, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{$(+«.key)} *= $r for $M.canonical-decomposition.pairs;
+    %canonical-decomposition{$(+«.key)} = .value * $r for $M.canonical-decomposition.pairs;
     MultiVector.new: :%canonical-decomposition;
 }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
@@ -163,6 +163,13 @@ method conj returns MultiVector {
 sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
 
 =finish
+sub commutator(MultiVector $A, MultiVector $B) returns MultiVector is export {
+    1/2 * ($A*$B - $B*$A)
+}
+multi infix:<×>(MultiVector $A, MultiVector $B) returns MultiVector is export {
+    commutator $A, $B
+}
+
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, 0) returns Bool is export {...}
 
@@ -171,12 +178,8 @@ multi outer-product(MultiVector $A, MultiVector $B) is export {...}
 
 multi infix:<*>(MultiVector $, MultiVector $) returns MultiVector is export {...}
 proto infix:<·>(MultiVector $, MultiVector $) is export {*}
-sub commutator(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    1/2 * ($A*$B - $B*$A)
-}
 
 #sub postfix:<*>(MultiVector $M) returns MultiVector is export { $M.conj }
 
-multi infix:<×>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    commutator $A, $B
-}
+
+# vim: syntax=off
