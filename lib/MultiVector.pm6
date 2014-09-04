@@ -84,10 +84,11 @@ multi e(Int $n where $n >= 0) {
 #
 #
 method at_pos(Int $n) returns MultiVector {
-    my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{$(+«.key)} = .value for
-    grep *.key == $n, %!canonical-decomposition.pairs;
-    MultiVector.new: :%canonical-decomposition;
+    MultiVector.new(
+	:canonical-decomposition(
+	    grep *.key == $n, %!canonical-decomposition.pairs
+	)
+    ).clean;
 }
 
 #
@@ -103,14 +104,14 @@ multi infix:<+>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     %canonical-decomposition{().Parcel.item} = $r;
     %canonical-decomposition{$(+«.key)} += .value for $M.canonical-decomposition.pairs;
-    MultiVector.new: :%canonical-decomposition;
+    MultiVector.new(:%canonical-decomposition).clean;
 }
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     for $A.canonical-decomposition.pairs, $B.canonical-decomposition.pairs {
 	%canonical-decomposition{$(+«.key)} += .value;
     }
-    MultiVector.new: :%canonical-decomposition;
+    MultiVector.new(:%canonical-decomposition).clean;
 }
 
 # 
@@ -135,7 +136,7 @@ multi infix:<*>(      1, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     %canonical-decomposition{$(+«.key)} += .value * $r for $M.canonical-decomposition.pairs;
-    MultiVector.new: :%canonical-decomposition;
+    MultiVector.new(:%canonical-decomposition).clean;
 }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
@@ -143,7 +144,7 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 	my $ab = ($a.key but Frame) * ($b.key but Frame);
 	%canonical-decomposition{$ab.Parcel.item} += $a.value * $b.value * $ab.orientation;
     }
-    MultiVector.new: :%canonical-decomposition;
+    MultiVector.new(:%canonical-decomposition).clean;
 }
 
 #
