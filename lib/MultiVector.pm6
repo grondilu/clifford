@@ -12,7 +12,7 @@ This class is an attempt to implement basic geometric algebra in Perl6.  See
 L<http://en.wikipedia.org/wiki/Geometric_algebra> for more information on what
 Geometric algebra is about.
 
-=SYNOPSIS
+=begin SYNOPSIS
 
     use MultiVector;
 
@@ -23,16 +23,24 @@ Geometric algebra is about.
     # a linear combination of e(0) and e(1):
     my $a = rand*e(0) + rand*e(1);
 
+    say $a ~~ Blade;     # There is a Blade subset of MultiVector
+    say $a ~~ Vector;    # And there is a Vector subset of Blade
+
     say $a**2 ~~ Real;   # the square of a vector is always a Real
 
-    say rand * e(Real)   # A scalar is a Blade
-    say $a ~~ Blade;     # A vector is a Blade
+    # A scalar is a Blade
+    say rand*e(Real) ~~ Blade;
 
-    # Changing to a Lorentzian
+    # The grade is defined only on blades:
+    say $a.grade;         # OK:     1
+    say (1 + $a).grade;   # WRONG:  dies with a constraint type check failure
+
+    # Changing to a Lorentzian metric
     @MultiVector::signature[0] = -1;
 
     say e(0)**2;     # -1
 
+=end SYNOPSIS
 
 =end pod
 our @signature = 1 xx *;
