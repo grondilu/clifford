@@ -9,6 +9,7 @@ method clean {
     for %!canonical-decomposition.pairs {
 	%!canonical-decomposition{$(+«.key)} :delete if .value == 0;
     }
+    return self;
 }
 method grades {
     uniq 
@@ -100,7 +101,7 @@ multi infix:<+>(MultiVector $M, Real $r) returns MultiVector is export { $r + $M
 multi infix:<+>(      0, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<+>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{().Parcel.item} += $r;
+    %canonical-decomposition{().Parcel.item} = $r;
     %canonical-decomposition{$(+«.key)} += .value for $M.canonical-decomposition.pairs;
     MultiVector.new: :%canonical-decomposition;
 }
@@ -133,7 +134,7 @@ multi infix:<*>(      0, MultiVector $M) returns Real is export { 0 }
 multi infix:<*>(      1, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{$(+«.key)} = .value * $r for $M.canonical-decomposition.pairs;
+    %canonical-decomposition{$(+«.key)} += .value * $r for $M.canonical-decomposition.pairs;
     MultiVector.new: :%canonical-decomposition;
 }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
