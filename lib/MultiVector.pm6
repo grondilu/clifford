@@ -7,8 +7,7 @@ has Real %.canonical-decomposition{RightFrame};
 
 method clean {
     for %!canonical-decomposition.pairs {
-	%!canonical-decomposition{.key} :delete
-	if .value == 0;
+	%!canonical-decomposition{$(+«.key)} :delete if .value == 0;
     }
 }
 method grades {
@@ -80,7 +79,7 @@ multi e(Int $n where $n >= 0) returns MultiVector is export {
 #
 method at_pos(Int $n) returns MultiVector {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{.key} = .value for
+    %canonical-decomposition{$(+«.key)} = .value for
     grep *.key == $n, %!canonical-decomposition.pairs;
     MultiVector.new: :%canonical-decomposition;
 }
@@ -97,13 +96,14 @@ multi infix:<+>(      0, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<+>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     %canonical-decomposition{().Parcel.item} += $r;
-    %canonical-decomposition{.key} += .value for $M.canonical-decomposition.pairs;
+    %canonical-decomposition{$(+«.key)} += .value for $M.canonical-decomposition.pairs;
     MultiVector.new: :%canonical-decomposition;
 }
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{.key} += .value for
-    $A.canonical-decomposition.pairs, $B.canonical-decomposition.pairs;
+    for $A.canonical-decomposition.pairs, $B.canonical-decomposition.pairs {
+	%canonical-decomposition{$(+«.key)} += .value;
+    }
     MultiVector.new: :%canonical-decomposition;
 }
 
@@ -128,7 +128,7 @@ multi infix:<*>(      0, MultiVector $M) returns Real is export { 0 }
 multi infix:<*>(      1, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{.key} *= $r for $M.canonical-decomposition.pairs;
+    %canonical-decomposition{$(+«.key)} *= $r for $M.canonical-decomposition.pairs;
     MultiVector.new: :%canonical-decomposition;
 }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
