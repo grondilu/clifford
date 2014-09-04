@@ -41,13 +41,10 @@ method narrow {
 }
 
 role Frame { has $.orientation = +1 }
-my multi infix:<*>( Frame $A, 1 ) returns Frame { $A }
-my multi infix:<*>( 1, Frame $B ) returns Frame { $B }
 my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     my @A = $A.flat;
     my @B = $B.flat;
     my @index = @A, @B;
-    my $signature = @signature[0 .. max(@index)];
     my $end = @index.end;
     my $orientation = $A.orientation * $B.orientation;
     for reverse ^@A -> $i {
