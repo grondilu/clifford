@@ -1,4 +1,40 @@
 class MultiVector;
+=begin pod
+
+=TITLE
+MultiVector ― Geometric Algebra In Perl 6
+
+=for AUTHOR
+Lucien Grondin <L<C<grondilu@yahoo.fr>|mailto:grondilu@yahoo.fr>>
+
+=DESCRIPTION
+This class is an attempt to implement basic geometric algebra in Perl6.  See
+L<http://en.wikipedia.org/wiki/Geometric_algebra> for more information on what
+Geometric algebra is about.
+
+=SYNOPSIS
+
+    use MultiVector;
+
+    say e(Real);         # The scalar unit seen as a MultiVector
+    say e(0);            # The first vector of the orthonormal basis
+    say e(1);            # The second vector of the orthonormal basis
+
+    # a linear combination of e(0) and e(1):
+    my $a = rand*e(0) + rand*e(1);
+
+    say $a**2 ~~ Real;   # the square of a vector is always a Real
+
+    say rand * e(Real)   # A scalar is a Blade
+    say $a ~~ Blade;     # A vector is a Blade
+
+    # Changing to a Lorentzian
+    @MultiVector::signature[0] = -1;
+
+    say e(0)**2;     # -1
+
+
+=end pod
 our @signature = 1 xx *;
 
 subset Blade  of MultiVector is export      where *.grades == 1|0;
@@ -188,5 +224,3 @@ proto infix:<·>(MultiVector $, MultiVector $) is export {*}
 
 #sub postfix:<*>(MultiVector $M) returns MultiVector is export { $M.conj }
 
-
-# vim: syntax=off
