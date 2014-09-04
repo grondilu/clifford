@@ -11,8 +11,10 @@ method clean {
     }
 }
 method grades {
-    self.clean;
-    uniq %!canonical-decomposition.keys».elems
+    uniq 
+    map *.key.elems,
+    grep *.value != 0,
+    %!canonical-decomposition.pairs;
 }
 
 method gist {
@@ -162,13 +164,13 @@ method conj returns MultiVector {
 }
 sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
 
-=finish
 sub commutator(MultiVector $A, MultiVector $B) returns MultiVector is export {
     1/2 * ($A*$B - $B*$A)
 }
 multi infix:<×>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     commutator $A, $B
 }
+=finish
 
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, 0) returns Bool is export {...}
