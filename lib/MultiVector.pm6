@@ -1,6 +1,11 @@
 class MultiVector;
 our @signature = 1 xx *;
 
+subset Blade  of MultiVector is export      where *.grades == 1|0;
+subset Vector of Blade       is export      where *.grade == 1;
+
+method grade(Blade $A:) returns Int { self.grades.pick // 0 }
+
 my subset Index of Int where * >= 0;
 my subset RightFrame of Parcel where { !$_ or [and] @$_ »~~» Index, [<] @$_ }
 has Real %.canonical-decomposition{RightFrame};
@@ -11,10 +16,8 @@ method clean {
     }
     return self;
 }
-method grades {
-    uniq 
-    map *.key.elems,
-    grep *.value != 0,
+method grades returns List {
+    uniq map *.key.elems, grep *.value != 0,
     %!canonical-decomposition.pairs;
 }
 
@@ -83,7 +86,7 @@ multi e(Int $n where $n >= 0) {
 # GRADE PROJECTION
 #
 #
-method at_pos(Int $n) returns MultiVector {
+method at_pos(Int $n) returns Blade {
     MultiVector.new(
 	:canonical-decomposition(
 	    grep *.key == $n, %!canonical-decomposition.pairs
@@ -116,7 +119,7 @@ multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 
 # 
 #
-# SOUSTRACTION
+# SUBSTRACTION
 #
 #
 multi infix:<->(MultiVector $A, Real $r) returns MultiVector is export { -$r + $A }
