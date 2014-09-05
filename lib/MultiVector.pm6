@@ -219,6 +219,9 @@ multi infix:<**>(Vector $a, Int $ where -1) returns Vector is export { $a / ($a*
 multi infix:<**>(Vector $a, Int $n where $n %% 2 && $n > 3) returns Real is export {
     ($a**2)**($n div 2)
 }
+multi infix:<**>(Vector $a, Int $n where $n % 2 && $n > 2) returns Vector is export {
+    ($a**2)**($n div 2) * $a
+}
 
 #
 #
