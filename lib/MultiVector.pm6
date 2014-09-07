@@ -303,10 +303,13 @@ multi method magnitude returns Real {
 method abs returns Real { self.magnitude }
 method norm returns Real { self.magnitude }
 
-=finish
+multi infix:<==>($A, MultiVector $B) returns Bool is export { $A - $B == 0 }
+multi infix:<==>(MultiVector $A, $B) returns Bool is export { $A - $B == 0 }
+multi infix:<==>(MultiVector $A, 0) returns Bool is export {
+    so all($A.canonical-decomposition.values) == 0
+}
 
-multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
-multi infix:<==>(MultiVector $A, 0) returns Bool is export {...}
+=finish
 
 #sub postfix:<*>(MultiVector $M) returns MultiVector is export { $M.conj }
 
