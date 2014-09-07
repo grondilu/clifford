@@ -102,7 +102,7 @@ my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
 	    if @index[$_] == @index[$_ + 1] {
 		$orientation *= @signature[@index[$_]];
 		@index.splice($_, 2);
-		$end = $_;
+		$end = $_ - 1;
 		last;
 	    } elsif @index[$_] > @index[$_ + 1] {
 		@index[$_, $_ + 1] = @index[$_ + 1, $_];
@@ -126,6 +126,7 @@ multi e(Int $n where $n >= 0) {
     %canonical-decomposition;
 }
 
+constant @e is export = map &e, 0..*;
 #
 #
 # GRADE PROJECTION
