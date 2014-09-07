@@ -52,6 +52,7 @@ method grade(Blade $A:) returns Int { self.grades.pick // 0 }
 
 my subset Index of Int where * >= 0;
 my subset RightFrame of Parcel where { !$_ or [and] @$_ »~~» Index, [<] @$_ }
+
 has Real %.canonical-decomposition{RightFrame};
 
 method clean {
@@ -89,7 +90,7 @@ method narrow {
     } else { return self }
 }
 
-role Frame { has $.orientation = +1 }
+role Frame { has Real $.orientation = 1 }
 my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     my @A = $A.flat;
     my @B = $B.flat;
