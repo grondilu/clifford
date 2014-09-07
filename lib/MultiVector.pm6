@@ -61,6 +61,7 @@ my subset RightFrame of Frame where {
 	.index == 0 or [and] @(.index) »~~» Index, [<] @(.index)
     )
 }
+constant NullFrame = Frame.new;
 
 has Real %.canonical-decomposition{RightFrame};
 
@@ -120,20 +121,17 @@ my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     Frame.new: :@index, :$orientation; 
 }
 
-proto e($) returns MultiVector is export {
-    MultiVector.new: :canonical-decomposition({*})
-}
-multi e(Real) {
-    (my Real %canonical-decomposition{RightFrame}){Frame.new}++;
-    %canonical-decomposition;
-}
-
-multi e(Int $n where $n >= 0) {
+constant @e is export = map -> $n {
     (my Real %canonical-decomposition{RightFrame}){Frame.new(:index($n))}++;
-    %canonical-decomposition;
+    MultiVector.new: :%canonical-decomposition;
+}, 0 .. *;
+proto e($) returns MultiVector is export {*}
+multi e(Real) {
+    (my Real %canonical-decomposition{RightFrame}){NullFrame}++;
+    MultiVector.new: :%canonical-decomposition;
 }
+multi e(Int $n where $n >= 0) { @e[$n] }
 
-constant @e is export = map &e, 0..*;
 #
 #
 # GRADE PROJECTION
@@ -158,7 +156,7 @@ multi infix:<+>(MultiVector $M, Real $r) returns MultiVector is export { $r + $M
 multi infix:<+>(      0, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<+>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
-    %canonical-decomposition{Frame.new} = $r;
+    %canonical-decomposition{NullFrame} = $r;
     %canonical-decomposition{.key} += .value for $M.canonical-decomposition.pairs;
     MultiVector.new(:%canonical-decomposition).clean;
 }
