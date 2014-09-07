@@ -52,12 +52,14 @@ method grade(Blade $A:) returns Int { self.grades.pick // 0 }
 
 class Frame {
     has @.index;
-    has Real $.orientation = 1;
+    has Real $.orientation is rw = 1;
     method WHICH { 'Frame|' ~ @!index.join('|') }
 }
 my subset RightFrame of Frame where {
     my subset Index of Int where * >= 0;
-    .index == 0 or [and] @(.index) »~~» Index, [<] @(.index);
+    .orientation == 1 and (
+	.index == 0 or [and] @(.index) »~~» Index, [<] @(.index)
+    )
 }
 
 has Real %.canonical-decomposition{RightFrame};
@@ -98,7 +100,7 @@ method narrow {
     } else { return self }
 }
 
-my multi infix:<*>( Frame $A, Frame $B ) returns RightFrame {
+my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     my @index = $A.index, $B.index;
     my $end = @index.end;
     my $orientation = $A.orientation * $B.orientation;
@@ -196,7 +198,8 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     for $A.canonical-decomposition.pairs X $B.canonical-decomposition.pairs -> $a, $b {
 	my $ab = $a.key * $b.key; 
-	%canonical-decomposition{$ab} += $a.value * $b.value * $ab.orientation;
+	%canonical-decomposition{Frame.new: :index($ab.index)} +=
+	$a.value * $b.value * $ab.orientation;
     }
     MultiVector.new(:%canonical-decomposition).clean;
 }
