@@ -52,13 +52,14 @@ method grade(Blade $A:) returns Int { self.grades.pick // 0 }
 
 class Frame {
     has @.index;
-    has Real $.orientation is rw = 1;
-    method WHICH { 'Frame|' ~ @!index.join('|') }
+    has Real $.orientation = 1;
+    method WHICH { 'Frame|(' ~ @!index.join(',') ~ ')' }
 }
 my subset RightFrame of Frame where {
-    my subset Index of Int where * >= 0;
     .orientation == 1 and (
-	.index == 0 or [and] @(.index) »~~» Index, [<] @(.index)
+	.index == 0 or [and]
+	(map { $_ ~~ Int, $_ >= 0 }, .index),
+	[<] .index
     )
 }
 constant NullFrame = Frame.new;
@@ -121,16 +122,15 @@ my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     Frame.new: :@index, :$orientation; 
 }
 
-constant @e is export = map -> $n {
-    (my Real %canonical-decomposition{RightFrame}){Frame.new(:index($n))}++;
-    MultiVector.new: :%canonical-decomposition;
-}, 0 .. *;
 proto e($) returns MultiVector is export {*}
 multi e(Real) {
     (my Real %canonical-decomposition{RightFrame}){NullFrame}++;
     MultiVector.new: :%canonical-decomposition;
 }
-multi e(Int $n where $n >= 0) { @e[$n] }
+multi e(Int $n where $n >= 0) {
+    (my Real %canonical-decomposition{RightFrame}){Frame.new(:index($n))}++;
+    MultiVector.new: :%canonical-decomposition;
+}
 
 #
 #

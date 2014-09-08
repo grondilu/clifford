@@ -31,11 +31,6 @@ the first unit vector or the orthonormal basis.  In other words, indexes do
 start with 0 and not 1 (it's a difference often seen between maths and
 computing).
 
-There is an exported constant array `@e` that holds a lazy list of all vectors
-of the orthogonal basis.
-
-    .say for @e[^10];
-
 There is a non-exported global array called `@signature`, which is used to set
 the squares values of the vectors of the orthonormal basis.  By default, this
 signature is set to `1 xx *` so that all squares of `e($i)` is 1.  This corresponds
