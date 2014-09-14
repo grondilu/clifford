@@ -59,5 +59,4 @@ Everything else (well, most of it) follows.
 
 ## TODO
 
-Lots of things of course, but in the short term it would be nice to implement
-the Numeric role.
+More tests.  Better performance.  
