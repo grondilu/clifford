@@ -1,4 +1,4 @@
-class MultiVector;
+class MultiVector is Cool does Numeric;
 =begin pod
 
 =TITLE
@@ -63,22 +63,31 @@ my subset RightFrame of Frame where {
     )
 }
 constant NullFrame = Frame.new;
-
 has Real %.canonical-decomposition{RightFrame};
 
-method clean {
-    for %!canonical-decomposition.pairs {
-	%!canonical-decomposition{.key} :delete if .value == 0;
+multi method new(Real $r) {
+    (my Real %canonical-decomposition{RightFrame}){NullFrame} = $r;
+    self.new: :%canonical-decomposition;
+}
+method reals(MultiVector:D:) { %!canonical-decomposition.values }
+method isNaN(MultiVector:D:) { [||] map *.isNaN, self.reals }
+method coerce-to-real(MultiVector:D: $exception-target) {
+    unless self.grades.max == 0 {
+	fail X::Numeric::Real.new(target => $exception-target, reason => "non-scalar part not zero", source => self);
     }
-    return self;
+    %!canonical-decomposition{NullFrame} // 0;
 }
-method grades returns List {
-    uniq map *.key.index.elems, grep *.value != 0,
-    %!canonical-decomposition.pairs;
-}
+multi method Real(MultiVector:D:) { self.coerce-to-real(Real); }
 
-method gist {
-    ! %!canonical-decomposition ?? "0" !!
+# should probably be eventually supplied by role Numeric
+method Num(MultiVector:D:) { self.coerce-to-real(Num).Num; }
+method Int(MultiVector:D:) { self.coerce-to-real(Int).Int; }
+method Rat(MultiVector:D:) { self.coerce-to-real(Rat).Rat; }
+
+multi method Bool(MultiVector:D:) { not self == 0 }
+method MultiVector { self }
+multi method Str(MultiVector:D:) {
+    ! %!canonical-decomposition ?? "MultiVector.new()" !!
     join ' + ', map {
 	my $index = .key.index;
 	$index ?? (
@@ -87,19 +96,54 @@ method gist {
 	    "{.value}*";
 	) ~ (
 	    $index == 1 ?? "e$index"
-	    !! "e[{$index.join(',')}]"
+	    !! $index.map({"e($_)"}).join('*')
 	) !! .value
     },
     sort *.key.index.elems,
     %!canonical-decomposition.pairs;
 }
+
+method floor(MultiVector:D:) {
+    my Real %canonical-decomposition{RightFrame};
+    %canonical-decomposition{.key} = .value.floor for %!canonical-decomposition.pairs;
+    self.new: :%canonical-decomposition;
+}
+method ceiling(MultiVector:D:) {
+    my Real %canonical-decomposition{RightFrame};
+    %canonical-decomposition{.key} = .value.ceiling for %!canonical-decomposition.pairs;
+    self.new: :%canonical-decomposition;
+}
+method truncate(MultiVector:D:) {
+    my Real %canonical-decomposition{RightFrame};
+    %canonical-decomposition{.key} = .value.truncate for %!canonical-decomposition.pairs;
+    self.new: :%canonical-decomposition;
+}
+
+proto method round(|) {*}
+multi method round(MultiVector:D: $scale as Real = 1) {
+    my Real %canonical-decomposition{RightFrame};
+    %canonical-decomposition{.key} = .value.round($scale) for %!canonical-decomposition.pairs;
+    self.new: :%canonical-decomposition;
+}
+
 method narrow {
-    return 0 unless %!canonical-decomposition;
-    if none(self.grades) > 0 {
-	# normally there is only entry here
-	# but we'll sum all possibilities just in case
-	return [+] %!canonical-decomposition.values
+    return 0 if self == 0;
+    if self.grades.max == 0 {
+	if %!canonical-decomposition.values > 1 {
+	    die 'unexpected number of entries in canonical decomposition'
+	} elsif %!canonical-decomposition.values == 1 {
+	    return %!canonical-decomposition.values.pick
+	} else { return 0 }
     } else { return self }
+}
+
+method clean returns MultiVector {
+    for %!canonical-decomposition.pairs {
+	next if .key ~~ NullFrame;
+	%!canonical-decomposition{.key} :delete if .value == 0;
+    }
+    %!canonical-decomposition{NullFrame} = 0 if %!canonical-decomposition == 0;
+    return self;
 }
 
 my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
@@ -122,8 +166,9 @@ my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
     Frame.new: :@index, :$orientation; 
 }
 
-proto e($) returns MultiVector is export {*}
-multi e(Real) {
+proto e(|) returns MultiVector is export {*}
+multi e(Real) { e() }
+multi e() {
     (my Real %canonical-decomposition{RightFrame}){NullFrame}++;
     MultiVector.new: :%canonical-decomposition;
 }
@@ -137,12 +182,19 @@ multi e(Int $n where $n >= 0) {
 # GRADE PROJECTION
 #
 #
+method grades returns List {
+    uniq map *.key.index.elems,
+    grep { .key ~~ NullFrame or .value != 0 },
+    %!canonical-decomposition.pairs;
+}
 method at_pos(Int $n) returns Blade {
     MultiVector.new(
 	:canonical-decomposition(
-	    grep *.key.index == $n, %!canonical-decomposition.pairs
+	    grep {
+		.key.index == $n
+	    }, %!canonical-decomposition.pairs
 	)
-    ).clean;
+    );
 }
 
 #
@@ -150,7 +202,7 @@ method at_pos(Int $n) returns Blade {
 #  ADDITION
 #
 #
-multi prefix:<+>(MultiVector $M) is export { $M.narrow }
+multi prefix:<+>(MultiVector $M) returns MultiVector is export { $M.clean }
 multi infix:<+>(MultiVector $M) returns MultiVector is export { $M }
 multi infix:<+>(MultiVector $M, Real $r) returns MultiVector is export { $r + $M }
 multi infix:<+>(      0, MultiVector $M) returns MultiVector is export { $M }
@@ -180,26 +232,34 @@ multi prefix:<->(MultiVector $A) returns MultiVector is export { (-1)*$A }
 
 # 
 #
-# MULTIPLICATION
+# SCALAR MULTIPLICATION
 #
 #
 # scalar multiplication is commutative so we'll define it from the left by default
 multi infix:<*>(MultiVector $M, Real $r) returns MultiVector is export { $r * $M }
-multi infix:<*>(      0, MultiVector $M) returns Real is export { 0 }
+multi infix:<*>(      0, MultiVector $M) returns MultiVector is export { MultiVector.new: 0 }
 multi infix:<*>(      1, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     %canonical-decomposition{.key} += .value * $r for $M.canonical-decomposition.pairs;
     MultiVector.new(:%canonical-decomposition).clean;
 }
+
+#
+#
+# GEOMETRIC PRODUCT
+#
+#
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %canonical-decomposition{RightFrame};
     for $A.canonical-decomposition.pairs X $B.canonical-decomposition.pairs -> $a, $b {
 	my $ab = $a.key * $b.key; 
-	%canonical-decomposition{Frame.new: :index($ab.index)} +=
-	$a.value * $b.value * $ab.orientation;
+	%canonical-decomposition{
+	    my $frame = Frame.new: :index($ab.index)
+	} += $a.value * $b.value * $ab.orientation;
+	%canonical-decomposition{$frame} :delete if %canonical-decomposition{$frame} == 0;
     }
-    MultiVector.new(:%canonical-decomposition).clean;
+    MultiVector.new(:%canonical-decomposition);
 }
 
 # 
@@ -218,11 +278,14 @@ multi infix:</>(MultiVector $M, Vector $a) returns MultiVector is export { $M * 
 multi infix:<**>(MultiVector $M, 0) returns Real is export { 1 }
 multi infix:<**>(MultiVector $M, 1) returns MultiVector is export { $M }
 multi infix:<**>(MultiVector $M, 2) returns MultiVector is export { $M * $M }
-multi infix:<**>(MultiVector $M, Int $n where $n > 2) returns MultiVector is export {
-    ($M**($n div 2))**2 * $M**($n mod 2)
+multi infix:<**>(MultiVector $M, Int $n where $n > 2 && $n %% 2) returns MultiVector is export {
+    ($M**($n div 2))**2
+}
+multi infix:<**>(MultiVector $M, Int $n where $n > 2 && $n % 2) returns MultiVector is export {
+    $M**($n - 1) * $M
 }
 # Nb. for some reason rakudo does not accept a -1 literal as a parameter??
-multi infix:<**>(Vector $a, 2) returns Real is export { ($a*$a).narrow }
+multi infix:<**>(Vector $a, 2) returns Real is export { ($a*$a).Real }
 multi infix:<**>(Vector $a, Int $ where -1) returns Vector is export { $a / ($a**2) }
 multi infix:<**>(Vector $a, Int $n where $n %% 2 && $n > 3) returns Real is export {
     ($a**2)**($n div 2)
@@ -236,7 +299,7 @@ multi infix:<**>(Vector $a, Int $n where $n % 2 && $n > 2) returns Vector is exp
 #  INNER PRODUCT
 #
 #
-multi innner-product(Vector $a, Vector $b) returns Real is export { 1/2*($a*$b + $b*$a).narrow }
+multi innner-product(Vector $a, Vector $b) returns Real is export { 1/2*($a*$b + $b*$a).Real }
 multi innner-product(Blade $A, Blade $B) returns Blade is export { ($A*$B)[abs($A.grade - $B.grade)] }
 multi infix:<⋅>(Vector $a, Vector $b) returns Real is export { innner-product $a, $b }
 multi infix:<cdot>(Vector $a, Vector $b) returns Real is export { innner-product $a, $b }
@@ -249,7 +312,7 @@ multi infix:<cdot>(Vector $a, Vector $b) returns Real is export { innner-product
 multi outer-product(Vector $a, Vector $b) returns Blade is export { 1/2*($a*$b - $b*$a) }
 multi outer-product(Blade $A, Blade $B) returns Blade is export { ($A*$B)[$A.grade + $B.grade] }
 multi infix:<∧>(Vector $a, Vector $b) returns Blade is export { outer-product $a, $b }
-multi infix:<wedge>(Vector $a, Vector $b) returns Blade is export { outer-product $a, $b }
+multi infix:<wedge>(Blade $a, Blade $b) returns Blade is export { outer-product $a, $b }
 
 #
 #
@@ -296,21 +359,34 @@ method signature(Vector $a:) returns Real { sign $a**2 }
 # MAGNITUDE, ABS, NORM
 #
 #
-multi method magnitude(Vector $a:) returns Real { sqrt ($a**2).narrow.abs }
+multi method magnitude(Vector $a:) returns Real { sqrt ($a**2).Real.abs }
 multi method magnitude returns Real {
-    sqrt [+] map { (self[$_]**2)[0].narrow.abs }, self.grades;
+    sqrt [+] self.canonical-decomposition.values X** 2;
 }
 method abs returns Real { self.magnitude }
 method norm returns Real { self.magnitude }
 
+#
+#
+# EQUALITY
+#
+#
+multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>($A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, 0) returns Bool is export {
     so all($A.canonical-decomposition.values) == 0
 }
 
-=finish
-
-#sub postfix:<*>(MultiVector $M) returns MultiVector is export { $M.conj }
+#
+#
+# INEQUALITY
+#
+#
+multi infix:« < »(MultiVector $A, MultiVector $B) returns Bool is export {
+    return False if $A == $B;
+    return True if $A.grades.max < $B.grades.max;
+    $A[$A.grades.max] < $B[$B.grades.max];
+}
 
 # vim: syntax=off
