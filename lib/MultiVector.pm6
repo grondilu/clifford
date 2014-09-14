@@ -45,10 +45,10 @@ Geometric algebra is about.
 =end pod
 our @signature = 1 xx *;
 
-subset Blade  of MultiVector is export      where *.grades == 1|0;
+subset Blade  of MultiVector is export      where *.grades == 1;
 subset Vector of Blade       is export      where *.grade == 1;
 
-method grade(Blade $A:) returns Int { self.grades.pick // 0 }
+method grade(Blade:D:) returns Int { self.grades.pick }
 
 class Frame {
     has @.index;
@@ -389,4 +389,4 @@ multi infix:« < »(MultiVector $A, MultiVector $B) returns Bool is export {
     $A[$A.grades.max] < $B[$B.grades.max];
 }
 
-# vim: syntax=off
+# vim: ft=perl6
