@@ -50,23 +50,20 @@ subset Vector of Blade       is export      where *.grade == 1;
 
 method grade(Blade:D:) returns Int { self.grades.pick }
 
-class Frame {
-    has @.index;
-    has Real $.orientation = 1;
-    method WHICH { 'Frame|(' ~ @!index.join(',') ~ ')' }
-}
-my subset RightFrame of Frame where {
-    .orientation == 1 and (
-	.index == 0 or [and]
-	(map { $_ ~~ Int, $_ >= 0 }, .index),
-	[<] .index
-    )
+subset PosInt of Int where * >= 0;
+class Frame is export {
+    has PosInt @.increase;
+    method list { [\+] 0, 1 xx * Z+ @!increase }
+    multi method new(@index where all(@index) >= 0 && [<] @index) {
+	self.new: :increase((@index Z- 0, @index) Z- 0, 1 xx *);
+    }
+    method WHICH { 'Frame|(' ~ @!increase.join(',') ~ ')' }
 }
 constant NullFrame = Frame.new;
-has Real %.canonical-decomposition{RightFrame};
+has Real %.canonical-decomposition{Frame};
 
 multi method new(Real $r) {
-    (my Real %canonical-decomposition{RightFrame}){NullFrame} = $r;
+    (my Real %canonical-decomposition{Frame}){NullFrame} = $r;
     self.new: :%canonical-decomposition;
 }
 method reals(MultiVector:D:) { %!canonical-decomposition.values }
@@ -89,7 +86,7 @@ method MultiVector { self }
 multi method Str(MultiVector:D:) {
     ! %!canonical-decomposition ?? "MultiVector.new()" !!
     join ' + ', map {
-	my $index = .key.index;
+	my $index = .key.list;
 	$index ?? (
 	    .value == 1 ?? '' !!
 	    .value < 0 ?? "({.value})*" !!
@@ -99,29 +96,29 @@ multi method Str(MultiVector:D:) {
 	    !! $index.map({"e($_)"}).join('*')
 	) !! .value
     },
-    sort *.key.index.elems,
+    sort *.key.list.elems,
     %!canonical-decomposition.pairs;
 }
 
 method floor(MultiVector:D:) {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     %canonical-decomposition{.key} = .value.floor for %!canonical-decomposition.pairs;
     self.new: :%canonical-decomposition;
 }
 method ceiling(MultiVector:D:) {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     %canonical-decomposition{.key} = .value.ceiling for %!canonical-decomposition.pairs;
     self.new: :%canonical-decomposition;
 }
 method truncate(MultiVector:D:) {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     %canonical-decomposition{.key} = .value.truncate for %!canonical-decomposition.pairs;
     self.new: :%canonical-decomposition;
 }
 
 proto method round(|) {*}
 multi method round(MultiVector:D: $scale as Real = 1) {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     %canonical-decomposition{.key} = .value.round($scale) for %!canonical-decomposition.pairs;
     self.new: :%canonical-decomposition;
 }
@@ -146,11 +143,11 @@ method clean returns MultiVector {
     return self;
 }
 
-my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
-    my @index = $A.index, $B.index;
+my multi infix:<*>( Frame $A, Frame $B ) returns Pair {
+    my @index = $A.list, $B.list;
     my $end = @index.end;
-    my $orientation = $A.orientation * $B.orientation;
-    for reverse ^$A.index -> $i {
+    my $orientation = 1;
+    for reverse ^$A.list -> $i {
 	for $i ..^ $end {
 	    if @index[$_] == @index[$_ + 1] {
 		$orientation *= @signature[@index[$_]];
@@ -163,17 +160,17 @@ my multi infix:<*>( Frame $A, Frame $B ) returns Frame {
 	    }
 	}
     }
-    Frame.new: :@index, :$orientation; 
+    Frame.new(@index) => $orientation; 
 }
 
 proto e(|) returns MultiVector is export {*}
 multi e(Real) { e() }
 multi e() {
-    (my Real %canonical-decomposition{RightFrame}){NullFrame}++;
+    (my Real %canonical-decomposition{Frame}){NullFrame}++;
     MultiVector.new: :%canonical-decomposition;
 }
 multi e(Int $n where $n >= 0) {
-    (my Real %canonical-decomposition{RightFrame}){Frame.new(:index($n))}++;
+    (my Real %canonical-decomposition{Frame}){Frame.new([$n,])}++;
     MultiVector.new: :%canonical-decomposition;
 }
 
@@ -183,7 +180,7 @@ multi e(Int $n where $n >= 0) {
 #
 #
 method grades returns List {
-    uniq map *.key.index.elems,
+    uniq map *.key.list.elems,
     grep { .key ~~ NullFrame or .value != 0 },
     %!canonical-decomposition.pairs;
 }
@@ -191,7 +188,7 @@ method at_pos(Int $n) returns Blade {
     MultiVector.new(
 	:canonical-decomposition(
 	    grep {
-		.key.index == $n
+		.key.list == $n
 	    }, %!canonical-decomposition.pairs
 	)
     );
@@ -207,13 +204,13 @@ multi infix:<+>(MultiVector $M) returns MultiVector is export { $M }
 multi infix:<+>(MultiVector $M, Real $r) returns MultiVector is export { $r + $M }
 multi infix:<+>(      0, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<+>(Real $r, MultiVector $M) returns MultiVector is export {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     %canonical-decomposition{NullFrame} = $r;
     %canonical-decomposition{.key} += .value for $M.canonical-decomposition.pairs;
     MultiVector.new(:%canonical-decomposition).clean;
 }
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     for $A.canonical-decomposition.pairs, $B.canonical-decomposition.pairs {
 	%canonical-decomposition{.key} += .value;
     }
@@ -240,7 +237,7 @@ multi infix:<*>(MultiVector $M, Real $r) returns MultiVector is export { $r * $M
 multi infix:<*>(      0, MultiVector $M) returns MultiVector is export { MultiVector.new: 0 }
 multi infix:<*>(      1, MultiVector $M) returns MultiVector is export { $M }
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     %canonical-decomposition{.key} += .value * $r for $M.canonical-decomposition.pairs;
     MultiVector.new(:%canonical-decomposition).clean;
 }
@@ -251,13 +248,11 @@ multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
 #
 #
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    my Real %canonical-decomposition{RightFrame};
+    my Real %canonical-decomposition{Frame};
     for $A.canonical-decomposition.pairs X $B.canonical-decomposition.pairs -> $a, $b {
 	my $ab = $a.key * $b.key; 
-	%canonical-decomposition{
-	    my $frame = Frame.new: :index($ab.index)
-	} += $a.value * $b.value * $ab.orientation;
-	%canonical-decomposition{$frame} :delete if %canonical-decomposition{$frame} == 0;
+	%canonical-decomposition{$ab.key} += $a.value * $b.value * $ab.value;
+	%canonical-decomposition{$ab.key} :delete if %canonical-decomposition{$ab.key} == 0;
     }
     MultiVector.new(:%canonical-decomposition);
 }
