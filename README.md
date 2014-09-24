@@ -1,4 +1,5 @@
-# Geometric Algebra in Perl 6
+Geometric Algebra in Perl 6
+===========================
 
 This module is an attempt to implement basic Geometric Algebra in Perl 6.
 
@@ -14,7 +15,8 @@ product.
 Geometric Algebras are sometimes called 'Clifford Algebras', thus the title of
 this module.
 
-## Introduction
+Introduction
+------------
 
 The vector space is assumed to be given an orthonormal basis e0, e1, e2 ...etc.
 There is no limit to the dimension, but it is countable.
@@ -42,7 +44,8 @@ to a so-called Euclidean space but you can change this if you want:
 The signature should normally only be -1, 0 or +1 but no safety check is made
 about this, so be warry.
 
-## What can be done?
+What can be done?
+-----------------
 
 Well, you can add and multiply vectors and multivectors:
 
@@ -57,6 +60,9 @@ You can get the grade projection of a multivector with `postcircumfix:<[ ]>($n)`
 
 Everything else (well, most of it) follows.
 
-## TODO
+TODO
+----
 
 More tests.  Better performance.  
+
+Rethinking the class structure.  Getting rid of  computationally expensive subsets.
