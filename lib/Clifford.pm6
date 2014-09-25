@@ -147,11 +147,13 @@ multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { 
 #
 #
 class CanonicalBlade {
+    # 'amount' is kind of like the magnitude
+    # except its signs also encodes the orientation.
     has Real $.amount = 1;
 
     # The frame is encoded in binary.
     # For instance the frame of the trivector e(0)*e(1)*e(4)
-    # will be identified by the integer 0b1011 = 19
+    # will be identified by the integer 0b10011 = 19
     #
     # The frame is null for scalars.
     has UInt $.frame = 0;
