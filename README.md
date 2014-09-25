@@ -63,4 +63,4 @@ Everything else (well, most of it) follows.
 TODO
 ----
 
-More tests.  Better performance.  
+More tests.  Better performance.  Possibly using NativeCall for the heavy lifting.
