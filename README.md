@@ -24,7 +24,7 @@ There is no limit to the dimension, but it is countable.
 The module exports a `sub e(Int $) {...}` function that allows you to create
 those vectors easily:
 
-    use MultiVector;
+    use Clifford;
 
     my $e = e(6);
 
@@ -38,7 +38,7 @@ the squares values of the vectors of the orthonormal basis.  By default, this
 signature is set to `1 xx *` so that all squares of `e($i)` is 1.  This corresponds
 to a so-called Euclidean space but you can change this if you want:
 
-    @MultiVector::signature[0] = -1;  # Lorentzian metric
+    @Clifford::signature[0] = -1;  # Lorentzian metric
     say e(0)**2;   # -1;
 
 The signature should normally only be -1, 0 or +1 but no safety check is made
@@ -64,5 +64,3 @@ TODO
 ----
 
 More tests.  Better performance.  
-
-Rethinking the class structure.  Getting rid of  computationally expensive subsets.
