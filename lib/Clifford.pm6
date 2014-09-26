@@ -159,8 +159,12 @@ class CanonicalBlade {
     has UInt $.frame = 0;
 
     our sub zero { CanonicalBlade.new: :frame(0), :amount(0) }
+
+    # The list method returns the list of indexes for each
+    # vector the Blade is made of.  In the example above, that
+    # would be 0, 1, 4
     method list {
-	$!frame.base(2).flip.comb.kv.hash.grep(+*.value)».keys
+	$!frame.base(2).flip.match(/1/, :g)».from
     }
     method canonical-decomposition { self, }
     method grade { self.list.elems }
