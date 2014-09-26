@@ -4,12 +4,12 @@ use Test;
 plan 4;
 
 sub random {
-    my $r = rand.round(.1) * e();
-    $r += rand.round(.1) * e((^5).pick);
+    my $r = rand * e();
+    $r += rand * e((^5).pick);
     my ($a, $b) = (^5).roll(2);
-    my $c = rand.round(.1) * e($a) * e($b);
+    my $c = rand * e($a) * e($b);
     $r += $c;
-    $r;
+    $r.round(.01);
 }
 
 my ($a, $b, $c) = random() xx 3;
