@@ -58,7 +58,7 @@ class MultiVector {
 	)
     }
     method clean-pairs { grep *.value != 0, %!canonical.pairs }
-    multi method reverse returns MultiVector {
+    method reverse returns MultiVector {
 	MultiVector.new: :canonical(
 	    map {
 		my $grade = grade .key;
@@ -147,42 +147,66 @@ multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 }
 
 #
-# MULTIPLICATION
+# SCALAR MULTIPLICATION
 #
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     MultiVector.new: canonical =>
     map { $^p.key => $r * $p.value }, $M.clean-pairs;
 }
 multi infix:<*>(MultiVector $M, Real $r) returns MultiVector is export { $r * $M }
+
+#
+# GEOMETRIC PRODUCT
+#
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    my Real %canonical{UInt};
-    for $A.clean-pairs X $B.clean-pairs -> $a, $b {
-	my @a = sb $a.key;
-	my @b = sb $b.key;
-	my @frame = @a[], @b[];
-	my $amount = $a.value * $b.value;
-	unless [<] @frame {
-	    my $end = @frame.end;
-	    for reverse ^@a -> $i {
-		for $i ..^ $end {
-		    if @frame[$_] == @frame[$_ + 1] {
-			$amount *= @signature[@frame[$_]];
-			@frame.splice($_, 2);
-			$end = $_ - 1;
-			last;
-		    } elsif @frame[$_] > @frame[$_ + 1] {
-			@frame[$_, $_ + 1] = @frame[$_ + 1, $_];
-			$amount *= -1;
-		    }
-		}
-	    }
-	}
-	given [+] 1 «+<« @frame {
-	    %canonical{$_} += $amount;
-	    %canonical{$_} :delete if %canonical{$_} == 0;
-	}
+    [+] $A.canonical-decomposition X* $B.canonical-decomposition
+}
+multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
+    # we use a cache to memorize orientations
+    state %orientation;
+
+    my ($a, $b) = $A.clean-pairs[0], $B.clean-pairs[0];
+    if $a.key == $b.key {
+	my $grade = grade $a.key;
+	return MultiVector.new: :canonical(
+	    0 => [*]
+	    $a.value, $b.value,
+	    (-1)**($grade*($grade - 1) div 2),
+	    @signature[sb $a.key]
+	)
     }
-    MultiVector.new: :%canonical;
+    elsif $b.key < $a.key { return ($B.reverse * $A.reverse).reverse }
+    else {
+	return MultiVector.new: :canonical(
+	    ($a.key +^ $b.key) => [*]
+	    $a.value, $b.value,
+	    (
+		%orientation{$a.key}{$b.key} //= do {
+		    my $orientation = 1;
+		    my @a = sb $a.key;
+		    my @b = sb $b.key;
+		    my @frame = @a, @b;
+		    unless [<] @frame {
+			my $end = @frame.end;
+			for reverse ^@a -> $i {
+			    for $i ..^ $end {
+				if @frame[$_] == @frame[$_ + 1] {
+				    @frame.splice($_, 2);
+				    $end = $_ - 1;
+				    last;
+				} elsif @frame[$_] > @frame[$_ + 1] {
+				    @frame[$_, $_ + 1] = @frame[$_ + 1, $_];
+				    $orientation *= -1;
+				}
+			    }
+			}
+		    }
+		    $orientation;
+		}
+	    ),
+	    @signature[sb $a.key +& $b.key];
+	);
+    }
 }
 
 #
