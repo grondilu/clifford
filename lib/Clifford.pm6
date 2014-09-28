@@ -167,6 +167,7 @@ multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
 
     my ($a, $b) = $A.clean-pairs[0], $B.clean-pairs[0];
     if $a.key == $b.key {
+	# This case is easy so we treat it separately
 	my $grade = grade $a.key;
 	return MultiVector.new: :canonical(
 	    0 => [*]
@@ -181,21 +182,19 @@ multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
 	    ($a.key +^ $b.key) => [*]
 	    $a.value, $b.value,
 	    (
-		%orientation{$a.key}{$b.key} //= do {
+		%orientation{join ':', $a.key, $b.key} //= do {
 		    my $orientation = 1;
 		    my @a = sb $a.key;
 		    my @b = sb $b.key;
 		    my @frame = @a, @b;
 		    unless [<] @frame {
-			my $end = @frame.end;
 			for reverse ^@a -> $i {
-			    for $i ..^ $end {
+			    for $i ..^ @frame.end {
 				if @frame[$_] == @frame[$_ + 1] {
-				    @frame.splice($_, 2);
-				    $end = $_ - 1;
+				    @frame.splice($_);
 				    last;
 				} elsif @frame[$_] > @frame[$_ + 1] {
-				    @frame[$_, $_ + 1] = @frame[$_ + 1, $_];
+				    @frame[$_, $_ + 1].=reverse;
 				    $orientation *= -1;
 				}
 			    }
