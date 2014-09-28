@@ -22,6 +22,30 @@ subset Canonical of MultiVector where *.clean-pairs == 1;
 # so we need a few functions to quickly get information from them.
 my sub grade(UInt $n --> UInt) { (state %){$n} //= $n.base(2).comb(/1/).elems }
 my sub sb   (UInt $n) { @((state %){$n} //= $n.base(2).flip.match(/1/, :g)».from) }
+my proto orientation(UInt $a, UInt $b where $a < $b) returns Int {*}
+multi orientation(0, UInt $) { 1 }
+multi orientation(UInt $a, UInt $b) {
+    (state Int %){"$a|$b"} //= do {
+	my Bool $orientation = True;
+	unless $a.msb < $b.lsb {
+	    my @a = sb $a;
+	    my @b = sb $b;
+	    my @frame = @a, @b;
+	    for reverse ^@a -> $i {
+		for $i ..^ @frame.end {
+		    if @frame[$_] == @frame[$_ + 1] {
+			@frame.splice($_);
+			last;
+		    } elsif @frame[$_] > @frame[$_ + 1] {
+			@frame[$_, $_ + 1].=reverse;
+			$orientation ?^= True;
+		    } else { last }
+		}
+	    }
+	}
+	$orientation ?? 1 !! -1;
+    }
+}
 
 # Vector is defined as a subset.
 subset Vector of MultiVector where *.clean-pairs».key.map(&grade).all == 1;
@@ -163,7 +187,6 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 }
 multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
     # we use a cache to memorize orientations
-    state %orientation;
 
     my ($a, $b) = $A.clean-pairs[0], $B.clean-pairs[0];
     if $a.key == $b.key {
@@ -181,28 +204,7 @@ multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
 	return MultiVector.new: :canonical(
 	    ($a.key +^ $b.key) => [*]
 	    $a.value, $b.value,
-	    (
-		%orientation{join ':', $a.key, $b.key} //= do {
-		    my $orientation = 1;
-		    my @a = sb $a.key;
-		    my @b = sb $b.key;
-		    my @frame = @a, @b;
-		    unless [<] @frame {
-			for reverse ^@a -> $i {
-			    for $i ..^ @frame.end {
-				if @frame[$_] == @frame[$_ + 1] {
-				    @frame.splice($_);
-				    last;
-				} elsif @frame[$_] > @frame[$_ + 1] {
-				    @frame[$_, $_ + 1].=reverse;
-				    $orientation *= -1;
-				}
-			    }
-			}
-		    }
-		    $orientation;
-		}
-	    ),
+	    orientation($a.key, $b.key),
 	    @signature[sb $a.key +& $b.key];
 	);
     }
