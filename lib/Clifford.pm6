@@ -186,8 +186,6 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     [+] $A.canonical-decomposition X* $B.canonical-decomposition
 }
 multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
-    # we use a cache to memorize orientations
-
     my ($a, $b) = $A.clean-pairs[0], $B.clean-pairs[0];
     if $a.key == $b.key {
 	# This case is easy so we treat it separately
