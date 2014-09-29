@@ -1,5 +1,11 @@
 module Clifford;
+
+
+# Metric signature
 our @signature = 1 xx *;
+
+# UInt is specced but NYI.
+# Here we define it as a subset.
 subset UInt of Int where * >= 0;
 
 #
@@ -23,24 +29,23 @@ subset Canonical of MultiVector where *.clean-pairs == 1;
 my sub grade(UInt $n --> UInt) { (state %){$n} //= $n.base(2).comb(/1/).elems }
 my sub sb   (UInt $n) { @((state %){$n} //= $n.base(2).flip.match(/1/, :g)».from) }
 my proto orientation(UInt $a, UInt $b where $a < $b) returns Int {*}
-multi orientation(0, UInt $) { 1 }
-multi orientation(UInt $a, UInt $b) {
+multi orientation(0, $) { 1 }
+multi orientation($a, $b where $a.msb < $b.lsb) { 1 }
+multi orientation($a, $b) {
     (state Int %){"$a|$b"} //= do {
 	my Bool $orientation = True;
-	unless $a.msb < $b.lsb {
-	    my @a = sb $a;
-	    my @b = sb $b;
-	    my @frame = @a, @b;
-	    for reverse ^@a -> $i {
-		for $i ..^ @frame.end {
-		    if @frame[$_] == @frame[$_ + 1] {
-			@frame.splice($_);
-			last;
-		    } elsif @frame[$_] > @frame[$_ + 1] {
-			@frame[$_, $_ + 1].=reverse;
-			$orientation ?^= True;
-		    } else { last }
-		}
+	my @a = sb $a;
+	my @b = sb $b;
+	my @frame = @a, @b;
+	for reverse ^@a -> $i {
+	    for $i ..^ @frame.end {
+		if @frame[$_] == @frame[$_ + 1] {
+		    @frame.splice($_);
+		    last;
+		} elsif @frame[$_] > @frame[$_ + 1] {
+		    @frame[$_, $_ + 1].=reverse;
+		    $orientation ?^= True;
+		} else { last }
 	    }
 	}
 	$orientation ?? 1 !! -1;
