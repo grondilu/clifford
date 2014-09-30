@@ -1,6 +1,8 @@
 module Clifford::Conformal;
 
 class MultiVector is Cool is Numeric {
+    # This class is written exactly as Complex is in Rakudo's core,
+    # except there are not two member variables, but 32.
     has num (
 	$.re,
 	$.x0, $.x1, $.x2, $.x3, $.x4,
@@ -47,6 +49,21 @@ class MultiVector is Cool is Numeric {
 	$!x0123 = x0123; $!x0124 = x0124; $!x0134 = x0134; $!x0234 = x0234; $!x1234 = x1234;
 	$!x01234 = x01234;
     }
+    method reals(MultiVector:D:) {
+	(
+	    self.re,
+	    self.x0, self.x1, self.x2, self.x3, self.x4,
+	    self.x01, self.x02, self.x03, self.x04, self.x12, self.x13, self.x14, self.x23, self.x24, self.x34,
+	    self.x012, self.x013, self.x014, self.x023, self.x024, self.x034, self.x123, self.x124, self.x134, self.x234,
+	    self.x0123, self.x0124, self.x0134, self.x0234, self.x1234,
+	    self.x01234
+	);
+    }
+
+    method isNaN(MultiVector:D:) {
+	[||] self.reals».isNaN;
+    }
+
 
 }
 
