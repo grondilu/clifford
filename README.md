@@ -64,3 +64,5 @@ TODO
 ----
 
 More tests.  Better performance.  Possibly using NativeCall for the heavy lifting.
+
+Optimized imlementations for homogeneous and conformal models of the 3D Euclidean space.
