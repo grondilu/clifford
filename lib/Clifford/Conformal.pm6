@@ -1,4 +1,5 @@
 module Clifford::Conformal;
+constant @signature = -1, 1, 1, 1, 1;
 
 class MultiVector is Cool is Numeric {
     # This class is written exactly as Complex is in Rakudo's core,
@@ -96,12 +97,11 @@ class MultiVector is Cool is Numeric {
 		e0123 e0124 e0134 e0234 e1234
 		e01234
 	    >;
-	    my Str $slash = nqp::isnanorinf($x) ?? "\\" !! '';
+	    nqp::isnanorinf($x) ?? "\\$blade" !!
 	    $x == 0e0 ?? Nil !!
-	    $x == 1e0 ?? $slash~$blade !!
-	    $x < 0e0
-	    ?? '-' ~ $x.abs ~ $slash ~ $blade
-	    !! "$x$blade"
+	    $x == 1e0 ?? $blade !!
+	    $x == -1e0 ?? "-$blade" !!
+	    "$x*$blade"
 	}, self.reals[1..*];
     }
 
@@ -144,12 +144,83 @@ class MultiVector is Cool is Numeric {
 
 }
 
+multi sub abs(MultiVector:D \M) returns Num:D is export { M.abs }
+
+#
+# VECTOR SUBSET
+#
+subset Vector of MultiVector is export where *.reals[0, 6..*].all == 0e0;
+
+#
+# SCALAR MULTIPLICATION AND DIVISION
+#
+multi infix:<*>(Real:D \r, MultiVector:D \M) returns MultiVector:D is export {
+    MultiVector.new: |( r X* M.reals )
+}
+multi infix:<*>(MultiVector:D \M, Real:D \r) returns MultiVector:D is export { r * M }
+multi infix:</>(MultiVector:D \M, Real:D \r) returns MultiVector:D is export { (1/r) * M }
+
+#
+# ADDITION AND SUBSTRACTION
+#
+multi infix:<+>(MultiVector:D \M) returns MultiVector:D is export { M }
+multi prefix:<->(MultiVector \M) returns MultiVector:D is export { -1 * M }
+multi infix:<+>(MultiVector:D \A, MultiVector:D \B) returns MultiVector:D is export {
+    MultiVector.new: |( A.reals Z+ B.reals )
+}
+multi infix:<->(MultiVector:D \A, MultiVector:D \B) returns MultiVector:D is export {
+    MultiVector.new: |( A.reals Z- B.reals )
+}
+
+#
+# GEOMETRIC PRODUCT
+#
+multi infix:<*>(MultiVector:D \A, MultiVector:D \B) returns MultiVector:D is export {
+    MultiVector.new:
+    A.re*B.re,
+    A.re*B.x0,
+    A.re*B.x1,
+    A.re*B.x2,
+    A.re*B.x3,
+    A.re*B.x4,
+    A.re*B.x01,
+    A.re*B.x02,
+    A.re*B.x03,
+    A.re*B.x04,
+    A.re*B.x12,
+    A.re*B.x13,
+    A.re*B.x14,
+    A.re*B.x23,
+    A.re*B.x24,
+    A.re*B.x34,
+    A.re*B.x012,
+    A.re*B.x013,
+    A.re*B.x014,
+    A.re*B.x023,
+    A.re*B.x024,
+    A.re*B.x034,
+    A.re*B.x123,
+    A.re*B.x124,
+    A.re*B.x134,
+    A.re*B.x234,
+    A.re*B.x0123,
+    A.re*B.x0124,
+    A.re*B.x0134,
+    A.re*B.x0234,
+    A.re*B.x1234,
+    A.re*B.x01234,
+	;
+}
+
+
+#
+# MAIN USER INTERFACE (basis vectors constructor)
+#
 proto e(Int $n?) returns MultiVector is export {*}
-multi e() { MultiVector.new: 1, |(0 xx 31) }
+multi e() { state $ = MultiVector.new: 1, |(0 xx 31) }
 multi e($n where $n ~~ ^5) {
-    my @arg = 0, (map { $_ == $n ?? 1 !! 0 }, ^5), 0 xx 26;
-    die "unexpected number of arg ({@arg.elems})" unless @arg == 32;
-    MultiVector.new: |@arg;
+    (state @)[$n] //=
+    MultiVector.new: |flat  0, (map { $_ == $n ?? 1 !! 0 }, ^5), 0 xx 26 ;
 }
 
 # vim: ft=perl6
