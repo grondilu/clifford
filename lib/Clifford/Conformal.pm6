@@ -3,6 +3,9 @@ module Clifford::Conformal;
 class MultiVector is Cool is Numeric {
     # This class is written exactly as Complex is in Rakudo's core,
     # except there are not two member variables, but 32.
+    #
+    # Why 32?  Because we're in the 5D conformal space, whose dimension is
+    # 2**5 = 32.
     has num (
 	$.re,
 	$.x0, $.x1, $.x2, $.x3, $.x4,
