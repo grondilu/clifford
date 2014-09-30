@@ -67,10 +67,89 @@ class MultiVector is Cool is Numeric {
 	[||] self.reals».isNaN;
     }
 
+    method coerce-to-real(MultiVector:D: $exception-target) {
+        unless self.reals[1..*].all == 0 { fail X::Numeric::Real.new(target => $exception-target, reason => "imaginary part not zero", source => self);}
+        $!re;
+    }
+    multi method Real(MultiVector:D:) { self.coerce-to-real(Real); }
+
+    # should probably be eventually supplied by role Numeric
+    method Num(MultiVector:D:) { self.coerce-to-real(Num).Num; }
+    method Int(MultiVector:D:) { self.coerce-to-real(Int).Int; }
+    method Rat(MultiVector:D:) { self.coerce-to-real(Rat).Rat; }
+
+    multi method Bool(MultiVector:D:) {
+	[||] self.reals X[!=] 0e0; 
+    }
+
+    method MultiVector() { self }
+    multi method Str(MultiVector:D:) {
+	my $re = nqp::p6box_s($!re);
+	self.reals[1..*].all == 0e0 ?? $re !!
+	join ' + ',
+	($re == 0e0 ?? Nil !! $re),
+	map -> $x {
+	    my $blade = shift state @ = <
+		e0 e1 e2 e3 e4
+		e01 e02 e03 e04 e12 e13 e14 e23 e24 e34
+		e012 e013 e014 e023 e024 e034 e123 e124 e134 e234
+		e0123 e0124 e0134 e0234 e1234
+		e01234
+	    >;
+	    my Str $slash = nqp::isnanorinf($x) ?? "\\" !! '';
+	    $x == 0e0 ?? Nil !!
+	    $x == 1e0 ?? $slash~$blade !!
+	    $x < 0e0
+	    ?? '-' ~ $x.abs ~ $slash ~ $blade
+	    !! "$x$blade"
+	}, self.reals[1..*];
+    }
+
+    multi method perl(MultiVector:D:) {
+        "MultiVector.new({self.reals.join(', ')})";
+    }
+    method conj(MultiVector:D:) {
+	MultiVector.new: |(
+	    (1, -1 xx 5, 1 xx 10, -1 xx 10, 1 xx 5, -1) Z* self.reals
+	);
+    }
+    method abs(MultiVector:) {
+	my num $sum = 0e0;
+	$sum = nqp::add_n( $sum, nqp::mul_n($_, $_) ) for self.reals;
+        nqp::p6box_n(nqp::sqrt_n($sum));
+    }
+
+    method floor(MultiVector:D:) {
+        MultiVector.new( |map *.floor, self.reals );
+    }
+
+    method ceiling(MultiVector:D:) {
+        MultiVector.new( |map *.ceiling, self.reals );
+    }
+
+    proto method round(|) {*}
+    multi method round(MultiVector:D: $scale as Real = 1) {
+        MultiVector.new( |map *.round($scale), self.reals );
+    }
+
+    method truncate(MultiVector:D:) {
+        MultiVector.new( |map *.truncate, self.reals );
+    }
+
+    method narrow(MultiVector:D:) {
+        self.reals[1..*].all == 0e0
+            ?? $!re.narrow
+            !! self;
+    }
 
 }
 
 proto e(Int $n?) returns MultiVector is export {*}
 multi e() { MultiVector.new: 1, |(0 xx 31) }
+multi e($n where $n ~~ ^5) {
+    my @arg = 0, (map { $_ == $n ?? 1 !! 0 }, ^5), 0 xx 26;
+    die "unexpected number of arg ({@arg.elems})" unless @arg == 32;
+    MultiVector.new: |@arg;
+}
 
 # vim: ft=perl6
