@@ -1,6 +1,6 @@
 {
     "name" : "Clifford",
-    "version" : "0.9.3",
+    "version" : "0.9.4",
     "description" : "Basic Geometric Algebra.",
     "author" : "Lucien Grondin",
     "depends" : [ ],
