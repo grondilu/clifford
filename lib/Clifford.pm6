@@ -29,20 +29,18 @@ multi orientation($a, $b where $a|$b == 0) { 1 }
 multi orientation($a, $b where $a == $b) { (-1)**(grade($a)*(grade($a)-1) div 2) }
 multi orientation($a, $b where $a.msb < $b.lsb) { 1 }
 multi orientation($a, $b) {
-    my @ab = map &sb, $a, $b;
-    my $orientation = 1;
-    until [<] @ab {
-	given first { @ab[$_] >= @ab[$_ + 1] }, ^@ab.end {
-	    if @ab[$_] == @ab[$_ + 1] {
-		@ab.splice($_, 2);
-	    }
+    (state %){"$a|$b"} //= do {
+	my @ab = map &sb, $a, $b;
+	my Bool $orientation = True;
+	while defined my $index = first { @ab[$_] >= @ab[$_ + 1] }, ^@ab.end {
+	    if @ab[$index] == @ab[$index + 1] { @ab.splice($index, 2) }
 	    else {
-		@ab[$_, $_ + 1].=reverse;
-		$orientation *= -1;
+		@ab[$index, $index + 1].=reverse;
+		$orientation ?^= True;
 	    }
 	}
+	$orientation ?? 1 !! -1;
     }
-    $orientation;
 }
 
 # Vector is defined as a subset.
