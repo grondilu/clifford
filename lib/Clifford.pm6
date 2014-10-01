@@ -1,6 +1,5 @@
 module Clifford;
 
-
 # Metric signature
 our @signature = 1 xx *;
 
@@ -15,9 +14,6 @@ subset UInt of Int where * >= 0;
 # Instantiation should always be done via &e and its algebraic combinations.
 my class MultiVector is Cool does Numeric {...}
 proto e(|) returns MultiVector is export {*}
-
-multi e() { state $ = MultiVector.new: :canonical( 0 => 1 ) }
-multi e(UInt $n) { (state @)[$n] //= MultiVector.new: :canonical( (1 +< $n) => 1 ) }
 
 # Canonical is a subset for MultiVectors of the form e(i)*e(j)*e(k)*...
 # where i < j < k < ...
@@ -263,5 +259,12 @@ multi infix:<wedge>(MultiVector $A, MultiVector $B) returns MultiVector is expor
 #
 sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
 
+
+#
+# main interface
+#
+multi e() { state $ = MultiVector.new: :canonical( 0 => 1 ) }
+multi e(UInt $n) { (state @)[$n] //= MultiVector.new: :canonical( (1 +< $n) => 1 ) }
+multi e(Whatever) { map { MultiVector.new: :canonical($_ => 1) }, 0 .. * }
 
 # vim: ft=perl6
