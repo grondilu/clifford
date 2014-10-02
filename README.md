@@ -1,7 +1,8 @@
 Geometric Algebra in Perl 6
 ===========================
 
-This module is an attempt to implement basic Geometric Algebra in Perl 6.
+This module is an attempt to implement basic [Geometric
+Algebra](http://en.wikipedia.org/wiki/Geometric_Algebra) in Perl 6.
 
 Geometric algebra is a mathematical formalism in which a vector space is given
 a multiplicative operation called "geometric product".  The geometric product
