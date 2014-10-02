@@ -168,6 +168,7 @@ multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { 
 # SCALAR MULTIPLICATION
 #
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
+    $r == 0 ?? MultiVector.new !!
     MultiVector.new: canonical =>
     map { $^p.key => $r * $p.value }, $M.pairs;
 }
