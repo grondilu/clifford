@@ -53,7 +53,8 @@ class MultiVector {
     has Real %.canonical{UInt};
     multi method grade(Canonical:) { grade self.clean-pairs[0].key }
     method canonical-decomposition {
-	map { MultiVector.new(:canonical($_)) }, self.clean-pairs 
+	map { MultiVector.new(:canonical($_)) },
+	self.clean-pairs;
     }
     multi method gist {
 	join ' + ', map {
@@ -63,7 +64,7 @@ class MultiVector {
 		    .value == -1 ?? '-' !!
 		    "{.value}*"
 		) ~
-		join '*',
+		join '',
 		map {"e$_"},
 		sb .key
 	    )
@@ -217,13 +218,32 @@ multi prefix:<+>(MultiVector $M) returns MultiVector is export { $M }
 multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { $A + -1 * $B }
 
 #
-# INNER PRODUCT
 #
+# Metric products
+#
+# 
+# Hestenes's inner product
 multi infix:<cdot>(Canonical $A, Canonical $B) returns MultiVector is export {
     ($A*$B)[ ($A.grade - $B.grade).abs ]
 }
 multi infix:<cdot>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     [+] $A.canonical-decomposition X[cdot] $B.canonical-decomposition
+}
+# Left contraction
+multi infix:<⌋>(Canonical $A, Canonical $B) returns MultiVector is export {
+    $B.grade < $A.grade ?? 0*e() !!
+    ($A*$B)[ $B.grade - $A.grade ]
+}
+multi infix:<⌋>(MultiVector $A, MultiVector $B) returns MultiVector is export {
+    [+] $A.canonical-decomposition X[⌋] $B.canonical-decomposition
+}
+# Right contraction
+multi infix:<⌊>(Canonical $A, Canonical $B) returns MultiVector is export {
+    $B.grade > $A.grade ?? 0*e() !!
+    ($A*$B)[ $A.grade - $B.grade ]
+}
+multi infix:<⌊>(MultiVector $A, MultiVector $B) returns MultiVector is export {
+    [+] $A.canonical-decomposition X[⌊] $B.canonical-decomposition
 }
 
 #
@@ -240,7 +260,6 @@ multi infix:<wedge>(MultiVector $A, MultiVector $B) returns MultiVector is expor
 # REVERSION
 #
 sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
-
 
 #
 # main interface
