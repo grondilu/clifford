@@ -3,13 +3,12 @@ module Clifford;
 # Metric signature
 our @signature = 1 xx *;
 
-# UInt is specced but NYI.
-# Here we define it as a subset.
-subset UInt of Int where * >= 0;
-
 #
 # PRE-DECLARATIONS AND SUBSETS
 #
+subset UInt of Int where * >= 0;
+subset NonZeroReal of Real where * != 0;
+
 # The user should never have to instantiate a MultiVector himself.
 # Instantiation should always be done via &e and its algebraic combinations.
 my class MultiVector is Cool does Numeric {...}
@@ -18,7 +17,8 @@ proto e(|) returns MultiVector is export {*}
 # Canonical is a subset for MultiVectors of the form e(i)*e(j)*e(k)*...
 # where i < j < k < ...
 # They form the elements of the so-called 'canonical basis', thus the name.
-subset Canonical of MultiVector where *.clean-pairs == 1;
+my subset Canonical of MultiVector where *.pairs.elems == 1;
+my subset Zero      of MultiVector where *.pairs.elems == 0;
 
 # Those canonical elements are identified by a positive integer
 # so we need a few functions to quickly get information from them.
@@ -43,20 +43,23 @@ multi orientation($a, $b) {
     }
 }
 
-# Vector is defined as a subset.
-subset Vector of MultiVector where *.clean-pairs».key.map(&grade).all == 1;
+# Vector is defined as a subset.  It is exported.
+subset Vector of MultiVector is export where *.keys.map(&grade).all == 1;
 
 # 
 # MULTIVECTOR
 #
 class MultiVector {
-    has Real %.canonical{UInt};
-    multi method grade(Canonical:) { grade self.clean-pairs[0].key }
+    has NonZeroReal %.canonical{UInt} handles <pairs keys values>;
+    multi method grade(Canonical:) returns Int {
+	self == 0 ?? 0 !! grade self.pairs[0].key
+    }
     method canonical-decomposition {
 	map { MultiVector.new(:canonical($_)) },
-	self.clean-pairs;
+	self.pairs;
     }
     multi method gist {
+	self ~~ Zero ?? '0' !!
 	join ' + ', map {
 	    grade(.key) == 0 ?? ~.value !! (
 		(
@@ -70,35 +73,31 @@ class MultiVector {
 	    )
 	},
 	sort { grade .key },
-	self.clean-pairs
+	self.pairs
     }
     multi method at_pos(UInt $grade) returns MultiVector {
-	MultiVector.new: :canonical(
-	    grep { grade(.key) == $grade },
-	    self.clean-pairs
-	)
+	MultiVector.new: :canonical( grep { grade(.key) == $grade }, self.pairs )
     }
-    method clean-pairs { grep *.value != 0, %!canonical.pairs }
     method reverse returns MultiVector {
 	MultiVector.new: :canonical(
 	    map {
 		my $grade = grade .key;
 		.key => (-1)**($grade * ($grade - 1) div 2) * .value
 	    },
-	    self.clean-pairs
+	    self.pairs
 	)
     }
 
     # 
     # Methods for the Numeric role
     #
-    method reals(MultiVector:) { self.clean-pairs».value }
+    method reals(MultiVector:) { self.values || 0 }
     method isNaN(MultiVector:) { [||] map *.isNaN, self.reals }
     method coerce-to-real(MultiVector: $exception-target) {
 	unless self ~~ Canonical and self.grade == 0 {
 	    fail X::Numeric::Real.new(target => $exception-target, reason => "non-scalar part not zero", source => self);
 	}
-	%!canonical{0};
+	%!canonical{0} // 0;
     }
     multi method Real(MultiVector:) { self.coerce-to-real(Real) }
     method Num { self.coerce-to-real(Num).Num; }
@@ -106,21 +105,18 @@ class MultiVector {
     method Rat { self.coerce-to-real(Rat).Rat; }
     multi method Bool { not self == 0 }
     method MultiVector { self }
-    method floor    { MultiVector.new: :canonical( map { $^p.key => $p.value.floor}, self.clean-pairs ) }
-    method ceiling  { MultiVector.new: :canonical( map { $^p.key => $p.value.ceiling}, self.clean-pairs ) }
-    method truncate { MultiVector.new: :canonical( map { $^p.key => $p.value.truncate}, self.clean-pairs ) }
+    method floor    { MultiVector.new: :canonical( map { $^p.key => $p.value.floor }, self.pairs ) }
+    method ceiling  { MultiVector.new: :canonical( map { $^p.key => $p.value.ceiling }, self.pairs ) }
+    method truncate { MultiVector.new: :canonical( map { $^p.key => $p.value.truncate }, self.pairs ) }
     multi method round($scale as Real = 1) {
-	MultiVector.new: :canonical( map { $^p.key => $p.value.round($scale)}, self.clean-pairs );
+	MultiVector.new: :canonical(
+	    map { $^p.key => $p.value.round($scale) }, self.pairs
+	);
     }
     method narrow {
-	my Real %canonical{UInt} = self.clean-pairs;
-	if %canonical.elems == 0 { return 0 }
-	elsif %canonical.elems == 1 {
-	    given %canonical.pairs.pick {
-		return .value if .key == 0;
-	    }
-	}
-	return MultiVector.new: :%canonical;
+	self ~~ Zero ?? 0 !!
+	self.pairs == 1 && self.pairs[0].key == 0 ?? self.pairs[0].value.narrow !!
+	self
     }
 }
 
@@ -130,9 +126,7 @@ class MultiVector {
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>($A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, $B) returns Bool is export { $A - $B == 0 }
-multi infix:<==>(MultiVector $A, 0) returns Bool is export {
-    so all($A.canonical.values) == 0
-}
+multi infix:<==>(MultiVector $A, 0) returns Bool is export { $A ~~ Zero }
 
 #
 # ORDER RELATION
@@ -150,40 +144,45 @@ multi infix:<+>(MultiVector $A, Real $r) returns MultiVector is export { $A + $r
 multi infix:<->(MultiVector $A, Real $r) returns MultiVector is export { $A + (-$r)*e() }
 
 #
-# ADDITION WITH A NULL MULTIVECTOR
+# ADDITION AND SUBSTRACTION WITH A NULL MULTIVECTOR
 #
-multi infix:<+>( $A, MultiVector $B where $B == 0) is export { $A }
-multi infix:<+>( MultiVector $A where $A == 0, $B) is export { $B }
+multi infix:<+>( $A, Zero ) is export { $A }
+multi infix:<+>( Zero, $B ) is export { $B }
 
 #
 # GENERIC ADDITION
 #
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    my Real %canonical{UInt} = $A.clean-pairs;
-    for $B.clean-pairs {
-	%canonical{.key} += .value;
-	%canonical{.key} :delete if %canonical{.key} == 0;
+    MultiVector.new: canonical =>
+    gather for uniq $A.keys, $B.keys {
+	my $sum = ($A.canonical{$_}//0) + ($B.canonical{$_}//0);
+	take $_ => $sum if $sum != 0;
     }
-    MultiVector.new: :%canonical;
 }
+multi prefix:<->(MultiVector $M) returns MultiVector is export { -1 * $M }
+multi prefix:<+>(MultiVector $M) returns MultiVector is export { $M }
+multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { $A + -1 * $B }
+
 
 #
 # SCALAR MULTIPLICATION
 #
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     MultiVector.new: canonical =>
-    map { $^p.key => $r * $p.value }, $M.clean-pairs;
+    map { $^p.key => $r * $p.value }, $M.pairs;
 }
 multi infix:<*>(MultiVector $M, Real $r) returns MultiVector is export { $r * $M }
 
 #
 # GEOMETRIC PRODUCT
 #
+multi infix:<*>(Zero $ , MultiVector $) returns MultiVector is export { 0 }
+multi infix:<*>(MultiVector $ , Zero $) returns MultiVector is export { 0 }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     [+] $A.canonical-decomposition X* $B.canonical-decomposition
 }
 multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
-    my ($a, $b) = $A.clean-pairs[0], $B.clean-pairs[0];
+    my ($a, $b) = $A.pairs[0], $B.pairs[0];
     return MultiVector.new: :canonical(
 	($a.key +^ $b.key) => [*]
 	$a.value, $b.value,
@@ -203,6 +202,7 @@ multi infix:<**>(Vector $a, Int $n where $n %% 2 && $n > 3) returns Real is expo
 multi infix:<**>(Vector $a, Int $n where $n % 2 && $n > 2) returns Vector is export {
     ($a**2)**($n div 2) * $a
 }
+multi infix:<**>(Zero $ , UInt $ ) returns Real is export { 0 }
 multi infix:<**>(MultiVector $M, 0) returns Real is export { 1 }
 multi infix:<**>(MultiVector $M, 1) returns MultiVector is export { $M }
 multi infix:<**>(MultiVector $M, 2) returns MultiVector is export { $M * $M }
@@ -212,10 +212,6 @@ multi infix:<**>(MultiVector $M, Int $n where $n > 2 && $n %% 2) returns MultiVe
 multi infix:<**>(MultiVector $M, Int $n where $n > 2 && $n % 2) returns MultiVector is export {
     $M**($n - 1) * $M
 }
-
-multi prefix:<->(MultiVector $M) returns MultiVector is export { -1 * $M }
-multi prefix:<+>(MultiVector $M) returns MultiVector is export { $M }
-multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { $A + -1 * $B }
 
 #
 #
@@ -268,4 +264,4 @@ multi e() { state $ = MultiVector.new: :canonical( 0 => 1 ) }
 multi e(UInt $n) { (state @)[$n] //= MultiVector.new: :canonical( (1 +< $n) => 1 ) }
 multi e(Whatever) { map { MultiVector.new: :canonical($_ => 1) }, 0 .. * }
 
-# vim: ft=perl6
+# vim: syntax=off
