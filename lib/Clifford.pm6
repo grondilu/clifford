@@ -22,11 +22,11 @@ my subset Zero      of MultiVector where *.pairs.elems == 0;
 
 # Those canonical elements are identified by a positive integer
 # so we need a few functions to quickly get information from them.
-my sub grade(UInt $n --> UInt) { (state %){$n} //= $n.base(2).comb(/1/).elems }
+my sub bitcount(UInt $n --> UInt) { (state %){$n} //= $n.base(2).comb(/1/).elems }
 my sub sb   (UInt $n) { @((state %){$n} //= $n.base(2).flip.match(/1/, :g)».from) }
 my proto orientation(UInt $a, UInt $b) is export returns Int {*}
 multi orientation($a, $b where $a|$b == 0) { 1 }
-multi orientation($a, $b where $a == $b) { (-1)**(grade($a)*(grade($a)-1) div 2) }
+multi orientation($a, $b where $a == $b) { (-1)**(bitcount($a)*(bitcount($a)-1) div 2) }
 multi orientation($a, $b where $a.msb < $b.lsb) { 1 }
 multi orientation($a, $b) {
     (state %){"$a|$b"} //= do {
@@ -44,7 +44,7 @@ multi orientation($a, $b) {
 }
 
 # Vector is defined as a subset.  It is exported.
-subset Vector of MultiVector is export where *.keys.map(&grade).all == 1;
+subset Vector of MultiVector is export where *.keys.map(&bitcount).all == 1;
 
 # 
 # MULTIVECTOR
@@ -52,7 +52,7 @@ subset Vector of MultiVector is export where *.keys.map(&grade).all == 1;
 class MultiVector {
     has NonZeroReal %.canonical{UInt} handles <pairs keys values>;
     multi method grade(Canonical:) returns Int {
-	self == 0 ?? 0 !! grade self.pairs[0].key
+	self == 0 ?? 0 !! bitcount self.pairs[0].key
     }
     method canonical-decomposition {
 	map { MultiVector.new(:canonical($_)) },
@@ -61,7 +61,7 @@ class MultiVector {
     multi method gist {
 	self ~~ Zero ?? '0' !!
 	join ' + ', map {
-	    grade(.key) == 0 ?? ~.value !! (
+	    bitcount(.key) == 0 ?? ~.value !! (
 		(
 		    .value == 1 ?? '' !!
 		    .value == -1 ?? '-' !!
@@ -72,16 +72,16 @@ class MultiVector {
 		sb .key
 	    )
 	},
-	sort { grade .key },
+	sort { bitcount .key },
 	self.pairs
     }
     multi method at_pos(UInt $grade) returns MultiVector {
-	MultiVector.new: :canonical( grep { grade(.key) == $grade }, self.pairs )
+	MultiVector.new: :canonical( grep { bitcount(.key) == $grade }, self.pairs )
     }
     method reverse returns MultiVector {
 	MultiVector.new: :canonical(
 	    map {
-		my $grade = grade .key;
+		my $grade = bitcount .key;
 		.key => (-1)**($grade * ($grade - 1) div 2) * .value
 	    },
 	    self.pairs
@@ -132,7 +132,7 @@ multi infix:<==>(MultiVector $A, 0) returns Bool is export { $A ~~ Zero }
 # ORDER RELATION
 #
 multi infix:« < »(MultiVector $A, MultiVector $B) returns Bool is export {
-    $A == $B ?? False !! $A.keys».&grade.max < $B.keys».&grade.max
+    $A == $B ?? False !! $A.keys».&bitcount.max < $B.keys».&bitcount.max
 }
 
 #
