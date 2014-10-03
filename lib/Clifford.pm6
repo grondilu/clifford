@@ -22,24 +22,12 @@ my subset Zero      of MultiVector where *.pairs.elems == 0;
 
 # Those canonical elements are identified by a positive integer
 # so we need a few functions to quickly get information from them.
-my sub bitcount(UInt $n --> UInt) { (state %){$n} //= $n.base(2).comb(/1/).elems }
-my sub sb   (UInt $n) { @((state %){$n} //= $n.base(2).flip.match(/1/, :g)».from) }
-my proto orientation(UInt $a, UInt $b) is export returns Int {*}
-multi orientation($a, $b where $a|$b == 0) { 1 }
-multi orientation($a, $b where $a == $b) { (-1)**(bitcount($a)*(bitcount($a)-1) div 2) }
-multi orientation($a, $b where $a.msb < $b.lsb) { 1 }
-multi orientation($a, $b) {
-    (state %){"$a|$b"} //= do {
-	my @ab = map &sb, $a, $b;
-	my Bool $orientation = True;
-	while defined my $index = first { @ab[$_] >= @ab[$_ + 1] }, ^@ab.end {
-	    if @ab[$index] == @ab[$index + 1] { @ab.splice($index, 2) }
-	    else {
-		@ab[$index, $index + 1].=reverse;
-		$orientation ?^= True;
-	    }
-	}
-	$orientation ?? 1 !! -1;
+my sub bitcount(UInt $n --> UInt) is cached { sb($n).elems }
+my sub sb (UInt $n) is cached { !$n ?? () !! do for 0 .. $n.msb { $_ if $n +& (1 +< $_) } }
+my sub canonicalReorderingSign(UInt $a is copy, UInt $b) is cached returns Int {
+    $_ +& 1 ?? -1 !! 1 given [+]
+    gather loop ($a +>= 1; $a ; $a +>= 1) {
+	take bitcount($a +& $b);
     }
 }
 
@@ -61,7 +49,8 @@ class MultiVector {
     multi method gist {
 	self ~~ Zero ?? '0' !!
 	join ' + ', map {
-	    bitcount(.key) == 0 ?? ~.value !! (
+	    my @sb = @(sb .key);
+	    @sb == 0 ?? ~.value !! (
 		(
 		    .value == 1 ?? '' !!
 		    .value == -1 ?? '-' !!
@@ -69,7 +58,7 @@ class MultiVector {
 		) ~
 		join '',
 		map {"e$_"},
-		sb .key
+		@sb
 	    )
 	},
 	sort { bitcount .key },
@@ -188,13 +177,13 @@ multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
     return MultiVector.new: :canonical(
 	($a.key +^ $b.key) => [*]
 	$a.value, $b.value,
-	orientation($a.key, $b.key),
-	@signature[sb $a.key +& $b.key];
+	canonicalReorderingSign($a.key, $b.key),
+	@signature[sb($a.key +& $b.key).list];
     );
 }
 
 #
-# EXPONENTIONATION
+# EXPONENTIATION
 #
 multi infix:<**>(Vector $a, 2) returns Real is export { ($a*$a).narrow }
 multi infix:<**>(Vector $a, Int $ where -1) returns Vector is export { $a / $a**2 }
@@ -260,7 +249,7 @@ multi infix:<wedge>(MultiVector $A, MultiVector $B) returns MultiVector is expor
 sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
 
 #
-# main interface
+# main interface (prototype was defined earlier)
 #
 multi e() { state $ = MultiVector.new: :canonical( 0 => 1 ) }
 multi e(UInt $n) { (state @)[$n] //= MultiVector.new: :canonical( (1 +< $n) => 1 ) }
