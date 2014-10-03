@@ -19,7 +19,7 @@ this module.
 Introduction
 ------------
 
-The vector space is assumed to be given an orthonormal basis e0, e1, e2 ...etc.
+The vector space is assumed to be given an orthogonal basis e0, e1, e2 ...etc.
 There is no limit to the dimension, but it is countable.
 
 The module exports a `sub e(Int $) {...}` function that allows you to create
