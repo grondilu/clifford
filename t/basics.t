@@ -1,7 +1,7 @@
 use Test;
 use Clifford;
 
-plan 12;
+plan 13;
 ok e(0)**2 == 1,  'square of a vector is usually 1';
 ok (e(5)*e(3))**2 == -1, 'the square of a bivector is -1';
 
@@ -11,6 +11,7 @@ ok (e(5)*e(3))**2 == -1, 'the square of a bivector is -1';
     @Clifford::signature[0] = 1;
 }
 
+ok .5 * e(0) == e(0) / 2, 'scalar multiplication and division look consistent';
 ok 1 + (1 + e(0)) == 2 + e(0);
 ok 2 * (1 + e(0)) == 2 + 2*e(0);
 ok 1 + e(0) - e(0) == 1;
