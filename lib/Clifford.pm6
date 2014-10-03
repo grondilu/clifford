@@ -22,27 +22,24 @@ my subset Zero      of MultiVector where *.pairs.elems == 0;
 
 # Those canonical elements are identified by a positive integer
 # so we need a few functions to quickly get information from them.
-my sub bitcount(UInt $n --> UInt) {
-    !$n ?? 0 !! [+] do for 0 .. $n.msb { ($n +> $_) +& 1 }
-}
-my sub sb   (UInt $n) {
-    !$n ?? () !! do for 0 .. $n.msb { $_ if $n +& (1 +< $_) }
-}
-my proto canonicalReorderingSign(UInt $a, UInt $b) is export returns Int {*}
-multi canonicalReorderingSign($a, $b where $a|$b == 0) { 1 }
-multi canonicalReorderingSign($a, $b where $a == $b) {
-    (-1)**($_*($_-1) div 2) given bitcount($a)
-}
-multi canonicalReorderingSign($a, $b where $a.msb < $b.lsb) { 1 }
-multi canonicalReorderingSign($a is copy, $b) {
+my sub bitcount(UInt $n --> UInt) { (state %){$n} //= $n.base(2).comb(/1/).elems }
+my sub sb   (UInt $n) { @((state %){$n} //= $n.base(2).flip.match(/1/, :g)».from) }
+my proto orientation(UInt $a, UInt $b) is export returns Int {*}
+multi orientation($a, $b where $a|$b == 0) { 1 }
+multi orientation($a, $b where $a == $b) { (-1)**(bitcount($a)*(bitcount($a)-1) div 2) }
+multi orientation($a, $b where $a.msb < $b.lsb) { 1 }
+multi orientation($a, $b) {
     (state %){"$a|$b"} //= do {
-	$a +>= 1;
-	my Int $sum = 0;
-	while $a != 0 {
-	    $sum += bitcount($a +& $b);
-	    $a +>= 1;
+	my @ab = map &sb, $a, $b;
+	my Bool $orientation = True;
+	while defined my $index = first { @ab[$_] >= @ab[$_ + 1] }, ^@ab.end {
+	    if @ab[$index] == @ab[$index + 1] { @ab.splice($index, 2) }
+	    else {
+		@ab[$index, $index + 1].=reverse;
+		$orientation ?^= True;
+	    }
 	}
-	$sum +& 1 ?? -1 !! 1;
+	$orientation ?? 1 !! -1;
     }
 }
 
@@ -191,7 +188,7 @@ multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
     return MultiVector.new: :canonical(
 	($a.key +^ $b.key) => [*]
 	$a.value, $b.value,
-	canonicalReorderingSign($a.key, $b.key),
+	orientation($a.key, $b.key),
 	@signature[sb $a.key +& $b.key];
     );
 }
