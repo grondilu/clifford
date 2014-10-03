@@ -64,7 +64,7 @@ You can get the grade projection of a multivector with `postcircumfix:<[ ]>($n)`
 
     say (1 + e(1))[0];  # 1
 
-Everything else (well, most of it) follows.
+Everything else follows.
 
 TODO
 ----
