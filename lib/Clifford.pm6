@@ -22,9 +22,9 @@ my subset Zero      of MultiVector where *.pairs.elems == 0;
 
 # Those canonical elements are identified by a positive integer
 # so we need a few functions to quickly get information from them.
-my sub bitcount(UInt $n --> UInt) is cached { sb($n).elems }
-my sub sb (UInt $n) is cached { !$n ?? () !! do for 0 .. $n.msb { $_ if $n +& (1 +< $_) } }
-my sub canonicalReorderingSign(UInt $a is copy, UInt $b) is cached returns Int {
+my sub bitcount(UInt $n --> UInt) { sb($n).elems }
+my sub sb (UInt $n) { !$n ?? () !! do for 0 .. $n.msb { $_ if $n +& (1 +< $_) } }
+my sub canonicalReorderingSign(UInt $a is copy, UInt $b) returns Int {
     $_ +& 1 ?? -1 !! 1 given [+]
     gather loop ($a +>= 1; $a ; $a +>= 1) {
 	take bitcount($a +& $b);
@@ -49,7 +49,7 @@ class MultiVector {
     multi method gist {
 	self ~~ Zero ?? '0' !!
 	join ' + ', map {
-	    my @sb = @(sb .key);
+	    my @sb = sb .key;
 	    @sb == 0 ?? ~.value !! (
 		(
 		    .value == 1 ?? '' !!
@@ -178,7 +178,7 @@ multi infix:<*>(Canonical $A, Canonical $B) returns Canonical is export {
 	($a.key +^ $b.key) => [*]
 	$a.value, $b.value,
 	canonicalReorderingSign($a.key, $b.key),
-	@signature[sb($a.key +& $b.key).list];
+	@signature[sb $a.key +& $b.key];
     );
 }
 
