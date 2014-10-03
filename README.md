@@ -30,17 +30,17 @@ those vectors easily:
     my $e = e(6);
 
 Be aware that there is nothing special about `e(0)`.  It is not a scalar, but
-the first unit vector or the orthonormal basis.  In other words, indexes do
+the first unit vector or the orthogonal basis.  In other words, indexes do
 start with 0 and not 1 (it's a difference often seen between maths and
 computing).
 
-`&e` can also return a lazy list of the elements of the orthonormal basis.  It is done
+`&e` can also return a lazy list of the elements of the orthogonal basis.  It is done
 via a `*` parameter:
 
     .say for e(*)   # this shows the infinite list of basis vectors.  Press ^C to stop.
     
 There is a non-exported global array called `@signature`, which is used to set
-the squares values of the vectors of the orthonormal basis.  By default, this
+the squares values of the vectors of the orthogonal basis.  By default, this
 signature is set to `1 xx *` so that all squares of `e($i)` is 1.  This corresponds
 to a so-called Euclidean space but you can change this if you want:
 
