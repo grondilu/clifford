@@ -165,7 +165,7 @@ multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { 
 
 
 #
-# SCALAR MULTIPLICATION
+# SCALAR MULTIPLICATION AND DIVISION
 #
 multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     $r == 0 ?? MultiVector.new !!
@@ -173,6 +173,7 @@ multi infix:<*>(Real $r, MultiVector $M) returns MultiVector is export {
     map { $^p.key => $r * $p.value }, $M.pairs;
 }
 multi infix:<*>(MultiVector $M, Real $r) returns MultiVector is export { $r * $M }
+multi infix:</>(MultiVector $M, Real $r) returns MultiVector is export { (1/$r) * $M }
 
 #
 # GEOMETRIC PRODUCT
