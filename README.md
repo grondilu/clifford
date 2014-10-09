@@ -48,7 +48,19 @@ to a so-called Euclidean space but you can change this if you want:
     say e(0)**2;   # -1;
 
 The signature should normally only be -1, 0 or +1 but no safety check is made
-about this, so be warry.
+about this, so be warry.  Also, it's not clear to me if it makes sense to accept
+a nul value here, for the metric is assumed to be diagonalized.  For instance in order
+to specify the conformal model, one should use e+ and e- in the metric, not no nor ni.
+E.g. for the conformal model of the 3D space:
+
+    @Clifford::signature[0] := -1;
+    constant no = (e(0) - e(4))/2;
+    constant ni = e(0) + e(4);
+
+    say no**2;           # 0
+    say ni**2;           # 0
+    say no cdot ni;      # -1
+
 
 What can be done?
 -----------------
