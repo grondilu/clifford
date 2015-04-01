@@ -2,6 +2,9 @@
     "name" : "Clifford",
     "version" : "0.10.4",
     "description" : "Basic Geometric Algebra.",
+    "provides": {
+        "Clifford": "lib/Clifford.pm6"
+    },
     "author" : "Lucien Grondin",
     "depends" : [ ],
     "source-url" : "git://github.com/grondilu/clifford.git"
