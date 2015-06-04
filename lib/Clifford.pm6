@@ -1,4 +1,4 @@
-module Clifford;
+unit module Clifford;
 
 # Metric signature
 our @signature = 1 xx *;
