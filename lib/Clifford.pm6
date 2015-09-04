@@ -37,7 +37,7 @@ subset Vector of MultiVector is export where *.keys.map(&bitcount).all == 1;
 # 
 # MULTIVECTOR
 #
-class MultiVector {
+class MultiVector does Positional {
     has NonZeroReal %.canonical{UInt} handles <pairs keys values>;
     multi method grade(Canonical:) returns Int {
 	self == 0 ?? 0 !! bitcount self.pairs[0].key
@@ -64,7 +64,7 @@ class MultiVector {
 	sort { bitcount .key },
 	self.pairs
     }
-    multi method at_pos(UInt $grade) returns MultiVector {
+    multi method AT-POS(UInt $grade) returns MultiVector {
 	MultiVector.new: :canonical( grep { bitcount(.key) == $grade }, self.pairs )
     }
     method reverse returns MultiVector {
@@ -254,5 +254,3 @@ sub postfix:<†>(MultiVector $M) returns MultiVector is export { $M.reverse }
 multi e() { state $ = MultiVector.new: :canonical( 0 => 1 ) }
 multi e(UInt $n) { (state @)[$n] //= MultiVector.new: :canonical( (1 +< $n) => 1 ) }
 multi e(Whatever) { map { MultiVector.new: :canonical($_ => 1) }, 0 .. * }
-
-# vim: syntax=off
