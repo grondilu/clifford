@@ -1,121 +1,106 @@
 unit module Clifford;
 
 # Metric signature
-our @signature = 1 xx *;
+our @signature = -1, |(1 xx *);
 
-our class Basis {...}
 our class MultiVector {...}
 
-my sub order(UInt:D $a is copy, UInt:D $b) {
+sub e(UInt $n?) returns MultiVector is export {
+    $n.defined ?? MultiVector.new(:blades(my Real %{UInt} = (1 +< $n) => 1)) !! MultiVector.new
+}
+
+my sub grade(UInt $n) { [+] $n.base(2).comb }
+my sub order(UInt:D $i is copy, UInt:D $j) {
     my $n = 0;
     repeat {
-	$a +>= 1;
-	$n += [+] ($a +& $b).base(2).comb;
-    } until $a == 0;
+	$i +>= 1;
+	$n += [+] ($i +& $j).base(2).comb;
+    } until $i == 0;
     return $n +& 1 ?? -1 !! 1;
 }
 
-class Basis {
-    has UInt $.blade;
-    has Real $.weight is rw;
-    method grade { [+] $!blade.base(2).comb }
-}
-
-multi infix:<*>(Basis $A, Basis $B) returns Basis is export {
-    my $r = Basis.new:
-    :blade($A.blade +^ $B.blade),
-    :weight($A.weight * $B.weight * order($A.blade, $B.blade));
-    my $t = $A.blade +& $B.blade;
-    my $i = 0;
+sub metric-product(UInt $i, UInt $j) {
+    my $r = order($i, $j);
+    my $t = $i +& $j;
+    my $k = 0;
     while $t !== 0 {
 	if $t +& 1 {
-	    $r.weight *= @signature[$i];
+	    $r *= @signature[$k];
 	}
 	$t +>= 1;
-	$i++;
+	$k++;
     }
     return $r;
 }
-multi prefix:<->(Basis $A) returns Basis is export {
-    return Basis.new:
-    :blade($A.blade),
-    :weight(-$A.weight);
-}
 
-multi infix:<⌋>(Basis $A, Basis $B) returns Basis is export {
-    my $r = $A * $B;
-    if $A.grade > $B.grade or $r.grade !== $B.grade - $A.grade {
-	return Basis;
-    } else {
-	return $r;
-    }
-}
-
-multi infix:<∧>(Basis $A, Basis $B) returns Basis is export {
-    return $A.grade +& $B.grade ?? Basis !! $A*$B;
-}
-
-multi infix:<≌>(Basis $A, Basis $B) returns Bool is export {
-    return $A.blade == $B.blade
-}
-
-multi infix:<+>(Basis $A, Basis $B) returns MultiVector is export {
-    my $C = MultiVector.new: :blades($A, $B);
-    $C.compress();
-    $C.clean();
-    return $C;
-}
-    
 class MultiVector {
-    has Basis @.blades;
-    method compress {
-	my %seen;
-	my Basis @blades;
-	for @!blades {
-	    if %seen{.blade} :exists {
-		@blades[%seen{.blade}].weight += .weight;
-	    } else {
-		@blades.push($_);
-		%seen{.blade} = @blades.end;
-	    }
+    has Real %.blades{UInt};
+    method clean {
+	for %!blades {
+	    %!blades{.key} :delete unless .value;
 	}
-	@!blades = @blades;
     }
-    method clean { @!blades.=grep(*.weight) }
-    method reals { map *.weight, @!blades }
-    method max-grade { max @!blades».grade }
+    method reals { %!blades.values }
+    method max-grade { self.clean(); max map &grade, %!blades.keys }
     method AT-POS($n) {
-	map -> $grade {
-	    MultiVector.new: :blades(grep *.grade == $grade, @!blades)
-	}, ^self.max-grade;
+	MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.grade == $n)
     }	
     method narrow {
-	self.compress();
 	self.clean();
-	if !@!blades { return 0 }
-	elsif self.max-grade == 0 { return @!blades[0].weight }
+	if !%!blades { return 0 }
+	elsif self.max-grade == 0 { return %!blades{0} }
 	else { return self }
+    }
+    method round($r) {
+	MultiVector.new: :blades(my Real %{UInt} = %!blades.map: { .key => .value.round($r) })
     }
 }
 
-multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    my $C = MultiVector.new: :blades($A.blades X* $B.blades);
-    $C.compress();
-    $C.clean();
-    return $C;
-}
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    my $C = MultiVector.new: :blades(|$A.blades, |$B.blades);
-    $C.compress();
-    $C.clean();
-    return $C;
+    my Real %blades{UInt} = $A.blades.clone;
+    for $B.blades {
+	%blades{.key} += .value;
+	%blades{.key} :delete unless %blades{.key};
+    }
+    return MultiVector.new: :%blades;
 }
-multi prefix:<->(MultiVector $A) returns MultiVector is export {
-    return MultiVector.new: :blades(map -*, $A.blades)
+multi infix:<+>(Real $s, MultiVector $A) returns MultiVector is export {
+    return MultiVector.new(:blades(my Real %{UInt} = 0 => $s)) + $A;
 }
+multi infix:<+>(MultiVector $A, Real $s) returns MultiVector is export { $s + $A }
+multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
+    my Real %blades{UInt};
+    for $A.blades -> $a {
+	for $B.blades -> $b {
+	    my $c = $a.key +^ $b.key;
+	    %blades{$c} += $a.value * $b.value * metric-product($a.key, $b.key);
+	    %blades{$c} :delete unless %blades{$c};
+	}
+    }
+    return MultiVector.new: :%blades;
+}
+multi infix:<**>(MultiVector $ , 0) returns MultiVector is export { return MultiVector.new }
+multi infix:<**>(MultiVector $A, 1) returns MultiVector is export { return $A }
+multi infix:<**>(MultiVector $A, 2) returns MultiVector is export { return $A * $A }
+multi infix:<**>(MultiVector $A, UInt $n where $n %% 2) returns MultiVector is export {
+    return ($A ** ($n div 2)) ** 2;
+}
+multi infix:<**>(MultiVector $A, UInt $n) returns MultiVector is export {
+    return $A * ($A ** ($n div 2)) ** 2;
+}
+
+multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export {
+    return MultiVector.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
+}
+multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export { $A * $s }
+multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { $A * (1/$s) }
+multi prefix:<->(MultiVector $A) returns MultiVector is export { return -1 * $A }
+multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { $A + -$B }
+multi infix:<->(MultiVector $A, Real $s) returns MultiVector is export { $A + -$s }
+multi infix:<->(Real $s, MultiVector $A) returns MultiVector is export { $s + -$A }
 
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
 multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
-    my $narrowed = $A.narrowed;
+    my $narrowed = $A.narrow;
     $narrowed ~~ Real and $narrowed == $x;
 }

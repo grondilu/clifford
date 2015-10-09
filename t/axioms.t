@@ -4,8 +4,7 @@ use Test;
 plan 4;
 
 sub random {
-    my $r = rand * e();
-    $r += rand * e((^5).pick);
+    my $r = rand + rand * e((^5).pick);
     my ($a, $b) = (^5).roll(2);
     my $c = rand * e($a) * e($b);
     $r += $c;
