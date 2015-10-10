@@ -1,7 +1,7 @@
 unit module Clifford;
 
 # Metric signature
-our @signature = -1, |(1 xx *);
+our @signature = 1 xx *;
 
 our class MultiVector {...}
 
