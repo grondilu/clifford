@@ -65,7 +65,10 @@ multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     return MultiVector.new: :%blades;
 }
 multi infix:<+>(Real $s, MultiVector $A) returns MultiVector is export {
-    return MultiVector.new(:blades(my Real %{UInt} = 0 => $s)) + $A;
+    my Real %blades{UInt} = $A.blades.clone;
+    %blades{0} += $s;
+    %blades{0} :delete unless %blades{0};
+    return MultiVector.new: :%blades;
 }
 multi infix:<+>(MultiVector $A, Real $s) returns MultiVector is export { $s + $A }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
