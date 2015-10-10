@@ -43,7 +43,7 @@ class MultiVector {
     method reals { %!blades.values }
     method max-grade { self.clean(); max map &grade, %!blades.keys }
     method AT-POS($n) {
-	MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.key.grade == $n)
+	MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.key.&grade == $n)
     }	
     method narrow {
 	self.clean();
