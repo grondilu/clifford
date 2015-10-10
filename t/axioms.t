@@ -4,11 +4,10 @@ use Test;
 plan 4;
 
 sub random {
-    my $r = rand + rand * e((^5).pick);
-    my ($a, $b) = (^5).roll(2);
-    my $c = rand * e($a) * e($b);
-    $r += $c;
-    $r.round(.01);
+    [+] map {
+	Clifford::MultiVector.new:
+	:blades(my Real %{UInt} = $_ => rand.round(.01))
+    }, (^32).pick(5);
 }
 
 my ($a, $b, $c) = random() xx 3;
