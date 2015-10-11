@@ -46,10 +46,10 @@ class MultiVector {
 	MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.key.&grade == $n)
     }	
     method narrow {
-	self.clean();
-	if !%!blades { return 0 }
-	elsif self.max-grade == 0 { return %!blades{0} }
-	else { return self }
+	for %!blades {
+	    return self if .key > 0 && .value !== 0;
+	}
+	return %!blades{0} // 0;
     }
     method reverse {
 	[+] do for 0..self.max-grade -> $grade {
@@ -108,6 +108,7 @@ multi infix:<->(MultiVector $A, Real $s) returns MultiVector is export { $A + -$
 multi infix:<->(Real $s, MultiVector $A) returns MultiVector is export { $s + -$A }
 
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
+multi infix:<==>(Real $x, MultiVector $A) returns Bool is export { $A == $x }
 multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
     my $narrowed = $A.narrow;
     $narrowed ~~ Real and $narrowed == $x;
