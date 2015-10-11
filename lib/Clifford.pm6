@@ -9,8 +9,8 @@ sub e(UInt $n?) returns MultiVector is export {
     $n.defined ?? MultiVector.new(:blades(my Real %{UInt} = (1 +< $n) => 1)) !! MultiVector.new
 }
 
-my sub grade(UInt $n) { [+] $n.base(2).comb }
-my sub order(UInt:D $i is copy, UInt:D $j) {
+my sub grade(UInt $n) is cached { [+] $n.base(2).comb }
+my sub order(UInt:D $i is copy, UInt:D $j) is cached {
     my $n = 0;
     repeat {
 	$i +>= 1;
@@ -50,6 +50,11 @@ class MultiVector {
 	if !%!blades { return 0 }
 	elsif self.max-grade == 0 { return %!blades{0} }
 	else { return self }
+    }
+    method reverse {
+	[+] do for 0..self.max-grade -> $grade {
+	    (-1)**($grade*($grade - 1) div 2) * self[$grade];
+	}
     }
     method round($r) {
 	MultiVector.new: :blades(my Real %{UInt} = %!blades.map: { .key => .value.round($r) })
