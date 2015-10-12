@@ -40,6 +40,33 @@ class MultiVector {
 	    %!blades{.key} :delete unless .value;
 	}
     }
+    multi method gist {
+	my sub blade-gist($blade) {
+	    join(
+		'*',
+		$blade.value,
+		map { "e({$_ - 1})" },
+		grep +*,
+		($blade.key.base(2).comb.reverse Z* 1 .. *)
+	    ).subst(/<|w>1\*/, '')
+	}
+	if %!blades == 1 {
+	    given %!blades.pick {
+		if .key == 0 {
+		    return .value.gist;
+		} else {
+		    return blade-gist($_);
+		}
+	    }
+	} else {
+	    return 
+	    join(
+		' + ', do for sort *.key, %!blades {
+		    .key == 0 ?? .value.gist !! blade-gist($_);
+		}
+	    ).subst('+ -','- ', :g);
+	}
+    }
     method reals { %!blades.values }
     method max-grade { self.clean(); max map &grade, %!blades.keys }
     method AT-POS($n) {
