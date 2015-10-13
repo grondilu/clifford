@@ -83,9 +83,6 @@ class MultiVector {
 	    (-1)**($grade*($grade - 1) div 2) * self[$grade];
 	}
     }
-    method round($r) {
-	MultiVector.new: :blades(my Real %{UInt} = %!blades.map: { .key => .value.round($r) })
-    }
 }
 
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
