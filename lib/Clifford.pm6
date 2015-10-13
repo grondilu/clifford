@@ -50,7 +50,8 @@ class MultiVector {
 		($blade.key.base(2).comb.reverse Z* 1 .. *)
 	    ).subst(/<|w>1\*/, '')
 	}
-	if %!blades == 1 {
+	if    %!blades == 0 { return '0' }
+	elsif %!blades == 1 {
 	    given %!blades.pick {
 		if .key == 0 {
 		    return .value.gist;
@@ -121,6 +122,8 @@ multi infix:<**>(MultiVector $A, UInt $n) returns MultiVector is export {
     return $A * ($A ** ($n div 2)) ** 2;
 }
 
+multi infix:<*>(MultiVector $,  0) returns MultiVector is export { MultiVector.new }
+multi infix:<*>(MultiVector $A, 1) returns MultiVector is export { $A }
 multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export {
     return MultiVector.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
 }
