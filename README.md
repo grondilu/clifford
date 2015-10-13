@@ -54,6 +54,8 @@ E.g. for the conformal model of the 3D space:
 
     say no**2;           # 0
     say ni**2;           # 0
+
+    sub infix:<cdot>($a, $b) { ($a*$b + $b*$a)/2 }
     say no cdot ni;      # -1
 
 
@@ -78,6 +80,6 @@ TODO
 
 More tests.  Better performance.  Possibly using NativeCall for the heavy lifting.
 
-Optimized imlementations for homogeneous and conformal models of the 3D Euclidean space.
+Optimized implementations for homogeneous and conformal models of the 3D Euclidean space.
 
 Use stuff found in [this paper](http://hdl.handle.net/11245/2.52687)
