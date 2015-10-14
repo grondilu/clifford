@@ -1,6 +1,8 @@
 Geometric Algebra in Perl 6
 ===========================
 
+[![Build Status](https://travis-ci.org/grondilu/clifford.svg)](https://travis-ci.org/grondilu/clifford)
+
 This module is an attempt to implement basic [Geometric
 Algebra](http://en.wikipedia.org/wiki/Geometric_Algebra) in Perl 6.
 
