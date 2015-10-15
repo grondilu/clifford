@@ -37,7 +37,7 @@ I hope that's fine with you.
 Now, some general explanation.
 
 The module exports a `sub e(Int $) {...}` function that allows you to create
-those vectors of an orthonormal basis e0, e1, e2 ...etc.
+vectors of an orthonormal basis e0, e1, e2 ...etc.
 
     use MultiVector;
 
