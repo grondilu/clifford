@@ -30,7 +30,7 @@ As a result in order to use this module you should write:
 
 and not:
 
-   use Clifford;  # nope, that won't work
+    use Clifford;  # nope, that won't work
 
 I hope that's fine with you.
 
