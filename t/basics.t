@@ -2,7 +2,7 @@ use Test;
 use MultiVector;
 
 plan 13;
-ok e(1)**2 == 1,  'square of a vector is usually 1';
+ok e(1)**2 == 1,  'square of a basis vector is usually 1';
 ok (e(5)*e(3))**2 == -1, 'the square of a bivector is -1';
 
 {
