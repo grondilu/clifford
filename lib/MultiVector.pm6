@@ -1,11 +1,8 @@
-unit module Clifford;
-
-die 'This module is deprecated.  Please use the MultiVector class instead, with "use MultiVector;"';
+unit class MultiVector; 
+has Real %.blades{UInt};
 
 # Metric signature
 our @signature = 1 xx *;
-
-our class MultiVector {...}
 
 sub e(UInt $n?) returns MultiVector is export {
     $n.defined ?? MultiVector.new(:blades(my Real %{UInt} = (1 +< $n) => 1)) !! MultiVector.new
@@ -35,58 +32,56 @@ sub metric-product(UInt $i, UInt $j) {
     return $r;
 }
 
-class MultiVector {
-    has Real %.blades{UInt};
-    method clean {
-	for %!blades {
-	    %!blades{.key} :delete unless .value;
-	}
-    }
-    multi method gist {
-	my sub blade-gist($blade) {
-	    join(
-		'*',
-		$blade.value,
-		map { "e({$_ - 1})" },
-		grep +*,
-		($blade.key.base(2).comb.reverse Z* 1 .. *)
-	    ).subst(/<|w>1\*/, '')
-	}
-	if    %!blades == 0 { return '0' }
-	elsif %!blades == 1 {
-	    given %!blades.pick {
-		if .key == 0 {
-		    return .value.gist;
-		} else {
-		    return blade-gist($_);
-		}
-	    }
-	} else {
-	    return 
-	    join(
-		' + ', do for sort *.key, %!blades {
-		    .key == 0 ?? .value.gist !! blade-gist($_);
-		}
-	    ).subst('+ -','- ', :g);
-	}
-    }
-    method reals { %!blades.values }
-    method max-grade { self.clean(); max map &grade, %!blades.keys }
-    method AT-POS($n) {
-	MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.key.&grade == $n)
-    }	
-    method narrow {
-	for %!blades {
-	    return self if .key > 0 && .value !== 0;
-	}
-	return %!blades{0} // 0;
-    }
-    method reverse {
-	[+] do for 0..self.max-grade -> $grade {
-	    (-1)**($grade*($grade - 1) div 2) * self[$grade];
-	}
+method clean {
+    for %!blades {
+	%!blades{.key} :delete unless .value;
     }
 }
+multi method gist {
+    my sub blade-gist($blade) {
+	join(
+	    '*',
+	    $blade.value,
+	    map { "e({$_ - 1})" },
+	    grep +*,
+	    ($blade.key.base(2).comb.reverse Z* 1 .. *)
+	).subst(/<|w>1\*/, '')
+    }
+    if    %!blades == 0 { return '0' }
+    elsif %!blades == 1 {
+	given %!blades.pick {
+	    if .key == 0 {
+		return .value.gist;
+	    } else {
+		return blade-gist($_);
+	    }
+	}
+    } else {
+	return 
+	join(
+	    ' + ', do for sort *.key, %!blades {
+		.key == 0 ?? .value.gist !! blade-gist($_);
+	    }
+	).subst('+ -','- ', :g);
+    }
+}
+method reals { %!blades.values }
+method max-grade { self.clean(); max map &grade, %!blades.keys }
+method AT-POS($n) {
+    MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.key.&grade == $n)
+}	
+method narrow {
+    for %!blades {
+	return self if .key > 0 && .value !== 0;
+    }
+    return %!blades{0} // 0;
+}
+method reverse {
+    [+] do for 0..self.max-grade -> $grade {
+	(-1)**($grade*($grade - 1) div 2) * self[$grade];
+    }
+}
+
 
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %blades{UInt} = $A.blades.clone;

@@ -21,15 +21,29 @@ this module.
 Introduction
 ------------
 
-The vector space is assumed to be given an orthogonal basis e0, e1, e2 ...etc.
-There is no limit to the dimension, but it is countable.
+First of all, I have to say that this module was initially called `Clifford`
+until it occured to me that a more suitable name would be `MultiVector`.
+As a result in order to use this module you should write:
+
+    use MultiVector;
+
+and not:
+
+   use Clifford;  # nope, that won't work
+
+I hope that's fine with you.
+
+Now, some general explanation.
 
 The module exports a `sub e(Int $) {...}` function that allows you to create
-those vectors easily:
+those vectors of an orthonormal basis e0, e1, e2 ...etc.
 
-    use Clifford;
+    use MultiVector;
 
     my $e = e(6);
+
+This is essentially the only user interface for the class.  Everything you can
+do with this module, you can do it with algebraic operations on these vectors.
 
 Be aware that there is nothing special about `e(0)`.  It is not a scalar, but
 the first unit vector or the orthogonal basis.  In other words, indexes do
@@ -41,7 +55,7 @@ the squares values of the vectors of the orthogonal basis.  By default, this
 signature is set to `1 xx *` so that all squares of `e($i)` is 1.  This corresponds
 to a so-called Euclidean space but you can change this if you want:
 
-    @Clifford::signature[0] = -1;  # Lorentzian metric
+    @MultiVector::signature[0] = -1;  # Lorentzian metric
     say e(0)**2;   # -1;
 
 The signature should normally only be -1, 0 or +1 but no safety check is made
@@ -50,7 +64,7 @@ a nul value here, for the metric is assumed to be diagonalized.  For instance in
 to specify the conformal model, one should use e+ and e- in the metric, not no nor ni.
 E.g. for the conformal model of the 3D space:
 
-    @Clifford::signature[0] := -1;
+    @MultiVector::signature[0] := -1;
     constant no = (e(0) - e(4))/2;
     constant ni = e(0) + e(4);
 

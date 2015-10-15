@@ -1,11 +1,11 @@
-use Clifford;
+use MultiVector;
 use Test;
 
 plan 4;
 
 sub random {
     [+] map {
-	Clifford::MultiVector.new:
+	MultiVector.new:
 	:blades(my Real %{UInt} = $_ => rand.round(.01))
     }, (^32).pick(5);
 }
