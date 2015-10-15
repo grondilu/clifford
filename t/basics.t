@@ -3,11 +3,11 @@ use MultiVector;
 
 plan 13;
 ok e(1)**2 == 1,  'square of a basis vector is usually 1';
-ok (e(5)*e(3))**2 == -1, 'the square of a bivector is -1';
+ok (e(5)*e(3))**2 == -1, 'the square of a unit bivector is -1';
 
 {
     @MultiVector::signature[0] = -1;
-    ok e(0)**2 == -1, 'square of a vector is -1 when signature is negative';
+    ok e(0)**2 == -1, 'square of a basis is -1 when its signature is negative';
     @MultiVector::signature[0] = 1;
 }
 
