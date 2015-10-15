@@ -13,7 +13,8 @@ space described by two or more vectors.
 
 For instance, two vectors form a triangle and the product of these two vectors
 represents the oriented area of that triangle.  Kind of as with the cross
-product.
+product, except that with geometric algebra there is no arbitrary choice of
+sign.
 
 Geometric Algebras are sometimes called 'Clifford Algebras', thus the title of
 this module.
