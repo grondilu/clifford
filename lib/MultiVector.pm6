@@ -1,11 +1,11 @@
-unit class MultiVector; 
+unit class MultiVector does Numeric; 
 has Real %.blades{UInt};
 
 # Metric signature
 our @signature = 1 xx *;
 
-sub e(UInt $n?) returns MultiVector is export {
-    $n.defined ?? MultiVector.new(:blades(my Real %{UInt} = (1 +< $n) => 1)) !! MultiVector.new
+sub e(UInt $n?) returns ::?CLASS is export {
+    $n.defined ?? ::?CLASS.new(:blades(my Real %{UInt} = (1 +< $n) => 1)) !! ::?CLASS.new
 }
 
 my sub grade(UInt $n) is cached { [+] $n.base(2).comb }
@@ -66,15 +66,26 @@ multi method gist {
     }
 }
 method reals { %!blades.values }
+method Real {
+    if any(%!blades.keys) > 0 {
+	fail X::Numeric::Real.new:
+	target => Real,
+	source => self,
+	reason => 'not purely scalar'
+	;
+    }
+    return %!blades{0} // 0;
+}
+
 method max-grade { self.clean(); max map &grade, %!blades.keys }
 method AT-POS($n) {
-    MultiVector.new: :blades(my Real %{UInt} = %!blades.grep: *.key.&grade == $n)
+    ::?CLASS.new: :blades(my Real %{UInt} = %!blades.grep: *.key.&grade == $n)
 }	
-method narrow {
+method narrow returns Numeric {
     for %!blades {
 	return self if .key > 0 && .value !== 0;
     }
-    return %!blades{0} // 0;
+    return (%!blades{0} // 0).narrow;
 }
 method reverse {
     [+] do for 0..self.max-grade -> $grade {
@@ -83,22 +94,22 @@ method reverse {
 }
 
 
-multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
+multi infix:<+>(::?CLASS $A, ::?CLASS $B) returns ::?CLASS is export {
     my Real %blades{UInt} = $A.blades.clone;
     for $B.blades {
 	%blades{.key} += .value;
 	%blades{.key} :delete unless %blades{.key};
     }
-    return MultiVector.new: :%blades;
+    return ::?CLASS.new: :%blades;
 }
-multi infix:<+>(Real $s, MultiVector $A) returns MultiVector is export {
+multi infix:<+>(Real $s, ::?CLASS $A) returns ::?CLASS is export {
     my Real %blades{UInt} = $A.blades.clone;
     %blades{0} += $s;
     %blades{0} :delete unless %blades{0};
-    return MultiVector.new: :%blades;
+    return ::?CLASS.new: :%blades;
 }
-multi infix:<+>(MultiVector $A, Real $s) returns MultiVector is export { $s + $A }
-multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
+multi infix:<+>(::?CLASS $A, Real $s) returns ::?CLASS is export { $s + $A }
+multi infix:<*>(::?CLASS $A, ::?CLASS $B) returns ::?CLASS is export {
     my Real %blades{UInt};
     for $A.blades -> $a {
 	for $B.blades -> $b {
@@ -107,33 +118,33 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 	    %blades{$c} :delete unless %blades{$c};
 	}
     }
-    return MultiVector.new: :%blades;
+    return ::?CLASS.new: :%blades;
 }
-multi infix:<**>(MultiVector $ , 0) returns MultiVector is export { return MultiVector.new }
-multi infix:<**>(MultiVector $A, 1) returns MultiVector is export { return $A }
-multi infix:<**>(MultiVector $A, 2) returns MultiVector is export { return $A * $A }
-multi infix:<**>(MultiVector $A, UInt $n where $n %% 2) returns MultiVector is export {
+multi infix:<**>(::?CLASS $ , 0) returns ::?CLASS is export { return ::?CLASS.new }
+multi infix:<**>(::?CLASS $A, 1) returns ::?CLASS is export { return $A }
+multi infix:<**>(::?CLASS $A, 2) returns ::?CLASS is export { return $A * $A }
+multi infix:<**>(::?CLASS $A, UInt $n where $n %% 2) returns ::?CLASS is export {
     return ($A ** ($n div 2)) ** 2;
 }
-multi infix:<**>(MultiVector $A, UInt $n) returns MultiVector is export {
+multi infix:<**>(::?CLASS $A, UInt $n) returns ::?CLASS is export {
     return $A * ($A ** ($n div 2)) ** 2;
 }
 
-multi infix:<*>(MultiVector $,  0) returns MultiVector is export { MultiVector.new }
-multi infix:<*>(MultiVector $A, 1) returns MultiVector is export { $A }
-multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export {
-    return MultiVector.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
+multi infix:<*>(::?CLASS $,  0) returns ::?CLASS is export { ::?CLASS.new }
+multi infix:<*>(::?CLASS $A, 1) returns ::?CLASS is export { $A }
+multi infix:<*>(::?CLASS $A, Real $s) returns ::?CLASS is export {
+    return ::?CLASS.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
 }
-multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export { $A * $s }
-multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { $A * (1/$s) }
-multi prefix:<->(MultiVector $A) returns MultiVector is export { return -1 * $A }
-multi infix:<->(MultiVector $A, MultiVector $B) returns MultiVector is export { $A + -$B }
-multi infix:<->(MultiVector $A, Real $s) returns MultiVector is export { $A + -$s }
-multi infix:<->(Real $s, MultiVector $A) returns MultiVector is export { $s + -$A }
+multi infix:<*>(Real $s, ::?CLASS $A) returns ::?CLASS is export { $A * $s }
+multi infix:</>(::?CLASS $A, Real $s) returns ::?CLASS is export { $A * (1/$s) }
+multi prefix:<->(::?CLASS $A) returns ::?CLASS is export { return -1 * $A }
+multi infix:<->(::?CLASS $A, ::?CLASS $B) returns ::?CLASS is export { $A + -$B }
+multi infix:<->(::?CLASS $A, Real $s) returns ::?CLASS is export { $A + -$s }
+multi infix:<->(Real $s, ::?CLASS $A) returns ::?CLASS is export { $s + -$A }
 
-multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
-multi infix:<==>(Real $x, MultiVector $A) returns Bool is export { $A == $x }
-multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
+multi infix:<==>(::?CLASS $A, ::?CLASS $B) returns Bool is export { $A - $B == 0 }
+multi infix:<==>(Real $x, ::?CLASS $A) returns Bool is export { $A == $x }
+multi infix:<==>(::?CLASS $A, Real $x) returns Bool is export {
     my $narrowed = $A.narrow;
     $narrowed ~~ Real and $narrowed == $x;
 }
