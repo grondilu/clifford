@@ -5,7 +5,9 @@ has Real %.blades{UInt};
 our @signature = 1 xx *;
 
 sub e(UInt $n?) returns ::?CLASS is export {
-    $n.defined ?? ::?CLASS.new(:blades(my Real %{UInt} = (1 +< $n) => 1)) !! ::?CLASS.new
+    ::?CLASS.new: |(
+	:blades(my Real %{UInt} = (1 +< $n) => 1) with $n
+    )
 }
 
 my sub grade(UInt $n) is cached { [+] $n.base(2).comb }
