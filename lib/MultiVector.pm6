@@ -20,7 +20,7 @@ my sub order(UInt:D $i is copy, UInt:D $j) is cached {
     return $n +& 1 ?? -1 !! 1;
 }
 
-sub metric-product(UInt $i, UInt $j, :@signature = @signature) is cached {
+sub metric-product(UInt $i, UInt $j) {
     my $r = order($i, $j);
     my $t = $i +& $j;
     my $k = 0;
