@@ -1,6 +1,6 @@
 {
     "name" : "Clifford",
-    "version" : "1.2.0",
+    "version" : "1.2.1",
     "description" : "Basic Geometric Algebra.",
     "provides": {
         "MultiVector": "lib/MultiVector.pm6"
