@@ -1,7 +1,7 @@
-use MultiVector;
+use Clifford;
 use Test;
 
-BEGIN @MultiVector::signature[0] = -1;
+BEGIN @Clifford::signature[0] = -1;
 
 constant no = (e(0) + e(4))/2;
 constant ni = e(4) - e(0);

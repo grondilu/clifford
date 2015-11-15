@@ -1,4 +1,4 @@
-use MultiVector;
+use Clifford;
 use Test;
 
 plan 1;

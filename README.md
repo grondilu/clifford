@@ -22,41 +22,34 @@ this module.
 Introduction
 ------------
 
-First of all, I have to say that this module was initially called `Clifford`
-until it occured to me that a more suitable name would be `MultiVector`.
-As a result in order to use this module you should write:
-
-    use MultiVector;
-
-and not:
-
-    use Clifford;  # nope, that won't work
-
-I hope that's fine with you.
-
-Now, some general explanation.
-
 The module exports a `sub e(Int $) {...}` function that allows you to create
 vectors of an orthonormal basis e0, e1, e2 ...etc.
 
-    use MultiVector;
+    use Clifford;
 
     my $e = e(6);
 
-This is essentially the only user interface for the class.  Everything you can
-do with this module, you can do it with algebraic operations on these vectors.
+It is also possible to call this function with `Whatever` to get the infinite
+orthonormal basis itself.  It can be used to create a vector from an array of
+coefficients.
+
+    say [+] 1, 2 Z* e(*);  # e(0) + 2*e(1)
+
+This `&e` subroutine is essentially the only user interface for the class.
+Everything you can do with this module, you can do it with algebraic operations
+on these vectors.
 
 Be aware that there is nothing special about `e(0)`.  It is not a scalar, but
 the first unit vector or the orthogonal basis.  In other words, indexes do
 start with 0 and not 1 (it's a difference often seen between maths and
 computing).
 
-There is a non-exported global array called `@signature`, which is used to set
-the squares values of the vectors of the orthogonal basis.  By default, this
-signature is set to `1 xx *` so that all squares of `e($i)` is 1.  This corresponds
-to a so-called Euclidean space but you can change this if you want:
+There is a non-exported array called `@signature`, which is used to set the
+squares values of the vectors of the orthogonal basis.  By default, this
+signature is set to `1 xx *` so that all squares of `e($i)` is 1.  This
+corresponds to a so-called Euclidean space but you can change this if you want:
 
-    @MultiVector::signature[0] = -1;  # Lorentzian metric
+    @Clifford::signature[0] = -1;  # Lorentzian metric
     say e(0)**2;   # -1;
 
 The signature should normally only be -1, 0 or +1 but no safety check is made
@@ -65,7 +58,7 @@ a nul value here, for the metric is assumed to be diagonalized.  For instance in
 to specify the conformal model, one should use e+ and e- in the metric, not no nor ni.
 E.g. for the conformal model of the 3D space:
 
-    @MultiVector::signature[0] := -1;
+    @Clifford::signature[0] := -1;
     constant no = (e(0) - e(4))/2;
     constant ni = e(0) + e(4);
 
@@ -76,6 +69,31 @@ E.g. for the conformal model of the 3D space:
     say no cdot ni;      # -1
 
 
+Implementation
+--------------
+
+Although the knowledge of the implementation design is hopefully not required
+for using this module, a basic understanding may be useful for instance to
+people willing to write extensions or improvements.
+
+The modules defines two roles `Vector` and `MultiVector` in two different unit
+compilation files.
+
+In order to implement the `MultiVector` role, a class must define the following
+methods:
+
+ * `blades` needs to return a hash for which all keys are positive integers and
+   all values are real numbers.  The key is the binary encoding of the blade.
+The value is the linear coefficient.  For instance, the pairs 0b1011 => -2
+represents the blade `-2*e(0)*e(1)*e(3)`.
+ * `grade-projection(UInt $n)` returns the grade projection on grade `$n`.  It
+   should be an instance of the same class.
+
+The `Vector` role inherits from `MultiVector` and `Positional`.  It provides
+default `blades` and `grade-projection(UInt $)` methods, so any class
+implementing `Positional` can be used as a Vector by just mixing it, with
+fairly predicitble semantics.
+ 
 What can be done?
 -----------------
 

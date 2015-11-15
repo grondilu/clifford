@@ -1,14 +1,14 @@
 use Test;
-use MultiVector;
+use Clifford;
 
 plan 13;
 ok e(1)**2 == 1,  'square of a basis vector is usually 1';
 ok (e(5)*e(3))**2 == -1, 'the square of a unit bivector is -1';
 
 {
-    @MultiVector::signature[0] = -1;
+    @Clifford::signature[0] = -1;
     ok e(0)**2 == -1, 'square of a basis is -1 when its signature is negative';
-    @MultiVector::signature[0] = 1;
+    @Clifford::signature[0] = 1;
 }
 
 ok .5 * e(0) == e(0) / 2, 'scalar multiplication and division look consistent';
