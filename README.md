@@ -104,9 +104,9 @@ Well, you can add and multiply vectors and multivectors:
     say $a + $b;
     say ($a + $b)**2;
 
-You can get the grade projection of a multivector with `postcircumfix:<[ ]>($n)`:
+You can get the grade projection of a multivector with `postcircumfix:<{ }>($n)`:
 
-    say (1 + e(1))[0];  # 1
+    say (1 + e(1)){0};  # 1
 
 Everything else follows.
 
