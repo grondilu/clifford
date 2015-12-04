@@ -3,6 +3,7 @@
     "version" : "2.0.2",
     "description" : "Basic Geometric Algebra.",
     "provides": {
+        "Clifford":    "lib/Clifford.pm6",
         "MultiVector": "lib/MultiVector.pm6",
         "Vector":      "lib/Vector.pm6"
     },
