@@ -13,11 +13,11 @@ sub e(UInt:D $n) returns Vector is export { my Real @ does Vector = flat 0 xx $n
 our @signature = 1 xx *;
 
 # utilities
-my sub order(UInt:D $i is copy, UInt:D $j) is cached {
+my sub order(UInt:D $i is copy, UInt:D $j) {
     my $n = 0;
     repeat {
 	$i +>= 1;
-	$n += [+] ($i +& $j).base(2).comb;
+	$n += [+] ($i +& $j).polymod(2 xx *);
     } until $i == 0;
     return $n +& 1 ?? -1 !! 1;
 }
