@@ -1,6 +1,11 @@
 unit module Clifford;
-use Vector;
 use MultiVector;
+
+role Vector does MultiVector does Positional is export {
+    method blades { grep *.value, ((1, 2, 4 ... *) Z=> self[]) }
+    method AT-KEY(UInt $n) { $n == 1 ?? self !! 0 }
+    method norm { sqrt [+] self »**» 2 }
+}
 
 class MVector does MultiVector {
     has Real %.blades{UInt};

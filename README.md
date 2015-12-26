@@ -29,15 +29,14 @@ vectors of an orthonormal basis e0, e1, e2 ...etc.
 
     my $e = e(6);
 
-It is also possible to call this function with `Whatever` to get the infinite
-orthonormal basis itself.  It can be used to create a vector from an array of
-coefficients.
+The module also exports a `Vector` role deriving from `Positional`.  This role
+can be used to define a vector from an array:
 
-    say [+] 1, 2 Z* e(*);  # e(0) + 2*e(1)
+    say [0, 1] but Vector;    # e(0) - e(1)
 
-This `&e` subroutine is essentially the only user interface for the class.
-Everything you can do with this module, you can do it with algebraic operations
-on these vectors.
+The `&e` subroutine and the `Vector` role are essentially the only user
+interface for the class.  Everything you can do with this module, you can do it
+with algebraic operations on vectors.
 
 Be aware that there is nothing special about `e(0)`.  It is not a scalar, but
 the first unit vector or the orthogonal basis.  In other words, indexes do
