@@ -92,7 +92,7 @@ represents the blade `-2*e(0)*e(1)*e(3)`.
 The `Vector` role inherits from `MultiVector` and `Positional`.  It provides
 default `blades` and `grade-projection(UInt $)` methods, so any class
 implementing `Positional` can be used as a Vector by just mixing it, with
-fairly predicitble semantics.
+fairly predictible semantics.
  
 What can be done?
 -----------------
