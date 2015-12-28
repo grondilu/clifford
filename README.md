@@ -32,7 +32,7 @@ vectors of an orthonormal basis e0, e1, e2 ...etc.
 The module also exports a `Vector` role deriving from `Positional`.  This role
 can be used to define a vector from an array:
 
-    say [0, 1] but Vector;    # e(0) - e(1)
+    say [1, -1] but Vector;    # e(0) - e(1)
 
 The `&e` subroutine and the `Vector` role are essentially the only user
 interface for the class.  Everything you can do with this module, you can do it
