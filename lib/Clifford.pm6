@@ -12,7 +12,7 @@ class MVector does MultiVector {
     method AT-KEY(UInt $n) { self.new: :blades(grep { $n == [+] .key.polymod(2 xx *) }, self.blades) }
 }
 
-sub e(UInt:D $n) returns Vector is export { my Real @ does Vector = flat 0 xx $n, 1 }
+sub e(UInt:D $n) returns Vector is export { [flat 0 xx $n, 1] but Vector }
 
 # Metric signature
 our @signature = 1 xx *;
@@ -42,7 +42,7 @@ my sub metric-product(UInt $i, UInt $j) {
 
 # ADDITION
 multi infix:<+>(Vector $a, Vector $b) returns Vector is export {
-    return my Real @ does Vector = (($a[$_]//0) + ($b[$_]//0) for ^max($a.elems, $b.elems));
+    return [($a[$_]//0) + ($b[$_]//0) for ^max($a.elems, $b.elems)] but Vector;
 }
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %blades{UInt} = $A.blades;
@@ -88,7 +88,7 @@ multi infix:<**>(MultiVector $A, UInt $n) returns MultiVector is export {
 multi infix:<*>(MultiVector $,  0) is export { MultiVector.new }
 multi infix:<*>(MultiVector $A, 1) is export { $A }
 multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export { $s * $A }
-multi infix:<*>(Real $s, Vector $V) returns Vector is export { return my Real @ does Vector = $s X* $V }
+multi infix:<*>(Real $s, Vector $V) returns Vector is export { [$s X* $V] but Vector }
 multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export {
     return MVector.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
 }
