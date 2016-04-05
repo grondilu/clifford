@@ -9,6 +9,34 @@ role Vector does MultiVector does Positional is export {
 
 class MVector does MultiVector {
     has Real %.blades{UInt};
+    multi method gist {
+	my sub blade-gist($blade) {
+	    join(
+		'*',
+		$blade.value,
+		map { "e({$_ - 1})" },
+		grep +*,
+		($blade.key.base(2).comb.reverse Z* 1 .. *)
+	    ).subst(/<|w>1\*/, '')
+	}
+	if    self.blades == 0 { return '0' }
+	elsif self.blades == 1 {
+	    given self.blades.pick {
+		if .key == 0 {
+		    return .value.gist;
+		} else {
+		    return blade-gist($_);
+		}
+	    }
+	} else {
+	    return 
+	    join(
+		' + ', do for sort *.key, self.blades {
+		    .key == 0 ?? .value.gist !! blade-gist($_);
+		}
+	    ).subst('+ -','- ', :g);
+	}
+    }
     method AT-KEY(UInt $n) { self.new: :blades(grep { $n == [+] .key.polymod(2 xx *) }, self.blades) }
 }
 
@@ -47,15 +75,13 @@ multi infix:<+>(Vector $a, Vector $b) returns Vector is export {
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %blades{UInt} = $A.blades;
     for $B.blades {
-	%blades{.key} += .value;
-	%blades{.key} :delete unless %blades{.key};
+	%blades{.key} :delete unless %blades{.key} += .value;
     }
     return MVector.new: :%blades;
 }
 multi infix:<+>(Real $s, MultiVector $A) returns MultiVector is export {
     my Real %blades{UInt} = $A.blades;
-    %blades{0} += $s;
-    %blades{0} :delete unless %blades{0};
+    %blades{0} :delete unless %blades{0} += $s;
     return MVector.new: :%blades;
 }
 multi infix:<+>(MultiVector $A, Real $s) returns MultiVector is export { $s + $A }
@@ -66,8 +92,8 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     for $A.blades -> $a {
 	for $B.blades -> $b {
 	    my $c = $a.key +^ $b.key;
+	    %blades{$c} :delete unless
 	    %blades{$c} += $a.value * $b.value * metric-product($a.key, $b.key);
-	    %blades{$c} :delete unless %blades{$c};
 	}
     }
     return MVector.new: :%blades;
