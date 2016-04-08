@@ -4,7 +4,6 @@ use Test;
 plan 4;
 
 sub random {
-    use MultiVector;
     (.5 - rand).round(.01) + 
     (.5 - rand).round(.01)*@e[(^5).pick] +
     (.5 - rand).round(.01)*@ē[(^5).pick] +
