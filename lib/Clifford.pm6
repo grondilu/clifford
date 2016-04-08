@@ -1,22 +1,45 @@
 unit module Clifford;
-use MultiVector;
+no precompilation; # see bug #127858
+our class MultiVector {...}
 
-role Vector does MultiVector does Positional is export {
-    method blades { grep *.value, ((1, 2, 4 ... *) Z=> self[]) }
-    method AT-KEY(UInt $n) { $n == 1 ?? self !! 0 }
-    method norm { sqrt [+] self »**» 2 }
-}
+our constant @e is export = map { MultiVector.new: blades => (my Real %{UInt} = (1 +< (2*$_)) => 1); }, ^Inf;
+our constant @ē is export = map { MultiVector.new: blades => (my Real %{UInt} = (1 +< (2*$_+1)) => 1); }, ^Inf;
 
-class MVector does MultiVector {
+class MultiVector does Numeric {
     has Real %.blades{UInt};
+    method Real {
+	if any(self.blades.keys) > 0 {
+	    fail X::Numeric::Real.new:
+	    target => Real,
+	    source => self,
+	    reason => 'not purely scalar'
+	    ;
+	}
+	return self.blades{0} // 0;
+    }
+
+    method reals { self.blades».value }
+    method narrow returns Numeric {
+	for self.blades {
+	    return self if .key > 0 && .value !== 0;
+	}
+	return (self.blades.hash{0} // 0).narrow;
+    }
     multi method gist {
 	my sub blade-gist($blade) {
 	    join(
 		'*',
 		$blade.value,
-		map { "e({$_ - 1})" },
-		grep +*,
-		($blade.key.base(2).comb.reverse Z* 1 .. *)
+		gather {
+		    my $key = $blade.key;
+		    my $i = 0;
+		    while $key > 0 {
+			take "e$i" if $key +& 1;
+			take "ē$i" if $key +& 2;
+			$key +>= 2;
+			$i++;
+		    }
+		}
 	    ).subst(/<|w>1\*/, '')
 	}
 	if    self.blades == 0 { return '0' }
@@ -37,13 +60,8 @@ class MVector does MultiVector {
 	    ).subst('+ -','- ', :g);
 	}
     }
-    method AT-KEY(UInt $n) { self.new: :blades(grep { $n == [+] .key.polymod(2 xx *) }, self.blades) }
+    method AT-POS(UInt $n) { self.new: :blades(grep { $n == [+] .key.polymod(2 xx *) }, self.blades) }
 }
-
-sub e(UInt:D $n) returns Vector is export { [flat 0 xx $n, 1] but Vector }
-
-# Metric signature
-our @signature = 1 xx *;
 
 # utilities
 my sub order(UInt:D $i is copy, UInt:D $j) {
@@ -60,7 +78,7 @@ my sub metric-product(UInt $i, UInt $j) {
     my $k = 0;
     while $t !== 0 {
 	if $t +& 1 {
-	    $r *= @Clifford::signature[$k];
+	    $r *= $k %% 2 ?? +1 !! -1;
 	}
 	$t +>= 1;
 	$k++;
@@ -69,20 +87,17 @@ my sub metric-product(UInt $i, UInt $j) {
 }
 
 # ADDITION
-multi infix:<+>(Vector $a, Vector $b) returns Vector is export {
-    return [($a[$_]//0) + ($b[$_]//0) for ^max($a.elems, $b.elems)] but Vector;
-}
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     my Real %blades{UInt} = $A.blades;
     for $B.blades {
 	%blades{.key} :delete unless %blades{.key} += .value;
     }
-    return MVector.new: :%blades;
+    return MultiVector.new: :%blades;
 }
 multi infix:<+>(Real $s, MultiVector $A) returns MultiVector is export {
     my Real %blades{UInt} = $A.blades;
     %blades{0} :delete unless %blades{0} += $s;
-    return MVector.new: :%blades;
+    return MultiVector.new: :%blades;
 }
 multi infix:<+>(MultiVector $A, Real $s) returns MultiVector is export { $s + $A }
 
@@ -96,7 +111,7 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
 	    %blades{$c} += $a.value * $b.value * metric-product($a.key, $b.key);
 	}
     }
-    return MVector.new: :%blades;
+    return MultiVector.new: :%blades;
 }
 
 # EXPONENTIATION
@@ -114,9 +129,8 @@ multi infix:<**>(MultiVector $A, UInt $n) returns MultiVector is export {
 multi infix:<*>(MultiVector $,  0) is export { MultiVector.new }
 multi infix:<*>(MultiVector $A, 1) is export { $A }
 multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export { $s * $A }
-multi infix:<*>(Real $s, Vector $V) returns Vector is export { [$s X* $V] but Vector }
 multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export {
-    return MVector.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
+    return MultiVector.new: :blades(my Real %{UInt} = map { .key => $s * .value }, $A.blades);
 }
 multi infix:</>(MultiVector $A, Real $s) is export { (1/$s) * $A }
 
