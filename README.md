@@ -25,7 +25,7 @@ basis for the Euclidean and anti-Euclidean spaces respectively.
 Any algebraic combination of those vectors is a multivector for which the
 `AT-POS` method returns the grade projection:
 
-    say (@e[0] + @e[0]*@e[1])[1];   # e0*e1
+    say (@e[0] + @e[0]*@e[1])[1];   # e0
 
 Those two arrays, along with the grade projection, constitute the main
 interface of the whole module.
