@@ -65,8 +65,8 @@ class MultiVector does Numeric {
 }
 
 # utilities
-my sub grade(UInt:D $i) { (state @)[$i] //= [+] $i.polymod(2 xx *) }
-my sub order(UInt:D $i is copy, UInt:D $j) {
+our sub grade(UInt:D $i) { (state @)[$i] //= [+] $i.polymod(2 xx *) }
+our sub order(UInt:D $i is copy, UInt:D $j) {
     my $n = 0;
     repeat {
 	$i +>= 1;
@@ -74,7 +74,7 @@ my sub order(UInt:D $i is copy, UInt:D $j) {
     } until $i == 0;
     return $n +& 1 ?? -1 !! 1;
 }
-my sub metric-product(UInt $i, UInt $j) {
+our sub metric-product(UInt $i, UInt $j) {
     my $r = order($i, $j);
     my $t = $i +& $j;
     my $k = 0;
