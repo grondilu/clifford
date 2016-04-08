@@ -61,6 +61,7 @@ class MultiVector does Numeric {
 	}
     }
     method AT-POS(UInt $n) { self.new: :blades(grep { $n == [+] .key.polymod(2 xx *) }, self.blades) }
+    method max-grade { %!blades.map({[+] .key.polymod(2 xx *)}).max }
 }
 
 # utilities
