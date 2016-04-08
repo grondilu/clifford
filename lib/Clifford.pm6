@@ -60,16 +60,17 @@ class MultiVector does Numeric {
 	    ).subst('+ -','- ', :g);
 	}
     }
-    method AT-POS(UInt $n) { self.new: :blades(grep { $n == [+] .key.polymod(2 xx *) }, self.blades) }
-    method max-grade { %!blades.map({[+] .key.polymod(2 xx *)}).max }
+    method AT-POS(UInt $n) { self.new: :blades(grep { grade(.key) == $n }, self.blades) }
+    method max-grade { %!blades.keys».&grade.max }
 }
 
 # utilities
+my sub grade(UInt:D $i) { (state @)[$i] //= [+] $i.polymod(2 xx *) }
 my sub order(UInt:D $i is copy, UInt:D $j) {
     my $n = 0;
     repeat {
 	$i +>= 1;
-	$n += [+] ($i +& $j).polymod(2 xx *);
+	$n += grade($i +& $j);
     } until $i == 0;
     return $n +& 1 ?? -1 !! 1;
 }
