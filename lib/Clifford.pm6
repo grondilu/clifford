@@ -28,8 +28,8 @@ class MultiVector does Numeric {
 	return $!blades{0}.narrow;
     }
     multi method gist {
-	if    $!blades == 0 { return '0' }
-	elsif $!blades == 1 {
+	if    $!blades.pairs == 0 { return '0 (no blade)' }
+	elsif $!blades.pairs == 1 {
 	    given $!blades.pairs.pick {
 		warn "unexpected sign" if .key.sign < 0;
 		if .key.index == 0 {
