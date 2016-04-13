@@ -44,7 +44,7 @@ multi method gist {
 }
 method AT-POS(UInt $n) {
     ::?CLASS.new:
-    blades => self.blades.grep({ Clifford::Basis::grade(.key) == $n }).MixHash
+    blades => self.blades.grep({ Clifford::Basis::grade($_) == $n }).MixHash
 }
-method max-grade { self.blades.keys.map(&Clifford::Basis::grade).max }
+method max-grade { self.blades.map(&Clifford::Basis::grade).max }
 

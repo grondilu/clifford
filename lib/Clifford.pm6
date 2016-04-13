@@ -38,8 +38,7 @@ multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
     MultiVector.new: blades =>
     (gather for $A.pairs -> $a {
 	for $B.pairs -> $b {
-	    take ($a.key +^ $b.key) =>
-	    $a.value * $b.value * Clifford::Basis::product($a.key, $b.key);
+	    take Clifford::Basis::product($a, $b);
 	}
     }).MixHash;
 }
