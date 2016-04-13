@@ -30,13 +30,12 @@ our sub signFlip(uint $a, uint $b, int $c = 0) returns Bool {
 }   
 
 # Geometric product
-our sub product(Basis $a, Basis $b) returns Basis is export {
-    state @signature = |(1, -1) xx *;
+multi infix:<*>(Basis $a, Basis $b) returns Basis is export {
     ($a.key +^ $b.key) => 
     [*] $a.value, $b.value,
     (signFlip($a.key, $b.key) ?? -1 !! +1),
     |grep +*, (
-	@signature Z*
+	|(1, -1) xx * Z*
 	($a.key +& $b.key).base(2).comb.reverse
-    )
+    );
 }

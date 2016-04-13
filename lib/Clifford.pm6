@@ -35,12 +35,7 @@ multi infix:<->(Real $s, MultiVector $A) returns MultiVector is export { $s + -$
 
 # GEOMETRIC PRODUCT
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export {
-    MultiVector.new: blades =>
-    (gather for $A.pairs -> $a {
-	for $B.pairs -> $b {
-	    take Clifford::Basis::product($a, $b);
-	}
-    }).MixHash;
+    MultiVector.new: blades => ($A.pairs X* $B.pairs).MixHash;
 }
 
 # EXPONENTIATION
