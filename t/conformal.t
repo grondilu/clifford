@@ -15,8 +15,8 @@ ok no·ni == -1, 'o·∞ = -1';
 
 ok E**2 == 1, 'E² = 1';
 
-ok no*E == -E*no == -no, 'oE = -Eo = o';
-ok E*ni == -ni*E == -ni, 'E∞ = -∞E = ∞';
+ok no*E == -E*no == -no, 'oE = -Eo = -o';
+ok E*ni == -ni*E == -ni, 'E∞ = -∞E = -∞';
 
 sub F($x) { no + $x + 1/2*$x**2*ni }
 
