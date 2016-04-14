@@ -10,6 +10,8 @@ my sub basis(UInt $basis) {
 
 our constant @e is export = map { basis(1 +< (2*$_))   }, ^Inf;
 our constant @ē is export = map { basis(1 +< (2*$_+1)) }, ^Inf;
+our constant no  is export = MultiVector.new: blades => (1 => .5, 2 => 0.5).MixHash;
+our constant ni  is export = MultiVector.new: blades => (1 => -1, 2 => 1).MixHash;
 
 # ADDITION
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export {
