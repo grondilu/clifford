@@ -1,6 +1,6 @@
 {
     "name" : "Clifford",
-    "version" : "3.3.1",
+    "version" : "3.9.O",
     "description" : "Basic Geometric Algebra.",
     "provides": {
         "Clifford":    "lib/Clifford.pm6"
