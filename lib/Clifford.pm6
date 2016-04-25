@@ -1,31 +1,60 @@
 unit module Clifford;
 no precompilation; # see bug #127858
-role BasisIndex {
-    multi method Str(UInt $b is copy:) {
-        return 's' unless $b;
-        my int $n = 0;
-        join '∧',
-        gather while $b > 0 {
-            $n++;
-            if $b +& 1 {
-                take ($n % 2) ??
-                "e{($n-1) div 2}" !!
-                "ē{($n div 2)-1}"
-            }
-            $b +>= 1;
-        }
+package Basis {
+    our role Index {...}
+    grammar Parser {
+	token TOP { <scalar> | <blade> }
+	token scalar { s }
+	token blade  { <unit-vector>+ % '∧' }
+	token unit-vector {
+	    <euclidean-unit-vector> |
+	    <anti-euclidean-unit-vector>
+	}
+	token euclidean-unit-vector {
+	    e<index>   { make 1 +< (2*$<index>) }
+	}
+	token anti-euclidean-unit-vector {
+	    'ē'<index> { make 1 +< (2*$<index> + 1) }
+	}
+	token index { \d+ }
+    }
+    our sub parse(Str $blade) returns Index {
+	my UInt $result = 0;
+	Parser.parse:
+	$blade,
+	actions => class {
+	    method euclidean-unit-vector($/)      { $result += $/.made }
+	    method anti-euclidean-unit-vector($/) { $result += $/.made }
+	};
+	return $result but Index;
+    }
+    role Index {
+	multi method Str(UInt $b is copy:) {
+	    return 's' unless $b;
+	    my int $n = 0;
+	    join '∧',
+	    gather while $b > 0 {
+		$n++;
+		if $b +& 1 {
+		    take ($n % 2) ??
+		    "e{($n-1) div 2}" !!
+		    "ē{($n div 2)-1}"
+		}
+		$b +>= 1;
+	    }
+	}
     }
 }
-subset Blade of Pair  where { .key ~~ BasisIndex and .value ~~ Real }
-sub blade($a, $b = 1) returns Blade { ($a but BasisIndex) => $b }
+subset Blade of Pair  where { .key ~~ Basis::Index and .value ~~ Real }
+sub blade($a, $b = 1) returns Blade { ($a but Basis::Index) => $b }
 
 role MultiVector does Numeric {
     method blades returns MixHash {...}
 
-    multi method gist(::?CLASS:D:) {
+    multi method gist(MultiVector:D:) {
 	return ~self.Real if none(self.blades.keys) > 0;
-	(self.blades{0 but BasisIndex} ??
-	~self.blades{0 but BasisIndex}~'+' !!
+	(self.blades{0 but Basis::Index} ??
+	~self.blades{0 but Basis::Index}~'+' !!
 	'') ~
         self.blades.pairs
 	.grep(*.key > 0)
@@ -48,7 +77,7 @@ role MultiVector does Numeric {
             reason => 'not purely scalar'
             ;
         }
-        return self.blades{0 but BasisIndex} // 0;
+        return self.blades{0 but Basis::Index} // 0;
     }
 
     method reals { self.blades.values }
@@ -57,7 +86,7 @@ role MultiVector does Numeric {
         for self.blades.pairs {
             return self if .key > 0;
         }
-        return self.blades{0 but BasisIndex}.narrow;
+        return self.blades{0 but Basis::Index}.narrow;
     }
     method AT-POS(UInt $n) {
         ::?CLASS.new:
@@ -65,8 +94,9 @@ role MultiVector does Numeric {
     }
     method max-grade { self.blades.keys.map(&grade).max }
 }
-our role MultiVector::Optimized[UInt $key] does MultiVector {
-    method key { $key }
+our role MultiVector::Optimized[UInt $key, Str $name] does MultiVector {
+    method name returns Str { $name }
+    method key  returns UInt { $key }
     method dimension { (unkey $key).elems }
     method coord {...}
     multi method gist { "optimized multivector for key={self.key}" }
@@ -78,22 +108,43 @@ our role MultiVector::Optimized[UInt $key] does MultiVector {
 our class Space {
     subset Metric of Array where { .all ~~ Real && .map(&abs).all == 1 }
     has Metric $.metric;
-    has BasisIndex @.basis;
-    has %.types;
+    has Basis::Index @.basis;
+
+    # Each type of multivector will be defined as a class implementing
+    # MultiVector::Optimized.
+    # We put them all in a public hash attribute, as we shall generate them
+    # with EVAL
+    has %.classes;
 
     has %.products;
+    has %.subspaces;
+
+    # Conformal variant
+    role Conformal {
+	submethod BUILD {
+	    note "building a conformal space!";
+	}
+    }
 
     method vector-dimension returns UInt { $!metric.elems }
     method dimension        returns UInt { 2**self.vector-dimension }
 
-    submethod BUILD(:$metric, :$types) {
+    submethod BUILD(:$metric, :%types, Bool :$conformal) {
         $!metric = $metric;
         @!basis  = self.build-basis;
-        %!types  = self.build-types;
+	self does Conformal if $conformal;
+
+        %!classes  = self.build-classes;
         %!products = self.build-products;
-	if $types {
-	    self.create-type($_) for $types.pairs;
+	if %types {
+	    for %types {
+		die "unreckognized basis <{.value}>" unless .value.all ~~ /<Basis::Parser::TOP>/;
+		my $key = key(.value.map(&Basis::parse));
+		%!classes{$key} = self.create-class($key) unless %!classes{$key} :exists;
+		%!classes{.key} := %!classes{$key};
+	    }
 	}
+	self.build-subspaces;
     }
     method build-basis {
         my @basis = 0;
@@ -118,25 +169,15 @@ our class Space {
                 push @basis, $r.key unless $r.key == @basis.any;
             }
         }
-        return map { $_ but BasisIndex },
+        return map { $_ but Basis::Index },
 	sort { grade($^a) <=> grade($^b) || $^a <=> $^b },
 	@basis;
     }
-    method build-types {
-        use MONKEY-SEE-NO-EVAL;
-        my @types;
-        for @!basis {
-            my $class-name = "C_{.base(36)}";
-            my $key = $_ + 0;
-            my $dimension = unkey($key).elems;
-            push @types, ~$_ => qq:to /END-CLASS-DEFINITION/;
-            class $class-name does MultiVector::Optimized[$key] \x7B
-                method name returns Str \x7B "$class-name" \x7D
-                has num \@.coord[$dimension] = 0 xx $dimension; 
-            \x7D
-            END-CLASS-DEFINITION
-        }
-        return @types;
+    method build-classes {
+	@!basis.map({
+	    my $key = 1 +< $_;
+	    $key => self.create-class($key);
+	}).Hash;
     }
     method build-products {
 	my %table;
@@ -151,15 +192,26 @@ our class Space {
     }
     method build-subspaces {
 	constant subspace-names = <Real Vec Biv Tri Quad Penta Hexa Hepta Octo>;
-	@!basis.classify(&grade).map(
-	    { subspace-names[.key] => (basis => .value).Hash }
-	).Hash
+	for @!basis.classify(&grade) {
+	    my $key = key(.value);
+	    %!classes{$key} = self.create-class: $key unless %!classes{$key} :exists;
+	    %!classes{subspace-names[.key]} := %!classes{$key};
+	}
     }
-    method create-type(Pair $type) {
+    method create-class(UInt $key) {
+	use MONKEY-SEE-NO-EVAL;
+	my $class-name = "C_{$key.base(36)}";
+	my $dimension  = (unkey $key).elems;
+	note "building $class-name...";
+	return EVAL qq:to /END-CLASS-DEFINITION/;
+	class $class-name does MultiVector::Optimized[$key, "$class-name"] \x7B
+	    has num \@.coord[$dimension];
+	\x7D
+	END-CLASS-DEFINITION
     }
 }
 
-our constant @e is export= map {
+our constant @e is export = map {
     class :: does MultiVector {
         has MixHash $.blades
     }.new: blades => (blade(1 +< (2*$_)),).MixHash
@@ -207,11 +259,11 @@ sub involute(UInt $x)         returns Blade { blade($x, (-1)**grade($x)) }
 sub reverse(UInt $x)          returns Blade { blade($x, (-1)**($_*($_-1) div 2)) given grade($x) }
 sub conjugate(UInt $x)        returns Blade { blade($x, (-1)**($_*($_+1) div 2)) given grade($x) }
 
-sub basisBit(Str $name) returns BasisIndex {
+sub basisBit(Str $name) returns Basis::Index {
     (
         $name eq 's' ?? 0 !!
         [+] map { 1 +< ($_ - 1) }, $name.comb(/\d/)
-    ) but BasisIndex;
+    ) but Basis::Index;
 }
 
 # ADDITION
