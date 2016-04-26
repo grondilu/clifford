@@ -42,7 +42,7 @@ It is available as a default digraph on [Vim](http://www.vim.org) as `e-`.
 Minkowski plane
 ---------------
 
-The module exports to constant `no` and `ni` which form a null basis of a
+The module exports two constants `no` and `ni` which form a null basis of a
 [Minkowski plane](https://en.wikipedia.org/wiki/Minkowski_plane).  This plane
 is orthogonal to both the Euclidean space and the anti-Euclidean space.
 
