@@ -36,6 +36,9 @@ space is orthogonal to the Euclidean space.
     say @e[0] + @ē[0];   # e0 + ē0
     say @e[0]*@ē[0];     # e0∧ē0
 
+The `ē` character is the voyel `e` with a [macron](https://en.wikipedia.org/wiki/Macron).
+It is available as a default digraph on [Vim](http://www.vim.org) as `e-`.
+
 Minkovski plane
 ---------------
 
