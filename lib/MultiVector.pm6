@@ -71,42 +71,21 @@ multi product(0, MultiVector $) { 0 }
 multi product(1, MultiVector $B) returns MultiVector { $B }
 multi product(Real $s, MultiVector $B) returns MultiVector { MultiVector.new: (map { (.key) => $s*.value }, $B.pairs).MixHash }
 multi product(MultiVector $A, Real $s) returns MultiVector { $s * $A }
-multi product(MultiVector $A, MultiVector $B) returns MultiVector {
-    my @a = (|.push-to-diagonal-basis for $A.basis-blades);
-    my @b = (|.push-to-diagonal-basis for $B.basis-blades);
-    my @p;
-    for @a -> $a {
-	for @b -> $b {
-	    push @p, Clifford::BasisBlade::geometric-product($a, $b);
-	}
-    }
-    return MultiVector.new:
-    (|Clifford::BasisBlade::pop-from-diagonal-basis($_) for @p).MixHash;
-}
 
-our sub outer-product(MultiVector $A, MultiVector $B) returns MultiVector {
-    my @a = (|.push-to-diagonal-basis for $A.basis-blades);
-    my @b = (|.push-to-diagonal-basis for $B.basis-blades);
-    my @p;
-    for @a -> $a {
-	for @b -> $b {
-	    push @p, Clifford::BasisBlade::outer-product($a, $b);
-	}
+our (&geometric-product, &inner-product, &outer-product) = 
+map -> &basis-blade-product {
+    sub (MultiVector $A, MultiVector $B) returns MultiVector {
+	my @a = (|.push-to-diagonal-basis for $A.basis-blades);
+	my @b = (|.push-to-diagonal-basis for $B.basis-blades);
+	return MultiVector.new:
+	do for @a.race -> $a {
+	    |do for @b -> $b {
+		&basis-blade-product($a, $b);
+	    }
+	}.map(&Clifford::BasisBlade::pop-from-diagonal-basis).flat.MixHash;
     }
-    return MultiVector.new:
-    (|Clifford::BasisBlade::pop-from-diagonal-basis($_) for @p).MixHash;
-}
-
-our sub inner-product(MultiVector $A, MultiVector $B) returns MultiVector {
-    my @a = (|.push-to-diagonal-basis for $A.basis-blades);
-    my @b = (|.push-to-diagonal-basis for $B.basis-blades);
-    my @p;
-    for @a -> $a {
-	for @b -> $b {
-	    push @p, Clifford::BasisBlade::inner-product($a, $b);
-	}
-    }
-    return MultiVector.new:
-    (|Clifford::BasisBlade::pop-from-diagonal-basis($_) for @p).MixHash;
-}
+}, 
+&Clifford::BasisBlade::geometric-product,
+&Clifford::BasisBlade::inner-product,
+&Clifford::BasisBlade::outer-product;
 

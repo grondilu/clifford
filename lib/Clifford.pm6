@@ -16,7 +16,7 @@ multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export { 
 # MULTIPLICATION
 multi infix:<*>(Real $x, MultiVector $A) returns MultiVector is export { MultiVector::product($x, $A) }
 multi infix:<*>(MultiVector $A, Real $x) returns MultiVector is export { MultiVector::product($A, $x) }
-multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { MultiVector::product($A, $B) }
+multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { &MultiVector::geometric-product($A, $B) }
 multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { (1/$s) * $A }
 
 # SUBSTRACTION
@@ -45,4 +45,4 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
 }
 
 # OUTER PRODUCT
-multi infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is export { MultiVector::outer-product($A, $B) }
+multi infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is export { &MultiVector::outer-product($A, $B) }
