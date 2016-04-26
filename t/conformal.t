@@ -1,8 +1,6 @@
 use Clifford;
 use Test;
 
-constant ni = @ē[0] - @e[0];
-constant no = (@e[0] + @ē[0])/2;
 constant E = (ni*no - no*ni)/2;
 
 plan 8;

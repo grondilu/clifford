@@ -11,24 +11,52 @@ arbitrary size.  You can then add and substract them, as well as multiplying
 them by real scalars as you would do with any vectors, but you can also
 multiply and divide as made possible by the geometric algebra.
 
-Introduction
-------------
+Euclidean space
+---------------
 
-The module exports two array constants `@e` and `@ē`.  They serve as orthonormal
-basis for the Euclidean and anti-Euclidean spaces respectively.
+The module exports an array constant `@e` which serves as an orthonormal basis
+for an Euclidean space of infinite, countable dimension.
 
     use Clifford;
 
-    say @e[0]**2;   # +1
-    say @ē[0]**2;   # -1
+    say @e[0]**2;         # +1
+    say @e[0] + 2*@e[1];  # e0+2*e1
+    say @e[0]*@e[1];      # e0∧e1
 
-Any algebraic combination of those vectors is a multivector for which the
-`AT-POS` method returns the grade projection:
+Anti-Euclidean space
+--------------------
 
-    say (@e[0] + @e[0]*@e[1])[1];   # e0
+The module also exports an array constant `@ē` which serves as an orthonormal
+basis for an anti-Euclidean space of infinite, countable dimension.  This
+space is orthogonal to the Euclidean space.
 
-Those two arrays, along with the grade projection, constitute the main
-interface of the whole module.
+    use Clifford;
+
+    say @ē[0]**2;        # -1
+    say @e[0] + @ē[0];   # e0 + ē0
+    say @e[0]*@ē[0];     # e0∧ē0
+
+Minkovski plane
+---------------
+
+The module exports to constant `no` and `ni` which form a null basis of a
+Minkovski plane.  This plane is orthogonal to both the Euclidean space and the
+anti-Euclidean space.
+
+    use Clifford;
+    say no**2;              # 0
+    say ni**2;              # 0
+    say no*@e[0];           # 𝑂∧e0
+    say ni*@ē[0];           # ∞∧ē0
+    say no*ni;              # -1+𝑂∧∞
+    say (no*ni + ni*no)/2   # -1
+
+Grade projection
+----------------
+
+The `AT-POS` method returns the grade projection:
+
+    say (no + @e[1] + @e[0]*@e[1])[1];   # 𝑂+e1
 
 Operations
 ----------
@@ -44,10 +72,6 @@ For instance, for the inner product of two vectors:
 The above example can only work if the arguments are vectors.  Ensuring this is
 a bit involved and would probably cost in terms of performance.  That's why the
 module does not try to find a compromise and let that decision to the user.
-
-Defining a Vector subset can be done for instance as such:
-
-    subset Vector of Clifford::MultiVector where { $_ == $_[1] }
 
 External links
 --------
