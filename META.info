@@ -1,9 +1,10 @@
 {
     "name" : "Clifford",
-    "version" : "4.0.0",
+    "version" : "4.0.2",
     "description" : "Basic Geometric Algebra.",
     "provides": {
         "Clifford":    "lib/Clifford.pm6"
+        "MultiVector":    "lib/MultiVector.pm6"
     },
     "author" : "Lucien Grondin",
     "depends" : [ ],

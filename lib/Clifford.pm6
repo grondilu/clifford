@@ -44,3 +44,5 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
     $narrowed ~~ Real and $narrowed == $x;
 }
 
+# OUTER PRODUCT
+multi infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is export { MultiVector::outer-product($A, $B) }

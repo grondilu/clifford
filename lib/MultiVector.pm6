@@ -77,9 +77,36 @@ multi product(MultiVector $A, MultiVector $B) returns MultiVector {
     my @p;
     for @a -> $a {
 	for @b -> $b {
-	    push @p, $_ for Clifford::BasisBlade::geometric-product($a, $b);
+	    push @p, Clifford::BasisBlade::geometric-product($a, $b);
 	}
     }
     return MultiVector.new:
     (|Clifford::BasisBlade::pop-from-diagonal-basis($_) for @p).MixHash;
 }
+
+our sub outer-product(MultiVector $A, MultiVector $B) returns MultiVector {
+    my @a = (|.push-to-diagonal-basis for $A.basis-blades);
+    my @b = (|.push-to-diagonal-basis for $B.basis-blades);
+    my @p;
+    for @a -> $a {
+	for @b -> $b {
+	    push @p, Clifford::BasisBlade::outer-product($a, $b);
+	}
+    }
+    return MultiVector.new:
+    (|Clifford::BasisBlade::pop-from-diagonal-basis($_) for @p).MixHash;
+}
+
+our sub inner-product(MultiVector $A, MultiVector $B) returns MultiVector {
+    my @a = (|.push-to-diagonal-basis for $A.basis-blades);
+    my @b = (|.push-to-diagonal-basis for $B.basis-blades);
+    my @p;
+    for @a -> $a {
+	for @b -> $b {
+	    push @p, Clifford::BasisBlade::inner-product($a, $b);
+	}
+    }
+    return MultiVector.new:
+    (|Clifford::BasisBlade::pop-from-diagonal-basis($_) for @p).MixHash;
+}
+

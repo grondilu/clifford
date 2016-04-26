@@ -144,7 +144,7 @@ sub sign(UInt $a, UInt $b --> Int) {
     }
     return $sum +& 1 ?? -1 !! +1;
 }
-our sub geometric-product(UIntRealPair $a, UIntRealPair $b) {
+our sub geometric-product(UIntRealPair $a, UIntRealPair $b --> UIntRealPair) {
     ($a.key +^ $b.key) =>
     [*] $a.value, $b.value,
     sign($a.key, $b.key),
@@ -153,4 +153,16 @@ our sub geometric-product(UIntRealPair $a, UIntRealPair $b) {
 	($a.key +& $b.key).polymod(2 xx *)
     )
 }
-
+our sub inner-product(UIntRealPair $a, UIntRealPair $b --> UIntRealPair) {
+    my $r = geometric-product($a, $b);
+    my ($ga, $gb, $gr) = map { grade(.key) }, $a, $b, $r;
+    if $ga > $gb or $gr !== $gb - $gr {
+	return 0 => 0;
+    } else {
+	return $r;
+    }
+}
+our sub outer-product(UIntRealPair $a, UIntRealPair $b --> UIntRealPair) {
+    $a.key +& $b.key ?? (0 => 0) !!
+    geometric-product($a, $b);
+}
