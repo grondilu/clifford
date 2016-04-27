@@ -2,22 +2,23 @@ unit module Clifford;
 no precompilation; # see bug #127858
 use MultiVector;
 
-our constant @e is export = map { MultiVector.new("e$_") }, ^Inf;
-our constant @ē is export = map { MultiVector.new("ē$_") }, ^Inf;
+class MV does MultiVector { has MixHash $.bitEncoding };
+our constant @e is export = map { MV.new("e$_") }, ^Inf;
+our constant @ē is export = map { MV.new("ē$_") }, ^Inf;
 
-our constant no is export = MultiVector.new('no');
-our constant ni is export = MultiVector.new('ni');
+our constant no is export = MV.new('no');
+our constant ni is export = MV.new('ni');
 
 # ADDITION
-multi infix:<+>(MultiVector $A, Real $x) returns MultiVector is export { MultiVector::addition($A, $x) }
-multi infix:<+>(Real $x, MultiVector $B) returns MultiVector is export { MultiVector::addition($x, $B) }
-multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export { MultiVector::addition($A, $B) }
+multi infix:<+>(MultiVector $A, Real $x) returns MultiVector is export { $A.add($x) }
+multi infix:<+>(Real $x, MultiVector $B) returns MultiVector is export { $B.add($x) }
+multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.add($B) }
 
 # MULTIPLICATION
-multi infix:<*>(Real $x, MultiVector $A) returns MultiVector is export { MultiVector::product($x, $A) }
-multi infix:<*>(MultiVector $A, Real $x) returns MultiVector is export { MultiVector::product($A, $x) }
-multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { &MultiVector::geometric-product($A, $B) }
-multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { (1/$s) * $A }
+multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export { $A.scale($s) }
+multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale($s) }
+multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.gp($B) }
+multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale(1/$s) }
 
 # SUBSTRACTION
 multi prefix:<->(MultiVector $A) returns MultiVector is export { return -1 * $A }
@@ -45,4 +46,4 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
 }
 
 # OUTER PRODUCT
-multi infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is export { &MultiVector::outer-product($A, $B) }
+multi infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.op($B) }

@@ -1,12 +1,9 @@
-unit class MultiVector does Numeric;
+unit role MultiVector does Numeric;
 use Clifford::BasisBlade;
 
-# This class uses a bit-encoding implementation.  Any derived class can define
-# a bitEncoding method as a fallback.
-# Ideally we should make this class a role instead so that we can define
-# bitEncoding as a stub method but roles have limitations that make it hard.
-subset BitEncoding of MixHash where .keys.all ~~ UInt;
-has BitEncoding $.bitEncoding;
+# Any implementation of this role must provide a bit encoding fallback.
+my subset BitEncoding of MixHash where .keys.all ~~ UInt;
+method bitEncoding returns BitEncoding {...}
 
 method pairs  { self.bitEncoding.pairs }
 method keys   { self.bitEncoding.keys  }
@@ -16,7 +13,7 @@ method basis-blades { self.pairs.map: { Clifford::BasisBlade.new: $_ } }
 
 multi method new(BitEncoding $bitEncoding) { self.new: :$bitEncoding }
 multi method new(Str $blade) {
-    self.new: bitEncoding => Clifford::BasisBlade.new($blade).pair.MixHash
+    self.new: Clifford::BasisBlade.new($blade).pair.MixHash
 }
 multi method gist(::?CLASS:D:) {
     !self.bitEncoding ?? '0' !!
@@ -50,38 +47,38 @@ method narrow returns Numeric {
     }
     return self{0}.narrow;
 }
-method AT-POS(UInt $n) {
-    ::?CLASS.new:
-    bitEncoding => self.pairs.grep(
+method AT-POS(UInt $n) returns MultiVector {
+    self.new:
+    self.pairs.grep(
 	{ Clifford::BasisBlade::grade(.key) == $n }
     ).MixHash
 }
-method max-grade { self.keys.map(&Clifford::BasisBlade::grade).max }
+method max-grade returns UInt { self.keys.map(&Clifford::BasisBlade::grade).max }
 
-our proto addition($, $) returns MultiVector {*}
-multi addition(MultiVector $A, MultiVector $B) {
-    MultiVector.new: (flat $A.pairs, $B.pairs).MixHash;
-}
-multi addition(0, MultiVector $B) { $B }
-multi addition(Real $s, MultiVector $B) { MultiVector.new: (0 => $s, $B.pairs).MixHash }
-multi addition(MultiVector $A, Real $s) { MultiVector.new: (0 => $s, $A.pairs).MixHash }
+proto method add($) returns MultiVector {*}
+multi method add(MultiVector $A) { self.new: (flat self.pairs, $A.pairs).MixHash }
+multi method add(Real $s) { self.new: (0 => $s, self.pairs).MixHash }
 
-our proto product($, $) {*}
-multi product(0, MultiVector $) { 0 }
-multi product(1, MultiVector $B) returns MultiVector { $B }
-multi product(Real $s, MultiVector $B) returns MultiVector { MultiVector.new: (map { (.key) => $s*.value }, $B.pairs).MixHash }
-multi product(MultiVector $A, Real $s) returns MultiVector { $s * $A }
+proto method scale(Real $) {*}
+multi method scale(0) { 0 }
+multi method scale(1) returns MultiVector { self }
+multi method scale(Real $s) returns MultiVector { self.new: (map { (.key) => $s*.value }, self.pairs).MixHash }
 
-our proto geometric-product(MultiVector $, MultiVector $) returns MultiVector {*};
-our proto     inner-product(MultiVector $, MultiVector $) returns MultiVector {*};
-our proto     outer-product(MultiVector $, MultiVector $) returns MultiVector {*};
+proto method gp(MultiVector $) returns MultiVector {*};
+proto method ip(MultiVector $) returns MultiVector {*};
+proto method op(MultiVector $) returns MultiVector {*};
 
-my %product = <geometric inner outer> Z=>
+my %product;
+multi method gp($A) { %product<gp>(self, $A) }
+multi method ip($A) { %product<ip>(self, $A) }
+multi method op($A) { %product<op>(self, $A) }
+
+%product = <gp ip op> Z=>
 map -> &basis-blade-product {
     sub (MultiVector $A, MultiVector $B) returns MultiVector {
 	my @a = (|.push-to-diagonal-basis for $A.basis-blades);
 	my @b = (|.push-to-diagonal-basis for $B.basis-blades);
-	return MultiVector.new:
+	return $A.new:
 	do for @a.race -> $a {
 	    |do for @b -> $b {
 		&basis-blade-product($a, $b);
@@ -89,10 +86,7 @@ map -> &basis-blade-product {
 	}.map(&Clifford::BasisBlade::pop-from-diagonal-basis).flat.MixHash;
     }
 }, 
-&Clifford::BasisBlade::geometric-product,
-&Clifford::BasisBlade::inner-product,
-&Clifford::BasisBlade::outer-product;
-
-multi geometric-product($A, $B) { %product<geometric>($A, $B) }
-multi     inner-product($A, $B) { %product<inner>($A, $B) }
-multi     outer-product($A, $B) { %product<outer>($A, $B) }
+# work around #128010
+{ Clifford::BasisBlade::geometric-product($^a, $^b) },
+{ Clifford::BasisBlade::inner-product($^a, $^b) },
+{ Clifford::BasisBlade::outer-product($^a, $^b) };
