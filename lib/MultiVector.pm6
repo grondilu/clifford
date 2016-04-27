@@ -1,92 +1,63 @@
 unit role MultiVector does Numeric;
-use Clifford::BasisBlade;
 
-# Any implementation of this role must provide a bit encoding fallback.
-my subset BitEncoding of MixHash where .keys.all ~~ UInt;
-method bitEncoding returns BitEncoding {...}
+# The grade projection should return a MultiVector
+# except for grade zero where it should return a Real.
+# This will make it easier to define the Real method.
+multi method AT-POS(0) returns Real {...}
+multi method AT-POS(UInt $n where $n > 0) returns MultiVector {...}
 
-method pairs  { self.bitEncoding.pairs }
-method keys   { self.bitEncoding.keys  }
-method values { self.bitEncoding.values }
-multi method AT-KEY(UInt $n) { self.bitEncoding{$n} }
-method basis-blades { self.pairs.map: { Clifford::BasisBlade.new: $_ } }
+# The grades method should return a list of grades where
+# the grade projection is not null.
+# For instance (e0 + e0∧e1).grades should return 1, 2
+method grades {...}
 
-multi method new(BitEncoding $bitEncoding) { self.new: :$bitEncoding }
-multi method new(Str $blade) {
-    self.new: Clifford::BasisBlade.new($blade).pair.MixHash
-}
-multi method gist(::?CLASS:D:) {
-    !self.bitEncoding ?? '0' !!
-    (
-	sort {
-	    $^a.grade <=> $^b.grade ||
-	    $a.bit-encoding <=> $b.bit-encoding
-	}, self.basis-blades
-    )
-    .map(*.gist)
-    .join('+')
-    .subst(/'+-'/, '-', :g);
-}
-
+# conversion to Real as required by the Numeric role.
 method Real {
-    if any(self.keys) > 0 {
+    if any(self.grades) > 0 {
 	fail X::Numeric::Real.new:
 	target => Real,
 	source => self,
-	reason => 'not purely scalar'
+	reason => 'Can not convert to Real: multivector is not purely scalar'
 	;
     }
-    return self{0} // 0;
+    return self[0] // 0;
 }
 
-method reals { self.values }
 method narrow returns Numeric {
-    return 0 if self.pairs == 0;
-    for self.pairs {
-	return self if .key > 0;
-    }
-    return self{0}.narrow;
+    if self.grades == 0 { return 0 }
+    elsif self.grades.any > 0 { return self }
+    else { return self.Real.narrow }
 }
-method AT-POS(UInt $n) returns MultiVector {
-    self.new:
-    self.pairs.grep(
-	{ Clifford::BasisBlade::grade(.key) == $n }
-    ).MixHash
-}
-method max-grade returns UInt { self.keys.map(&Clifford::BasisBlade::grade).max }
 
 proto method add($) returns MultiVector {*}
-multi method add(MultiVector $A) { self.new: (flat self.pairs, $A.pairs).MixHash }
-multi method add(Real $s) { self.new: (0 => $s, self.pairs).MixHash }
+multi method add(Real $) {...}
+multi method add(MultiVector $) {...}
 
 proto method scale(Real $) {*}
 multi method scale(0) { 0 }
-multi method scale(1) returns MultiVector { self }
-multi method scale(Real $s) returns MultiVector { self.new: (map { (.key) => $s*.value }, self.pairs).MixHash }
+multi method scale(1) returns MultiVector { self.clone }
+multi method scale(Real $) returns MultiVector {...}
 
 proto method gp(MultiVector $) returns MultiVector {*};
+multi method gp(MultiVector $) {...};
 proto method ip(MultiVector $) returns MultiVector {*};
+multi method ip(MultiVector $) {...};
 proto method op(MultiVector $) returns MultiVector {*};
+multi method op(MultiVector $) {...};
 
-my %product;
-multi method gp($A) { %product<gp>(self, $A) }
-multi method ip($A) { %product<ip>(self, $A) }
-multi method op($A) { %product<op>(self, $A) }
-
-%product = <gp ip op> Z=>
-map -> &basis-blade-product {
-    sub (MultiVector $A, MultiVector $B) returns MultiVector {
-	my @a = (|.push-to-diagonal-basis for $A.basis-blades);
-	my @b = (|.push-to-diagonal-basis for $B.basis-blades);
-	return $A.new:
-	do for @a.race -> $a {
-	    |do for @b -> $b {
-		&basis-blade-product($a, $b);
-	    }
-	}.map(&Clifford::BasisBlade::pop-from-diagonal-basis).flat.MixHash;
-    }
-}, 
-# work around #128010
-{ Clifford::BasisBlade::geometric-product($^a, $^b) },
-{ Clifford::BasisBlade::inner-product($^a, $^b) },
-{ Clifford::BasisBlade::outer-product($^a, $^b) };
+method reversion {
+    # the first grade projection may be Real and if so
+    # it has no add method.  The solution is to add
+    # the first operand to the second, and not the second
+    # to the first.
+    reduce -> ($a, $b) { $b.add($a) },
+    (self[$_].scale((-1)**($_*($_-1) div 2)) for self.grades)
+}
+method involution {
+    reduce -> ($a, $b) { $b.add($a) },
+    (self[$_].scale((-1)**$_) for self.grades)
+}
+method conjugation {
+    reduce -> ($a, $b) { $b.add($a) },
+    (self[$_].scale((-1)**($_*($_+1) div 2)) for self.grades)
+}
