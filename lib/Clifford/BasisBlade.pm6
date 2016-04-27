@@ -28,7 +28,7 @@ our grammar Parser {
 	| <anti-euclidean-unit-vector>
     }
     token null-vector { <origin> | <infinity> }
-    token origin { no | o | '𝑂' }
+    token origin { no | o | '𝑜' }
     token infinity { ni | '∞' }
     token euclidean-unit-vector { e<index> }
     token anti-euclidean-unit-vector { 'ē'<index> }
@@ -57,7 +57,7 @@ multi method gist {
 	"$!weight*"
     ) ~ join '∧',
     gather {
-	take '𝑂' if $b +& origin;
+	take '𝑜' if $b +& origin;
 	take '∞' if $b +& infinity;
 	$b +>= 2;
 	while $b > 0 {
@@ -82,20 +82,20 @@ our sub grade(UInt $b is copy) returns int {
 }
 method grade returns int { grade($!bit-encoding) }
 
-method negate returns ::?CLASS { self.new: :$!bit-encoding, :weight(-$!weight) }
-method conjugate returns ::?CLASS {
+method negation returns ::?CLASS { self.new: :$!bit-encoding, :weight(-$!weight) }
+method conjugation returns ::?CLASS {
     self.new:
     :$!bit-encoding,
     :weight($!weight*(-1)**($_*($_+1) div 2))
     given self.grade;
 }
-method reverse returns ::?CLASS {
+method reversion returns ::?CLASS {
     self.new:
     :$!bit-encoding,
     :weight($!weight*(-1)**($_*($_-1) div 2))
     given self.grade;
 }
-method involute returns ::?CLASS {
+method involution returns ::?CLASS {
     self.new:
     :$!bit-encoding,
     :weight($!weight*(-1)**self.grade);
