@@ -72,7 +72,11 @@ multi product(1, MultiVector $B) returns MultiVector { $B }
 multi product(Real $s, MultiVector $B) returns MultiVector { MultiVector.new: (map { (.key) => $s*.value }, $B.pairs).MixHash }
 multi product(MultiVector $A, Real $s) returns MultiVector { $s * $A }
 
-our (&geometric-product, &inner-product, &outer-product) = 
+our proto geometric-product(MultiVector $, MultiVector $) returns MultiVector {*};
+our proto     inner-product(MultiVector $, MultiVector $) returns MultiVector {*};
+our proto     outer-product(MultiVector $, MultiVector $) returns MultiVector {*};
+
+my %product = <geometric inner outer> Z=>
 map -> &basis-blade-product {
     sub (MultiVector $A, MultiVector $B) returns MultiVector {
 	my @a = (|.push-to-diagonal-basis for $A.basis-blades);
@@ -89,3 +93,6 @@ map -> &basis-blade-product {
 &Clifford::BasisBlade::inner-product,
 &Clifford::BasisBlade::outer-product;
 
+multi geometric-product($A, $B) { %product<geometric>($A, $B) }
+multi     inner-product($A, $B) { %product<inner>($A, $B) }
+multi     outer-product($A, $B) { %product<outer>($A, $B) }
