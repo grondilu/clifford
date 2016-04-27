@@ -17,7 +17,7 @@ method Real {
 	fail X::Numeric::Real.new:
 	target => Real,
 	source => self,
-	reason => 'Can not convert to Real: multivector is not purely scalar'
+	reason => 'not purely scalar'
 	;
     }
     return self[0] // 0;
