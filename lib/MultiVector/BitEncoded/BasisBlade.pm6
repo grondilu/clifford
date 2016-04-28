@@ -1,8 +1,9 @@
-unit class MultiVector::BitEncoding::BasisBlade;
+unit class MultiVector::BitEncoded::BasisBlade;
 
 has UInt $.bit-encoding;
 has Real $.weight = 1;
 
+subset UIntHash of MixHash is export where .keys.all ~~ UInt;
 subset UIntRealPair of Pair where { .key ~~ UInt and .value ~~ Real }
 
 # This class should easily be converted to and from a Pair object
