@@ -1,13 +1,13 @@
 unit module Clifford;
 no precompilation; # see bug #127858
 use MultiVector;
-use MultiVector::BitEncoded;
+use MultiVector::BitEncoding;
 
-our constant @e is export = map { MultiVector::BitEncoded.new("e$_") }, ^Inf;
-our constant @ē is export = map { MultiVector::BitEncoded.new("ē$_") }, ^Inf;
+our constant @e is export = map { MultiVector::BitEncoding.new("e$_") }, ^Inf;
+our constant @ē is export = map { MultiVector::BitEncoding.new("ē$_") }, ^Inf;
 
-our constant no is export = MultiVector::BitEncoded.new('no');
-our constant ni is export = MultiVector::BitEncoded.new('ni');
+our constant no is export = MultiVector::BitEncoding.new('no');
+our constant ni is export = MultiVector::BitEncoding.new('ni');
 
 # ADDITION
 multi infix:<+>(MultiVector $A, Real $x) returns MultiVector is export { $A.add($x) }

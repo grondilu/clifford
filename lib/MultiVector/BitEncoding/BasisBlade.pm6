@@ -1,4 +1,4 @@
-unit class Clifford::BasisBlade;
+unit class MultiVector::BitEncoding::BasisBlade;
 
 has UInt $.bit-encoding;
 has Real $.weight = 1;

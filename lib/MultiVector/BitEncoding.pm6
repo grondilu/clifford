@@ -1,6 +1,6 @@
 use MultiVector;
-use Clifford::BasisBlade;
-unit class MultiVector::BitEncoded does MultiVector;
+use MultiVector::BitEncoding::BasisBlade;
+unit class MultiVector::BitEncoding does MultiVector;
 
 subset BitEncoding of MixHash where .keys.all ~~ UInt;
 has BitEncoding $.bitEncoding handles <pairs keys values>;
@@ -8,7 +8,7 @@ has BitEncoding $.bitEncoding handles <pairs keys values>;
 # Constructors
 multi method new(BitEncoding $bitEncoding) { self.new: :$bitEncoding }
 multi method new(Str $blade) {
-    self.new: Clifford::BasisBlade.new($blade).pair.MixHash
+    self.new: MultiVector::BitEncoding::BasisBlade.new($blade).pair.MixHash
 }
 
 # Grade projection
@@ -16,18 +16,18 @@ multi method AT-POS(0) { $!bitEncoding{0} }
 multi method AT-POS(UInt $n where $n > 0) {
     self.new:
     self.pairs.grep(
-	{ Clifford::BasisBlade::grade(.key) == $n }
+	{ MultiVector::BitEncoding::BasisBlade::grade(.key) == $n }
     ).MixHash
 }
 
 # list of non-vanishing grades
 method grades {
     squish sort
-    map &Clifford::BasisBlade::grade,
+    map &MultiVector::BitEncoding::BasisBlade::grade,
     self.keys
 }
 
-method basis-blades { self.pairs.map: { Clifford::BasisBlade.new: $_ } }
+method basis-blades { self.pairs.map: { MultiVector::BitEncoding::BasisBlade.new: $_ } }
 
 multi method gist(::?CLASS:D:) {
     !self.bitEncoding ?? '0' !!
@@ -68,15 +68,15 @@ map -> &basis-blade-product {
 	    |do for @b -> $b {
 		&basis-blade-product($a, $b);
 	    }
-	}.map(&Clifford::BasisBlade::pop-from-diagonal-basis).flat.MixHash;
+	}.map(&MultiVector::BitEncoding::BasisBlade::pop-from-diagonal-basis).flat.MixHash;
     }
 }, 
-&Clifford::BasisBlade::geometric-product,
-&Clifford::BasisBlade::inner-product,
-&Clifford::BasisBlade::outer-product;
+&MultiVector::BitEncoding::BasisBlade::geometric-product,
+&MultiVector::BitEncoding::BasisBlade::inner-product,
+&MultiVector::BitEncoding::BasisBlade::outer-product;
 
 =finish
 # work around #128010
-{ Clifford::BasisBlade::geometric-product($^a, $^b) },
-{ Clifford::BasisBlade::inner-product($^a, $^b) },
-{ Clifford::BasisBlade::outer-product($^a, $^b) };
+{ MultiVector::BitEncoding::BasisBlade::geometric-product($^a, $^b) },
+{ MultiVector::BitEncoding::BasisBlade::inner-product($^a, $^b) },
+{ MultiVector::BitEncoding::BasisBlade::outer-product($^a, $^b) };
