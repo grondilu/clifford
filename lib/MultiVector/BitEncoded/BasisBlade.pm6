@@ -157,7 +157,7 @@ our sub geometric-product(UIntRealPair $a, UIntRealPair $b --> UIntRealPair) {
 our sub inner-product(UIntRealPair $a, UIntRealPair $b --> UIntRealPair) {
     my $r = geometric-product($a, $b);
     my ($ga, $gb, $gr) = map { grade(.key) }, $a, $b, $r;
-    if $ga > $gb or $gr !== $gb - $gr {
+    if $ga > $gb or $gr !== $gb - $ga {
 	return 0 => 0;
     } else {
 	return $r;
