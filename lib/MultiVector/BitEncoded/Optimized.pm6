@@ -1,7 +1,6 @@
 use MultiVector::BitEncoded;
 unit class MultiVector::BitEncoded::Optimized does MultiVector::BitEncoded;
 
-# "code" and "basis" may not be the best names here.
 has UInt @.basis;
 has Real @.coeff;
 method code returns Str { @!basis.join('|') }
