@@ -59,7 +59,7 @@ map -> &basis-blade-product {
 	my @a = (|.push-to-diagonal-basis for $A.basis-blades);
 	my @b = (|.push-to-diagonal-basis for $B.basis-blades);
 	return $A.new:
-	do for @a.race -> $a {
+	do for @a -> $a {
 	    |do for @b -> $b {
 		&basis-blade-product($a, $b);
 	    }
