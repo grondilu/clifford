@@ -47,11 +47,13 @@ The module exports two constants `no` and `ni` which form a null basis of a
 is orthogonal to both the Euclidean space and the anti-Euclidean space.
 
     use Clifford;
+    say no;                 # 𝑜
+    say ni;                 # ∞
     say no**2;              # 0
     say ni**2;              # 0
-    say no*@e[0];           # 𝑂∧e0
+    say no*@e[0];           # 𝑜∧e0
     say ni*@ē[0];           # ∞∧ē0
-    say no*ni;              # -1+𝑂∧∞
+    say no*ni;              # -1+𝑜∧∞
     say (no*ni + ni*no)/2   # -1
 
 Grade projection
@@ -59,7 +61,7 @@ Grade projection
 
 The `AT-POS` method returns the grade projection:
 
-    say (no + @e[1] + @e[0]*@e[1])[1];   # 𝑂+e1
+    say (no + @e[1] + @e[0]*@e[1])[1];   # 𝑜+e1
 
 Operations
 ----------
