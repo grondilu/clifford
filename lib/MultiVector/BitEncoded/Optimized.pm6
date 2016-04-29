@@ -1,30 +1,77 @@
 use MultiVector::BitEncoded;
 unit class MultiVector::BitEncoded::Optimized does MultiVector::BitEncoded;
 
-has UInt $.basis-code;
+# "code" and "basis" may not be the best names here.
 has UInt @.basis;
 has Real @.coeff;
+method code returns Str { @!basis.join('|') }
 
-submethod BUILD(UInt :$basis-code, :@coeff) {
-    $!basis-code = $basis-code;
+submethod BUILD(:@basis, :@coeff) {
     @!coeff = @coeff;
+    @!basis = @basis;
 
-    # build @!basis
-    my $b = $!basis-code;
-    my int $i = 0;
-    while $b > 0 { 
-	push @!basis, $i if $b +& 1;
-	$i++; $b +>= 1;
-    }
-    fail "basis-code contains more elements than there are coefficients"
+    fail "basis unit multivectors should be given in increasing order"
+    unless [<] @!basis;
+    fail "basis contains more elements than there are coefficients"
     unless @!basis == @coeff;
 }
 multi method new(MultiVector::BitEncoded $model) {
-    my UInt $basis-code;
-    my @coeff = do for $model.pairs {
-	$basis-code +|= (1 +< .key);
-	.value;
-    }
-    self.bless: :$basis-code, :@coeff;
+    my @pairs = sort *.key, $model.pairs;
+    self.bless:
+    :basis[@pairs».key],
+    :coeff[@pairs».value];
 }
 method bitEncoding { (@!basis Z=> @!coeff).MixHash }
+
+multi method gp(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<gp>($A, $B) }
+multi method ip(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<ip>($A, $B) }
+multi method op(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<op>($A, $B) }
+
+sub basis-product(UInt $a, UInt $b) {
+    (state @)[$a][$b] //= do {
+	my ($A, $B) = map {
+	    use MultiVector::BitEncoded::Default;
+	    MultiVector::BitEncoded::Default.new: $^x.MixHash;
+	}, $a, $b;
+	{
+	    gp => $A.gp($B).pairs,
+	    ip => $A.ip($B).pairs,
+	    op => $A.op($B).pairs,
+	}
+    }
+}
+sub products(Str $Acode, Str $Bcode) {
+    (state %){$Acode}{$Bcode} //= do {
+	use MONKEY-SEE-NO-EVAL;
+	note "building code!";
+	my %instructions;
+	my @Abasis = $Acode.comb(/\d+/).map(*.Int);
+	my @Bbasis = $Bcode.comb(/\d+/).map(*.Int);
+	for ^@Abasis -> $i {
+	    for ^@Bbasis -> $j {
+		my $product = basis-product(@Abasis[$i], @Bbasis[$j]);
+		for <gp ip op> -> $op {
+		    for @($product{$op}) {
+			%instructions{$op}{.key} ~=
+			(.value == 1 ?? '+' !! '-')~
+			"\$x.coeff[$i]*\$y.coeff[$j]";
+		    }
+		}
+	    }
+	}
+	do for <gp ip op> -> $op {
+	    my @basis = sort %instructions{$op}.keys;
+	    my @coeff = %instructions{$op}{@basis};
+	    $op => EVAL qq:to /STOP/;
+	    sub (\$x, \$y) \x7b
+		MultiVector::BitEncoded::Optimized.new:
+		:basis[{@basis.join(',')}],
+		:coeff[
+		    {@coeff.join(",\n        ")}
+		];
+	    \x7d
+	    STOP
+	}.Hash;
+    }
+}
+
