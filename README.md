@@ -66,17 +66,25 @@ The `AT-POS` method returns the grade projection:
 Operations
 ----------
 
-The module *does not* define any of the various products derived from the
-geometric product.  However, the user can fairly easily define them.
+There are many multiplicative operators derived from the geometric product, but
+as of today the module only defines the outer product:
 
-For instance, for the inner product of two vectors:
+    say (@e[0] + @e[1] + @e[0]∧@e[2])∧@e[1];   # e0∧e1 - e0∧e1∧e2
 
-    sub infix:<·> { ($^a*$^b + $a*$b)/2 }
-    say @e[0]·(@e[0] + @e[1]);   # 1
+It is tighter than `&[*]`.
 
-The above example can only work if the arguments are vectors.  Ensuring this is
-a bit involved and would probably cost in terms of performance.  That's why the
-module does not try to find a compromise and let that decision to the user.
+The symbol `∧` is the wedge symbol usually used for logical AND.
+It can be displayed in *Vim* with the digraph `AN`.
+
+The module also implements the three involutions:
+
+    use Clifford;
+
+    my $M = 1 + @e[0] + @e[0]∧@e[1] + @e[0]∧@e[1]∧@e[2];
+    
+    say $M.reversion;    # 1+e0-e0∧e1-e0∧e1∧e2
+    say $M.involution;   # 1-e0+e0∧e1-e0∧e1∧e2
+    say $M.conjugation;  # 1-e0-e0∧e1+e0∧e1∧e2
 
 External links
 --------
