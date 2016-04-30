@@ -30,6 +30,12 @@ multi method new(MultiVector::BitEncoded $model    ) {
     :reals[@pairs».value];
 }
 
+method clean {
+    self.reals.none == 0 ??
+    self !!
+    self.new: self.bitEncoding
+}
+
 multi method add(::?CLASS $B) {
     self.new: (self.pairs, |$B.pairs).MixHash;
 }
@@ -80,11 +86,12 @@ sub products(Str $Acode, Str $Bcode) {
 		my @reals = %instructions{$op}{@basis};
 		$op => EVAL qq:to /STOP/;
 		sub (\$x, \$y) \x7b
-		\$x.new:
-		:basis[{@basis.join(',')}],
-		:reals[
-		    {@reals.join(",\n        ")}
-		];
+		\$x.new(
+		    :basis[{@basis.join(',')}],
+		    :reals[
+			{@reals.join(",\n        ")}
+		    ]
+		).clean;
 		\x7d
 		STOP
 	    } !! ($op => -> $x, $ { $x.new(0) })
