@@ -79,9 +79,9 @@ It can be displayed in *Vim* with the digraph `AN`.
 The module also implements the three involutions:
 
     given 1 + @e[0] + @e[0]∧@e[1] + @e[0]∧@e[1]∧@e[2] {
-	say .reversion;    # 1+e0-e0∧e1-e0∧e1∧e2
-	say .involution;   # 1-e0+e0∧e1-e0∧e1∧e2
-	say .conjugation;  # 1-e0-e0∧e1+e0∧e1∧e2
+        say .reversion;    # 1+e0-e0∧e1-e0∧e1∧e2
+        say .involution;   # 1-e0+e0∧e1-e0∧e1∧e2
+        say .conjugation;  # 1-e0-e0∧e1+e0∧e1∧e2
     }
 
 External links
