@@ -1,10 +1,9 @@
 unit module Clifford;
-no precompilation; # see bug #127858
 use MultiVector;
 use MultiVector::BitEncoded::Optimized;
 
-our constant @e is export = map { MultiVector::BitEncoded::Optimized.new("e$_") }, ^Inf;
-our constant @ē is export = map { MultiVector::BitEncoded::Optimized.new("ē$_") }, ^Inf;
+our @e is export = map { MultiVector::BitEncoded::Optimized.new("e$_") }, ^Inf;
+our @ē is export = map { MultiVector::BitEncoded::Optimized.new("ē$_") }, ^Inf;
 
 our constant no is export = MultiVector::BitEncoded::Optimized.new("no");
 our constant ni is export = MultiVector::BitEncoded::Optimized.new("ni");
