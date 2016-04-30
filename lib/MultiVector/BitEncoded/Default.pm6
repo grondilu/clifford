@@ -4,16 +4,16 @@ unit class MultiVector::BitEncoded::Default does MultiVector::BitEncoded;
 
 has UIntHash $.bitEncoding;
 
-# Constructors
+# Constructors required by roles
+multi method new(Real $s) { self.new: :bitEncoding((0 => $s).MixHash) }
 multi method new(UIntHash $bitEncoding) { self.new: :$bitEncoding }
-multi method new(Str $blade) {
-    self.new: MultiVector::BitEncoded::BasisBlade.new($blade).pair.MixHash
-}
 
 multi method add(MultiVector::BitEncoded $A) { self.new: (flat self.pairs, $A.pairs).MixHash }
-multi method add(Real $s) { self.new: (0 => $s, self.pairs).MixHash }
+multi method add(Real $s) { self.new: (0 => $s, |self.pairs).MixHash }
 
-multi method scale(Real $s) { self.new: (map { (.key) => $s*.value }, self.pairs).MixHash }
+multi method scale(Real $s) {
+    self.new: self.pairs.map({ Pair.new: .key, $s*.value }).MixHash
+}
 
 my %product;
 multi method gp(MultiVector::BitEncoded $A) { %product<gp>(self, $A) }

@@ -1,29 +1,33 @@
 use MultiVector::BitEncoded;
+use MultiVector::BitEncoded::BasisBlade;
 unit class MultiVector::BitEncoded::Optimized does MultiVector::BitEncoded;
 
 has UInt @.basis;
-has Real @.coeff;
+has Real @.reals;
+method reals { @!reals }  # overides any previously defined reals method
+method bitEncoding { (@!basis Z=> @!reals).MixHash }
+
 method code returns Str { @!basis.join('|') }
 
-submethod BUILD(:@basis, :@coeff) {
-    @!coeff = @coeff;
+submethod BUILD(:@basis, :@reals) {
+    fail "expected strictly increasing order in @basis" unless [<] @basis;
+    fail "unexpected number of coefficients" unless @basis == @reals;
     @!basis = @basis;
-
-    fail "basis unit multivectors should be given in increasing order"
-    unless [<] @!basis;
-    fail "basis contains more elements than there are coefficients"
-    unless @!basis == @coeff;
+    @!reals = @reals;
 }
-multi method new(MultiVector::BitEncoded $model) {
+
+multi method new(Real $s) { self.new: :basis[0], :reals[$s] }
+multi method new(UIntHash $ where !*  ) { self.new(0) }
+multi method new(UIntHash $bitEncoding) {
+    my @basis = sort $bitEncoding.keys;
+    self.new: :@basis, :reals[$bitEncoding{@basis}];
+}
+multi method new(MultiVector::BitEncoded $ where !*) { self.new(0) }
+multi method new(MultiVector::BitEncoded $model    ) {
     my @pairs = sort *.key, $model.pairs;
     self.bless:
     :basis[@pairs».key],
-    :coeff[@pairs».value];
-}
-method bitEncoding { (@!basis Z=> @!coeff).MixHash }
-multi method new(MixHash $bitEncoding where .keys.all ~~ UInt) {
-    my @basis = sort $bitEncoding.keys;
-    self.new: :@basis, :coeff[$bitEncoding{@basis}];
+    :reals[@pairs».value];
 }
 
 multi method add(::?CLASS $B) {
@@ -33,8 +37,7 @@ multi method add(Real $s) {
     self.new: (0 => $s, |self.pairs).MixHash;
 }
 
-
-multi method scale(Real $s) { self.new: :@!basis, :coeff[@!coeff X* $s] }
+multi method scale(Real $s) { self.new: :@!basis, :reals[@!reals X* $s] }
 multi method gp(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<gp>($A, $B) }
 multi method ip(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<ip>($A, $B) }
 multi method op(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<op>($A, $B) }
@@ -66,7 +69,7 @@ sub products(Str $Acode, Str $Bcode) {
 		    for @($product{$op}) {
 			%instructions{$op}{.key} ~=
 			(.value == 1 ?? '+' !! '-')~
-			"\$x.coeff[$i]*\$y.coeff[$j]";
+			"\$x.reals[$i]*\$y.reals[$j]";
 		    }
 		}
 	    }
@@ -74,17 +77,17 @@ sub products(Str $Acode, Str $Bcode) {
 	do for <gp ip op> -> $op {
 	    my @basis = sort %instructions{$op}.keys».Int;
 	    @basis ?? do {
-		my @coeff = %instructions{$op}{@basis};
+		my @reals = %instructions{$op}{@basis};
 		$op => EVAL qq:to /STOP/;
 		sub (\$x, \$y) \x7b
-		MultiVector::BitEncoded::Optimized.new:
+		\$x.new:
 		:basis[{@basis.join(',')}],
-		:coeff[
-		    {@coeff.join(",\n        ")}
+		:reals[
+		    {@reals.join(",\n        ")}
 		];
 		\x7d
 		STOP
-	    } !! ($op => -> $, $ { 0 })
+	    } !! ($op => -> $x, $ { $x.new(0) })
 	}.Hash;
     }
 }

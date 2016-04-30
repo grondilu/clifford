@@ -6,9 +6,22 @@ method bitEncoding returns UIntHash {...}
 method pairs  { self.bitEncoding.pairs }
 method keys   { self.bitEncoding.keys  }
 method values { self.bitEncoding.values }
+method reals  { map *.value, sort *.key, self.pairs }
+
+# All implementations should have a constructor taking a MixHash as parameter.
+# (provided this MixHash as positive integers as keys)
+multi method new(UIntHash $) {...}
+
+# With the requirement above, we can define a constructor
+# that takes a string representation of a basis blade.
+multi method new(Str $blade) {
+    self.new: MultiVector::BitEncoded::BasisBlade.new($blade).pair.MixHash
+}
 
 # Grade projection
-multi method AT-POS(0) { self.bitEncoding{0} }
+multi method AT-POS(0) {
+    self.new: (0 => self.bitEncoding{0}).MixHash
+}
 multi method AT-POS(UInt $n where $n > 0) {
     self.new:
     self.pairs.grep(
@@ -23,7 +36,10 @@ method grades {
     self.keys
 }
 
-method basis-blades { self.pairs.map: { MultiVector::BitEncoded::BasisBlade.new: $_ } }
+method basis-blades {
+    self.pairs.map:
+    { MultiVector::BitEncoded::BasisBlade.new: $_ }
+}
 
 multi method gist(MultiVector::BitEncoded:D:) {
     !self.bitEncoding ?? '0' !!

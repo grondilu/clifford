@@ -1,15 +1,20 @@
 unit role MultiVector does Numeric;
 
-# The grade projection should return a MultiVector
-# except for grade zero where it should return a Real.
-# This will make it easier to define the Real method.
-multi method AT-POS(0) returns Real {...}
-multi method AT-POS(UInt $n where $n > 0) returns MultiVector {...}
+# All implementations should be able to promote a Real
+multi method new(Real $s) returns MultiVector {...}
+
+# Grade projection
+proto method AT-POS(UInt $n) returns MultiVector {*}
 
 # The grades method should return a list of grades where
 # the grade projection is not null.
 # For instance (e0 + e0∧e1).grades should return 1, 2
 method grades {...}
+
+# real coefficients:
+# for instance (no + 2*ni + 3*e0).reals --> (1, 2, 3);
+# The order does not matter much.
+method reals {...}
 
 # conversion to Real as required by the Numeric role.
 method Real {
@@ -20,40 +25,43 @@ method Real {
 	reason => 'not purely scalar'
 	;
     }
-    return self[0] // 0;
+    return self[0].reals[0];
 }
 
+# Boolean evaluation
+multi method Bool { self.grades.elems > 0 }
+
+# narrow method required by Numeric
 method narrow returns Numeric {
-    if self.grades == 0 { return 0 }
-    elsif self.grades.any > 0 { return self }
-    else { return self.Real.narrow }
+    !self               ?? 0    !!
+    self.grades.any > 0 ?? self !!
+    self.Real.narrow
 }
 
+# addition prototype
 proto method add($) returns MultiVector {*}
-multi method add(Real $) {...}
 
+# scalar multiplication prototype
 proto method scale(Real $) {*}
 multi method scale(0) { 0 }
 multi method scale(1) returns MultiVector { self.clone }
 multi method scale(Real $) returns MultiVector {...}
 
-proto method gp(MultiVector $) {*};
-proto method ip(MultiVector $) {*};
-proto method op(MultiVector $) {*};
+# geometric, inner and outer products prototypes
+proto method gp(MultiVector $) returns MultiVector {*};
+proto method ip(MultiVector $) returns MultiVector {*};
+proto method op(MultiVector $) returns MultiVector {*};
 
-method reversion {
-    # the first grade projection may be Real and if so
-    # it has no add method.  The solution is to add
-    # the first operand to the second, and not the second
-    # to the first.
-    reduce -> ($a, $b) { $b.add($a) },
+# involutions
+method reversion returns MultiVector {
+    reduce { $^a.add($^b) },
     (self[$_].scale((-1)**($_*($_-1) div 2)) for self.grades)
 }
-method involution {
-    reduce -> ($a, $b) { $b.add($a) },
+method involution returns MultiVector {
+    reduce { $^a.add($^b) },
     (self[$_].scale((-1)**$_) for self.grades)
 }
-method conjugation {
-    reduce -> ($a, $b) { $b.add($a) },
+method conjugation returns MultiVector {
+    reduce { $^a.add($^b) },
     (self[$_].scale((-1)**($_*($_+1) div 2)) for self.grades)
 }
