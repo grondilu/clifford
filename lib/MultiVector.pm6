@@ -37,9 +37,9 @@ multi method scale(0) { 0 }
 multi method scale(1) returns MultiVector { self.clone }
 multi method scale(Real $) returns MultiVector {...}
 
-proto method gp(MultiVector $) returns MultiVector {*};
-proto method ip(MultiVector $) returns MultiVector {*};
-proto method op(MultiVector $) returns MultiVector {*};
+proto method gp(MultiVector $) {*};
+proto method ip(MultiVector $) {*};
+proto method op(MultiVector $) {*};
 
 method reversion {
     # the first grade projection may be Real and if so
