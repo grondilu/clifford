@@ -5,7 +5,7 @@
     "provides": {
         "Clifford":       "lib/Clifford.pm6",
         "MultiVector":    "lib/MultiVector.pm6",
-        "MultiVector":    "lib/MultiVector/BitEncoded.pm6",
+        "MultiVector":    "lib/MultiVector/BitEncoded.pm6"
     },
     "author" : "Lucien Grondin",
     "depends" : [ ],
