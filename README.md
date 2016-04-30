@@ -91,5 +91,4 @@ External links
   website and a book that helped for this project ;
 * [Versor](https://github.com/wolftype/versor), a C++ implementation of the
   above reference.  This uses advanced optimizations with precompilation and
-stuff.  Ideally it should be possible to copy ideas from this, but it will need
-work.
+stuff.  Some of the ideas used there have been used here.
