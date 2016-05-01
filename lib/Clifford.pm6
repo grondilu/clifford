@@ -49,5 +49,9 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
     $narrowed ~~ Real and $narrowed == $x;
 }
 
+# INNER PRODUCT
+sub infix:<·>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.ip($B) }
+
 # OUTER PRODUCT
 sub infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.op($B) }
+
