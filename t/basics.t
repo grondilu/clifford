@@ -16,7 +16,6 @@ ok -1*(1 + @e[0]) + 1 + @e[0] == 0;
 
 ok (1 + @e[0])**2 == 2 + 2*@e[0];
 
-sub infix:<·>($A, $B) { 1/2 * ($A*$B + $B*$A) }
 ok @e[0] · @e[1] == 0, 'inner product of two orthogonal vectors';
 ok @e[0] · @e[0] == 1, 'inner product of a vector with itself';
 ok (@e[0] + @e[1]) · (@e[0] - @e[1]) == 0, 'non-trivial inner product';
