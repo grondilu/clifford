@@ -89,7 +89,7 @@ Optimization
 
 This module attempts to optimize computations by generating code during
 runtime, as inspired by Pablo Colapinto's work (see next section).  The technique
-is quite unproven though so it is not unabled by default.  To use it, the module
+is quite unproven though so it is not enabled by default.  To use it, the module
 exports a `&optimize` subroutine:
 
     my $M = optimize(@e[0] + 2*@e[1]);
