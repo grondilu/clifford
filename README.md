@@ -92,7 +92,7 @@ runtime, as inspired by Pablo Colapinto's work (see next section).  The techniqu
 is quite unproven though so it is not enabled by default.  To use it, the module
 exports a `&optimize` subroutine:
 
-    my $M = optimize(@e[0] + 2*@e[1]);
+    say optimize(@e[0] + 2*@e[1]);
 
 In order to understand how the method works, consider for instance the
 geometric product of two vectors `X = x1*e1 + x2*e2 + x3*e3` and
