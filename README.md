@@ -88,10 +88,15 @@ Optimization
 ------------
 
 This module attempts to optimize computations by generating code during
-runtime, as inspired by Pablo Colapinto's work (see next section).
+runtime, as inspired by Pablo Colapinto's work (see next section).  The technique
+is quite unproven though so it is not unabled by default.  To use it, the module
+exports a `&optimize` subroutine:
 
-Consider for instance the geometric product of two vectors `X = x1*e1 + x2*e2 +
-x3*e3` and `Y = y1*e1 + y2*e2 + y3*e3`:
+    my $M = optimize(@e[0] + 2*@e[1]);
+
+In order to understand how the method works, consider for instance the
+geometric product of two vectors `X = x1*e1 + x2*e2 + x3*e3` and
+`Y = y1*e1 + y2*e2 + y3*e3`:
 
     X*Y = (x1*y1+x2*y2+x3*y3) +
           (x1*y2-x2*y1)*e1∧e2 +
