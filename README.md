@@ -109,9 +109,9 @@ calculated by a function such as:
 
     sub (@x, @y) {
         @x[0]*@y[0]+@x[1]*@y[1]+@x[2]*@y[2],
-	@x[0]*@y[1]-@x[1]*@y[0],
-	@x[1]*@y[2]-@x[2]*@y[1],
-	@x[2]*@y[0]-@x[0]*@y[2]
+        @x[0]*@y[1]-@x[1]*@y[0],
+        @x[1]*@y[2]-@x[2]*@y[1],
+        @x[2]*@y[0]-@x[0]*@y[2]
     }
 
 This would be very efficient but we would have to use a different function for
