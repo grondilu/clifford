@@ -84,6 +84,45 @@ The module also implements the three involutions:
         say .conjugation;  # 1-e0-e0∧e1+e0∧e1∧e2
     }
 
+Optimization
+------------
+
+This module attempts to optimize computations by generating code during
+runtime, as inspired by Pablo Colapinto's work (see next section).
+
+Consider for instance the geometric product of two vectors `X = x1*e1 + x2*e2 +
+x3*e3` and `Y = y1*e1 + y2*e2 + y3*e3`:
+
+    X*Y = (x1*y1+x2*y2+x3*y3) +
+          (x1*y2-x2*y1)*e1∧e2 +
+          (x2*y3-x3*y2)*e2∧e3 +
+          (x3*y1-x1*y3)*e3∧e1
+     
+This multivector is a linear combination of the unit scalar and the basis
+bivectors `e1∧e2`, `e2∧e3` and `e3∧e1`.  It would have been possible to know
+that beforehand by taking all possible products from `e1`, `e2` and `e3` and
+classify them, keeping track of the sign changes.
+
+Assuming an array of coefficients can be associated with a list of basis unit multivectors in order
+to form a generic multivector, the coefficients of a product of two vectors could have been
+calculated by a function such as:
+
+    sub (@x, @y) {
+        @x[0]*@y[0]+@x[1]*@y[1]+@x[2]*@y[2],
+	@x[0]*@y[1]-@x[1]*@y[0],
+	@x[1]*@y[2]-@x[2]*@y[1],
+	@x[2]*@y[0]-@x[0]*@y[2]
+    }
+
+This would be very efficient but we would have to use a different function for
+all possible kinds of products, and there are infinitely many of them.  Since
+it's not possible to precompute an infinity of things, the module starts from
+nothing and generates a product at runtime, every time it encounters a product
+type it has never seen before.
+
+To generate a function we simply generate the literal string that defines it in
+Perl 6 and we `EVAL` it.
+
 External links
 --------
 
