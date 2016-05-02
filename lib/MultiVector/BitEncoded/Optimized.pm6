@@ -48,9 +48,9 @@ multi method add(Real $s) {
 
 my enum Product <gp ip op>;
 multi method scale(Real $s) { self.new: :@!basis, :reals[@!reals X* $s] }
-multi method gp(::?CLASS $A: ::?CLASS $B) { generate-block($A, $B, gp)($A, $B) }
-multi method ip(::?CLASS $A: ::?CLASS $B) { generate-block($A, $B, ip)($A, $B) }
-multi method op(::?CLASS $A: ::?CLASS $B) { generate-block($A, $B, op)($A, $B) }
+multi method gp(::?CLASS $A: ::?CLASS $B) { get-block($A, $B, gp)($A, $B) }
+multi method ip(::?CLASS $A: ::?CLASS $B) { get-block($A, $B, ip)($A, $B) }
+multi method op(::?CLASS $A: ::?CLASS $B) { get-block($A, $B, op)($A, $B) }
 
 sub basis-product(UInt $a, UInt $b, Product $op) {
     (state %){"$a $op $b"} //= do {
@@ -61,12 +61,12 @@ sub basis-product(UInt $a, UInt $b, Product $op) {
         $A."$op"($B).pairs;
     }
 }
-sub generate-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
+sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
     use nqp;
-    use MONKEY-SEE-NO-EVAL;
     (state %){
 	nqp::sha1( "{$A.basis.join(',')} $op {$B.basis.join(',')}" ); 
     } //= do {
+	use MONKEY-SEE-NO-EVAL;
 	(
 	    my @classif = gather
 	    for ^$A.basis -> $i {
