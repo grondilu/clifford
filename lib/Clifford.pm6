@@ -2,12 +2,13 @@ unit module Clifford;
 use MultiVector;
 use MultiVector::BitEncoded::Default;
 use MultiVector::BitEncoded::Optimized;
+class MV is MultiVector::BitEncoded::Optimized {}
 
-our @e is export = map { MultiVector::BitEncoded::Default.new("e$_") }, ^Inf;
-our @ē is export = map { MultiVector::BitEncoded::Default.new("ē$_") }, ^Inf;
+our @e is export = map { MV.new("e$_") }, ^Inf;
+our @ē is export = map { MV.new("ē$_") }, ^Inf;
 
-our constant no is export = MultiVector::BitEncoded::Default.new("no");
-our constant ni is export = MultiVector::BitEncoded::Default.new("ni");
+our constant no is export = MV.new("no");
+our constant ni is export = MV.new("ni");
 
 sub optimize(MultiVector::BitEncoded::Default $M) returns MultiVector::BitEncoded::Optimized is export {
     MultiVector::BitEncoded::Optimized.new: $M.bitEncoding
