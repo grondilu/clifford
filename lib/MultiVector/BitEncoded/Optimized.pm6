@@ -48,9 +48,10 @@ multi method add(Real $s) {
 
 my enum Product <gp ip op>;
 multi method scale(Real $s) { self.new: :@!basis, :reals[@!reals X* $s] }
-multi method gp(::?CLASS $A: ::?CLASS $B) { get-block($A, $B, gp)($A, $B) }
-multi method ip(::?CLASS $A: ::?CLASS $B) { get-block($A, $B, ip)($A, $B) }
-multi method op(::?CLASS $A: ::?CLASS $B) { get-block($A, $B, op)($A, $B) }
+
+method gp($A: ::?CLASS $B) { get-block($A, $B, gp)($A, $B) }
+method ip($A: ::?CLASS $B) { get-block($A, $B, ip)($A, $B) }
+method op($A: ::?CLASS $B) { get-block($A, $B, op)($A, $B) }
 
 sub basis-product(UInt $a, UInt $b, Product $op) {
     (state %){"$a $op $b"} //= do {

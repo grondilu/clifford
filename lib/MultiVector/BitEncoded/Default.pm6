@@ -16,9 +16,9 @@ multi method scale(Real $s) {
 }
 
 my %product;
-multi method gp(MultiVector::BitEncoded $A) { %product<gp>(self, $A) }
-multi method ip(MultiVector::BitEncoded $A) { %product<ip>(self, $A) }
-multi method op(MultiVector::BitEncoded $A) { %product<op>(self, $A) }
+method gp(MultiVector::BitEncoded $A) { %product<gp>(self, $A) }
+method ip(MultiVector::BitEncoded $A) { %product<ip>(self, $A) }
+method op(MultiVector::BitEncoded $A) { %product<op>(self, $A) }
 
 %product = <gp ip op> Z=>
 map -> &basis-blade-product {

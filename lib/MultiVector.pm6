@@ -47,10 +47,10 @@ multi method scale(0) returns MultiVector { self.new: 0 }
 multi method scale(1) returns MultiVector { self.clone }
 multi method scale(Real $) returns MultiVector {...}
 
-# geometric, inner and outer products prototypes
-proto method gp(MultiVector $) returns MultiVector {*};
-proto method ip(MultiVector $) returns MultiVector {*};
-proto method op(MultiVector $) returns MultiVector {*};
+# geometric, inner and outer products pre-declarations
+method gp(MultiVector $) returns MultiVector {...};
+method ip(MultiVector $) returns MultiVector {...};
+method op(MultiVector $) returns MultiVector {...};
 
 # involutions
 method reversion returns MultiVector {
