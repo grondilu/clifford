@@ -8,7 +8,7 @@ has UIntHash $.bitEncoding;
 multi method new(Real $s) { self.new: :bitEncoding((0 => $s).MixHash) }
 multi method new(UIntHash $bitEncoding) { self.new: :$bitEncoding }
 
-multi method add(MultiVector::BitEncoded $A) { self.new: (flat self.pairs, $A.pairs).MixHash }
+multi method add(::?CLASS $A) { self.new: (flat self.pairs, $A.pairs).MixHash }
 multi method add(Real $s) { self.new: (0 => $s, |self.pairs).MixHash }
 
 multi method scale(Real $s) {
@@ -16,9 +16,9 @@ multi method scale(Real $s) {
 }
 
 my %product;
-method gp(MultiVector::BitEncoded $A) { %product<gp>(self, $A) }
-method ip(MultiVector::BitEncoded $A) { %product<ip>(self, $A) }
-method op(MultiVector::BitEncoded $A) { %product<op>(self, $A) }
+method gp(::?CLASS $A) { %product<gp>(self, $A) }
+method ip(::?CLASS $A) { %product<ip>(self, $A) }
+method op(::?CLASS $A) { %product<op>(self, $A) }
 
 %product = <gp ip op> Z=>
 map -> &basis-blade-product {
