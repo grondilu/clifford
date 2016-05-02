@@ -49,7 +49,7 @@ multi method ip(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<ip>($A, $
 multi method op(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<op>($A, $B) }
 
 sub basis-product(UInt $a, UInt $b) {
-    (state @)[$a][$b] //= do {
+    (state %){$a}{$b} //= do {
 	my ($A, $B) = map {
 	    use MultiVector::BitEncoded::Default;
 	    MultiVector::BitEncoded::Default.new: $^x.MixHash;
