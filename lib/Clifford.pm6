@@ -20,8 +20,8 @@ multi infix:<+>(Real $x, MultiVector $B) returns MultiVector is export { $B.add(
 multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.add($B) }
 
 # MULTIPLICATION
-multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export { $A.scale($s) }
-multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale($s) }
+multi infix:<*>(Real $s, MultiVector $A) is export { $A.scale($s) }
+multi infix:<*>(MultiVector $A, Real $s) is export { $A.scale($s) }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.gp($B) }
 multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale(1/$s) }
 
