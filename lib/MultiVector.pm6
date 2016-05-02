@@ -43,7 +43,7 @@ proto method add($) returns MultiVector {*}
 
 # scalar multiplication prototype
 proto method scale(Real $) {*}
-multi method scale(0) { 0 }
+multi method scale(0) returns MultiVector { self.new: 0 }
 multi method scale(1) returns MultiVector { self.clone }
 multi method scale(Real $) returns MultiVector {...}
 

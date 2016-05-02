@@ -4,13 +4,16 @@ unit class MultiVector::BitEncoded::Optimized does MultiVector::BitEncoded;
 
 has UInt @.basis;
 has Real @.reals;
-method reals { @!reals }  # overides any previously defined reals method
+
+# overides any previously defined reals and values methods
+method reals  { @!reals }
+method values { @!reals }
+
+# required by MultiVector::BitEncoded
 method bitEncoding { (@!basis Z=> @!reals).MixHash }
 
-method code returns Str { @!basis.join('|') }
-
 submethod BUILD(:@basis, :@reals) {
-    fail "expected strictly increasing order in @basis" unless [<] @basis;
+    fail "expected strictly increasing basis order" unless [<] @basis;
     fail "unexpected number of coefficients" unless @basis == @reals;
     @!basis = @basis;
     @!reals = @reals;
@@ -43,59 +46,57 @@ multi method add(Real $s) {
     self.new: (0 => $s, |self.pairs).MixHash;
 }
 
+my enum Product <gp ip op>;
 multi method scale(Real $s) { self.new: :@!basis, :reals[@!reals X* $s] }
-multi method gp(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<gp>($A, $B) }
-multi method ip(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<ip>($A, $B) }
-multi method op(::?CLASS $A: ::?CLASS $B) { products($A.code, $B.code)<op>($A, $B) }
+multi method gp(::?CLASS $A: ::?CLASS $B) { generate-block($A, $B, gp)($A, $B) }
+multi method ip(::?CLASS $A: ::?CLASS $B) { generate-block($A, $B, ip)($A, $B) }
+multi method op(::?CLASS $A: ::?CLASS $B) { generate-block($A, $B, op)($A, $B) }
 
-sub basis-product(UInt $a, UInt $b) {
-    (state %){$a}{$b} //= do {
-	my ($A, $B) = map {
-	    use MultiVector::BitEncoded::Default;
-	    MultiVector::BitEncoded::Default.new: $^x.MixHash;
-	}, $a, $b;
-	{
-	    gp => $A.gp($B).pairs,
-	    ip => $A.ip($B).pairs,
-	    op => $A.op($B).pairs,
-	}
+sub basis-product(UInt $a, UInt $b, Product $op) {
+    (state %){"$a $op $b"} //= do {
+        my ($A, $B) = map {
+            use MultiVector::BitEncoded::Default;
+            MultiVector::BitEncoded::Default.new: $^x.MixHash;
+        }, $a, $b;
+        $A."$op"($B).pairs;
     }
 }
-sub products(Str $Acode, Str $Bcode) {
-    (state %){$Acode}{$Bcode} //= do {
-	use MONKEY-SEE-NO-EVAL;
-	#note "generating code! (A.code=$Acode, B.code=$Bcode)";
-	my %instructions;
-	my @Abasis = $Acode.comb(/\d+/).map(*.Int);
-	my @Bbasis = $Bcode.comb(/\d+/).map(*.Int);
-	for ^@Abasis -> $i {
-	    for ^@Bbasis -> $j {
-		my $product = basis-product(@Abasis[$i], @Bbasis[$j]);
-		for <gp ip op> -> $op {
-		    for @($product{$op}) {
-			%instructions{$op}{.key} ~=
-			(.value == 1 ?? '+' !! '-')~
-			"\$x.reals[$i]*\$y.reals[$j]";
+sub generate-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
+    use nqp;
+    use MONKEY-SEE-NO-EVAL;
+    (state %){
+	nqp::sha1( "{$A.basis.join(',')} $op {$B.basis.join(',')}" ); 
+    } //= do {
+	(
+	    my @classif = gather
+	    for ^$A.basis -> $i {
+		for ^$B.basis -> $j {
+		    for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
+			die "unexpected value" unless .value == 1|-1;
+			take (.key) => 
+			(.value == 1 ?? '+' !! '-') ~
+			'$x.reals[' ~$i~ ']*$y.reals['~$j~']';
 		    }
 		}
+	    }.classify(*.key)
+	    .map({ (.key) => .value».value.join })
+	    .sort(*.key);
+	) ?? do {
+	    my $code = qq:to /STOP/;
+	    -> \$x, \$y \x7b
+		\$x.new:
+		    :basis[{@classif».key.join(',')}],
+		    :reals[{@classif».value.join(',')}]
+		;
+	    \x7d
+	    STOP
+	    if %*ENV<DEBUG> {
+		note "generated code for $op:";
+		note $code;
 	    }
+	    EVAL $code;
 	}
-	do for <gp ip op> -> $op {
-	    my @basis = sort %instructions{$op}.keys».Int;
-	    @basis ?? do {
-		my @reals = %instructions{$op}{@basis};
-		$op => EVAL qq:to /STOP/;
-		sub (\$x, \$y) \x7b
-		\$x.new(
-		    :basis[{@basis.join(',')}],
-		    :reals[
-			{@reals.join(",\n        ")}
-		    ]
-		).clean;
-		\x7d
-		STOP
-	    } !! ($op => -> $x, $ { $x.new(0) })
-	}.Hash;
+	!! -> $x, $ { $x.new(0) }
     }
 }
 
