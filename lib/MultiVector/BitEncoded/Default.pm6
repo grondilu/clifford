@@ -1,5 +1,5 @@
 use MultiVector::BitEncoded;
-use MultiVector::BitEncoded::BasisBlade;
+use BasisBlade;
 unit class MultiVector::BitEncoded::Default does MultiVector::BitEncoded;
 
 has UIntHash $.bitEncoding;
@@ -29,10 +29,12 @@ map -> &basis-blade-product {
 	    |do for @b -> $b {
 		&basis-blade-product($a, $b);
 	    }
-	}.map(&MultiVector::BitEncoded::BasisBlade::pop-from-diagonal-basis).flat.MixHash;
+	}.map(*.pop-from-diagonal-basis)
+	.flat
+	.map(*.pair)
+	.MixHash;
     }
 }, 
-# work around #128010
-{ MultiVector::BitEncoded::BasisBlade::geometric-product($^a, $^b) },
-{ MultiVector::BitEncoded::BasisBlade::inner-product($^a, $^b) },
-{ MultiVector::BitEncoded::BasisBlade::outer-product($^a, $^b) };
+{ $^a.geometric-product($^b) },
+{ $^a.inner-product($^b) },
+{ $^a.outer-product($^b) };

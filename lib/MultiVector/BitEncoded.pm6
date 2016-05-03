@@ -1,5 +1,5 @@
 use MultiVector;
-use MultiVector::BitEncoded::BasisBlade;
+use BasisBlade;
 unit role MultiVector::BitEncoded does MultiVector;
 
 method bitEncoding returns UIntHash {...}
@@ -15,7 +15,7 @@ multi method new(UIntHash $) {...}
 # With the requirement above, we can define a constructor
 # that takes a string representation of a basis blade.
 multi method new(Str $blade) {
-    self.new: MultiVector::BitEncoded::BasisBlade.new($blade).pair.MixHash
+    self.new: BasisBlade.new($blade).pair.MixHash
 }
 
 # Grade projection
@@ -25,20 +25,20 @@ multi method AT-POS(0) {
 multi method AT-POS(UInt $n where $n > 0) {
     self.new:
     self.pairs.grep(
-	{ MultiVector::BitEncoded::BasisBlade::grade(.key) == $n }
+	{ BasisBlade::grade(.key) == $n }
     ).MixHash
 }
 
 # list of non-vanishing grades
 method grades {
     squish sort
-    map &MultiVector::BitEncoded::BasisBlade::grade,
+    map &BasisBlade::grade,
     self.keys
 }
 
 method basis-blades {
     self.pairs.map:
-    { MultiVector::BitEncoded::BasisBlade.new: $_ }
+    { BasisBlade.new: $_ }
 }
 
 multi method gist(MultiVector::BitEncoded:D:) {

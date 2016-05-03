@@ -1,5 +1,5 @@
 use MultiVector::BitEncoded;
-use MultiVector::BitEncoded::BasisBlade;
+use BasisBlade;
 unit class MultiVector::BitEncoded::Optimized does MultiVector::BitEncoded;
 
 has UInt @.basis;
