@@ -59,7 +59,7 @@ sub basis-product(UInt $a, UInt $b, Product $op) {
             use MultiVector::BitEncoded::Default;
             MultiVector::BitEncoded::Default.new: $^x.MixHash;
         }, $a, $b;
-        $A."$op"($B).pairs;
+	$A."$op"($B).pairs;
     }
 }
 sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
@@ -82,8 +82,7 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
 	    }.classify(*.key)
 	    .map({ (.key) => .value».value.join })
 	    .sort(*.key);
-	) ?? do {
-	    my $code = qq:to /STOP/;
+	) ?? EVAL(qq:to /STOP/)
 	    -> \$x, \$y \x7b
 		\$x.new:
 		    :basis[{@classif».key.join(',')}],
@@ -91,12 +90,6 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
 		;
 	    \x7d
 	    STOP
-	    if %*ENV<DEBUG> {
-		note "generated code for $op:";
-		note $code;
-	    }
-	    EVAL $code;
-	}
 	!! -> $x, $ { $x.new(0) }
     }
 }
