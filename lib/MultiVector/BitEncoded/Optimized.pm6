@@ -73,30 +73,20 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
 		for ^$B.basis -> $j {
 		    for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
 			die "unexpected value" unless .value == 1|-1;
-			take (.key) => 
-			(
-			    .value == 1 ??
-			    -> $i, $j {
-				-> $x, $y { +$x.reals[$i]*$y.reals[$j] }
-			    }($i, $j)   !!
-			    -> $i, $j {
-				-> $x, $y { -$x.reals[$i]*$y.reals[$j] }
-			    }($i, $j)
-			    ;
-			)
+			take (.key) => ( :sign(.value), :$i, :$j ).Hash
 		    }
 		}
 	    }.classify(*.key)
-	    .map({
-		(.key) =>
-		reduce -> $a, $b { -> $x, $y { $a($x, $y) + $b($x, $y) } },
-		|.value».value
-	    })
+	    .map({ (.key) => .value».value })
 	    .sort(*.key);
 	) ?? -> $x, $y {
 	    $x.new:
 	    :basis[@classif».key],
-	    :reals[@classif».value».($x, $y)]
+	    :reals[
+		@classif».value.map({
+		    [+] .map({.<sign>*$x.reals[.<i>]*$y.reals[.<j>]});
+		})
+	    ]
 	} !! -> $x, $ { $x.new(0) }
     }
 }
