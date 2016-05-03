@@ -56,25 +56,35 @@ is orthogonal to both the Euclidean space and the anti-Euclidean space.
     say no*ni;              # -1+𝑜∧∞
     say (no*ni + ni*no)/2   # -1
 
-Grade projection
-----------------
+Operations
+----------
+
+### Grade projection
 
 The `AT-POS` method returns the grade projection:
 
     say (no + @e[1] + @e[0]*@e[1])[1];   # 𝑜+e1
 
-Operations
-----------
+### Derived products
 
 There are many multiplicative operators derived from the geometric product, but
-as of today the module only defines the outer product:
+as of today the module only defines two of them, the outer product and the
+inner product.  They are define by the operators `&infix:<∧>` and `&infix:<·>` respectively.
+
+They are both tighter than `&[*]`.
 
     say (@e[0] + @e[1] + @e[0]∧@e[2])∧@e[1];   # e0∧e1 - e0∧e1∧e2
-
-It is tighter than `&[*]`.
+    say (@e[1] + 2*@e[2])·@e[2];               # 2
 
 The symbol `∧` is the wedge symbol usually used for logical AND.
 It can be displayed in *Vim* with the digraph `AN`.
+
+The symbol `.` is the centered dot symbol.  It is also a default *Vim* digraph:
+`.M`.  There are several kinds of inner product, this one is David Hestenes'es version,
+sometimes called *left contraction*.
+
+
+### Involutions
 
 The module also implements the three involutions:
 
