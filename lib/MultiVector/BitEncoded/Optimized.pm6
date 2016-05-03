@@ -67,7 +67,6 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
     (state %){
 	nqp::sha1( "{$A.basis.join(',')} $op {$B.basis.join(',')}" ); 
     } //= do {
-	use MONKEY-SEE-NO-EVAL;
 	(
 	    my @classif = gather
 	    for ^$A.basis -> $i {
@@ -75,22 +74,30 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
 		    for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
 			die "unexpected value" unless .value == 1|-1;
 			take (.key) => 
-			(.value == 1 ?? '+' !! '-') ~
-			'$x.reals[' ~$i~ ']*$y.reals['~$j~']';
+			(
+			    .value == 1 ??
+			    -> $i, $j {
+				-> $x, $y { +$x.reals[$i]*$y.reals[$j] }
+			    }($i, $j)   !!
+			    -> $i, $j {
+				-> $x, $y { -$x.reals[$i]*$y.reals[$j] }
+			    }($i, $j)
+			    ;
+			)
 		    }
 		}
 	    }.classify(*.key)
-	    .map({ (.key) => .value».value.join })
+	    .map({
+		(.key) =>
+		reduce -> $a, $b { -> $x, $y { $a($x, $y) + $b($x, $y) } },
+		|.value».value
+	    })
 	    .sort(*.key);
-	) ?? EVAL(qq:to /STOP/)
-	    -> \$x, \$y \x7b
-		\$x.new:
-		    :basis[{@classif».key.join(',')}],
-		    :reals[{@classif».value.join(',')}]
-		;
-	    \x7d
-	    STOP
-	!! -> $x, $ { $x.new(0) }
+	) ?? -> $x, $y {
+	    $x.new:
+	    :basis[@classif».key],
+	    :reals[@classif».value».($x, $y)]
+	} !! -> $x, $ { $x.new(0) }
     }
 }
 
