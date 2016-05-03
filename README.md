@@ -129,8 +129,8 @@ it's not possible to precompute an infinity of things, the module starts from
 nothing and generates a product at runtime, every time it encounters a product
 type it has never seen before.
 
-To generate a function we simply generate the literal string that defines it in
-Perl 6 and we `EVAL` it.
+To generate a function, early versions of this module were simply generating the literal string that defines it in
+Perl 6 and use `EVAL` on it.  Current version uses Functional programming.
 
 External links
 --------
