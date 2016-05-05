@@ -71,8 +71,8 @@ There are several multiplicative operators derived from the geometric product.
 They are extensively discussed by Leo Dorst in his 2002 paper
 *the inner products of Geometric Algebra*.
 
-This module uses unicode symbols as infix operators, but a two-ASCII letters
-form is also available.
+This module uses unicode symbols as infix operators, but a ASCII method form is
+also available.
 
 | name              | infix notation  | method notation |
 |-------------------|-----------------|-----------------|
