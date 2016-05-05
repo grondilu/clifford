@@ -90,7 +90,9 @@ All symbols are available as Vim digraphs by default.
 
 Beware of the symbol used for the scalar product.  It is the asterisk operator
 (digraph `*-`), not the usual multiplication sign (`*`).  Here they are besides
-one an other: `∗*`.
+one an other: `∗*`.  Also the symbols for inner product ("centered dot") and
+dot product ("bullet operator", or "fat dot") look very similar in certain
+fonts, apparently.  
 
 ### Involutions
 
