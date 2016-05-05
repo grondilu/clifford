@@ -139,7 +139,21 @@ role InDiagonalBasis {
 	),
 	:in-diagonal-basis;
     }
+    method outer-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
+	$a.bit-encoding +& $b.bit-encoding ??
+	$a.new(0, :in-diagonal-basis) !!
+	$a.geometric-product($b);
+    }
     method inner-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
+	my $r = $a.geometric-product($b);
+	my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
+	if $ga|$gb == 0 or $gr !== abs($ga - $gb) {
+	    return $a.new(0, :in-diagonal-basis)
+	} else {
+	    return $r;
+	}
+    }
+    method left-contraction($a: InDiagonalBasis $b) returns InDiagonalBasis {
 	my $r = $a.geometric-product($b);
 	my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
 	if $ga > $gb or $gr !== $gb - $ga {
@@ -148,10 +162,22 @@ role InDiagonalBasis {
 	    return $r;
 	}
     }
-    method outer-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	$a.bit-encoding +& $b.bit-encoding ??
-	$a.new(0, :in-diagonal-basis) !!
-	$a.geometric-product($b);
+    method scalar-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
+	my $r = $a.geometric-product($b);
+	if $r.grade == 0 {
+	    return $r;
+	} else {
+	    return $a.new(0, :in-diagonal-basis);
+	}
+    }
+    method dot-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
+	my $r = $a.geometric-product($b);
+	my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
+	if $gr !== abs($gb - $ga) {
+	    return $a.new(0, :in-diagonal-basis);
+	} else {
+	    return $r;
+	}
     }
 }
 

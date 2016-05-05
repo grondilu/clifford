@@ -67,22 +67,30 @@ The `AT-POS` method returns the grade projection:
 
 ### Derived products
 
-There are many multiplicative operators derived from the geometric product, but
-as of today the module only defines two of them, the outer product and the
-inner product.  They are define by the operators `&infix:<∧>` and `&infix:<·>` respectively.
+There are several multiplicative operators derived from the geometric product.
+They are extensively discussed by Leo Dorst in his 2002 paper
+*the inner products of Geometric Algebra*.
 
-They are both tighter than `&[*]`.
+This module uses unicode symbols as infix operators, but a two-ASCII letters
+form is also available.
 
-    say (@e[0] + @e[1] + @e[0]∧@e[2])∧@e[1];   # e0∧e1 - e0∧e1∧e2
-    say (@e[1] + 2*@e[2])·@e[2];               # 2
+| name              | infix notation  | method notation |
+|--------------------------------------------------------
+| outer product     | $a ∧ $b         | $a.op($b)       |
+| inner product     | $a · $b         | $a.ip($b)       |
+| scalar product    | $a ∗ $b         | $a.sp($b)       |
+| commutator        | $a × $b         | $a.co($b)       |
+| left contraction  | $a ⌋ $b         | $a.lc($b)       |
+| right contraction | $a ⌊ $b         | $a.rc($b)       |
+| dot product       | $a ∙ $b         | $a.dp($b)       |
 
-The symbol `∧` is the wedge symbol usually used for logical AND.
-It can be displayed in *Vim* with the digraph `AN`.
+All those infix operators are tighter than `&infix:<*>`.
 
-The symbol `.` is the centered dot symbol.  It is also a default *Vim* digraph:
-`.M`.  There are several kinds of inner product, this one is David Hestenes'es version,
-sometimes called *left contraction*.
+All symbols are available as Vim digraphs by default.
 
+Beware of the symbol used for the scalar product.  It is the asterisk operator
+(digraph `*-`), not the usual multiplication sign (`*`).  Here they are besides
+one an other: `∗*`.
 
 ### Involutions
 
@@ -93,6 +101,11 @@ The module also implements the three involutions:
         say .involution;   # 1-e0+e0∧e1-e0∧e1∧e2
         say .conjugation;  # 1-e0-e0∧e1+e0∧e1∧e2
     }
+
+Here the involution called 'involution' is the so-called *main* involution.
+
+The module exports two postfix operators `&postfix:<~>` and `&postfix:<^>`
+respectively for the reversion and the main involution.
 
 Optimization
 ------------

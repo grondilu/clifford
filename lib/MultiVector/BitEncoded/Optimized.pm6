@@ -46,12 +46,15 @@ multi method add(Real $s) {
     self.new: (0 => $s, |self.pairs).MixHash;
 }
 
-my enum Product <gp ip op>;
+my enum Product <gp ip op sp lc dp>;
 multi method scale(Real $s) { self.new: :@!basis, :reals[@!reals X* $s] }
 
 method gp($A: ::?CLASS $B) { get-block($A, $B, gp)($A, $B) }
 method ip($A: ::?CLASS $B) { get-block($A, $B, ip)($A, $B) }
 method op($A: ::?CLASS $B) { get-block($A, $B, op)($A, $B) }
+method sp($A: ::?CLASS $B) { get-block($A, $B, sp)($A, $B) }
+method lc($A: ::?CLASS $B) { get-block($A, $B, lc)($A, $B) }
+method dp($A: ::?CLASS $B) { get-block($A, $B, dp)($A, $B) }
 
 sub basis-product(UInt $a, UInt $b, Product $op) {
     (state %){"$a $op $b"} //= do {

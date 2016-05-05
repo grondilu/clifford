@@ -50,9 +50,15 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
     $narrowed ~~ Real and $narrowed == $x;
 }
 
-# INNER PRODUCT
+# INVOLUTIONS
+sub postfix:<~>(MultiVector $A) returns MultiVector is export { $A.reversion }
+sub postfix:<^>(MultiVector $A) returns MultiVector is export { $A.involution }
+
+# DERIVED PRODUCTS
 sub infix:<·>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.ip($B) }
-
-# OUTER PRODUCT
 sub infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.op($B) }
-
+sub infix:<⌋>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.lc($B) }
+sub infix:<⌊>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.rc($B) }
+sub infix:<∗>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.sp($B) }
+sub infix:<×>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { 1/2*($A*$B - $B*$A) }
+sub infix:<∙>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.dp($B) }

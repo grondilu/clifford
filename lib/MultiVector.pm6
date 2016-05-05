@@ -47,21 +47,37 @@ multi method scale(0) returns MultiVector { self.new: 0 }
 multi method scale(1) returns MultiVector { self.clone }
 multi method scale(Real $) returns MultiVector {...}
 
-# geometric, inner and outer products pre-declarations
+# Derived products:
+# - gp: geometric product
+# - ip: inner product
+# - op: outer product
+# - sp: scalar product
+# - lc: left contraction
+# - rc: right contraction
+# - dp: dot product (a.k.a "fat" dot)
 method gp(MultiVector $) returns MultiVector {...};
 method ip(MultiVector $) returns MultiVector {...};
 method op(MultiVector $) returns MultiVector {...};
+method sp(MultiVector $) returns MultiVector {...};
+method lc(MultiVector $) returns MultiVector {...};
+method rc($a: MultiVector $b) returns MultiVector {
+    ($b.reversion.lc($a.reversion)).reversion
+}
+method dp(MultiVector $) returns MultiVector {...};
 
 # involutions
 method reversion returns MultiVector {
+    !self.grades ?? self.new(0) !!
     reduce { $^a.add($^b) },
     (self[$_].scale((-1)**($_*($_-1) div 2)) for self.grades)
 }
 method involution returns MultiVector {
+    !self.grades ?? self.new(0) !!
     reduce { $^a.add($^b) },
     (self[$_].scale((-1)**$_) for self.grades)
 }
 method conjugation returns MultiVector {
+    !self.grades ?? self.new(0) !!
     reduce { $^a.add($^b) },
     (self[$_].scale((-1)**($_*($_+1) div 2)) for self.grades)
 }
