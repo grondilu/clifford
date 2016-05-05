@@ -70,19 +70,18 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
     (state %){
 	nqp::sha1( "{$A.basis.join(',')} $op {$B.basis.join(',')}" ); 
     } //= do {
-	(
-	    my @classif = gather
-	    for ^$A.basis -> $i {
-		for ^$B.basis -> $j {
-		    for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
-			die "unexpected value" unless .value == 1|-1;
-			take (.key) => ( :sign(.value), :$i, :$j ).Hash
-		    }
+	my @classif = gather
+	for ^$A.basis -> $i {
+	    for ^$B.basis -> $j {
+		for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
+		    die "unexpected value" unless .value == 1|-1;
+		    take (.key) => ( :sign(.value), :$i, :$j ).Hash
 		}
-	    }.classify(*.key)
-	    .map({ (.key) => .value».value })
-	    .sort(*.key);
-	) ?? -> $x, $y {
+	    }
+	}.classify(*.key)
+	.map({ (.key) => .value».value })
+	.sort(*.key);
+	@classif ?? -> $x, $y {
 	    $x.new:
 	    :basis[@classif».key],
 	    :reals[
