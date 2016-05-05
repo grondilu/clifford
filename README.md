@@ -145,7 +145,7 @@ nothing and generates a product at runtime, every time it encounters a product
 type it has never seen before.
 
 To generate a function, early versions of this module were simply generating the literal string that defines it in
-Perl 6 and use `EVAL` on it.  Current version uses Functional programming.
+Perl 6 and use `EVAL` on it.  Current version uses a closure.
 
 External links
 --------
