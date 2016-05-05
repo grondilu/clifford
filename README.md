@@ -74,8 +74,6 @@ They are extensively discussed by Leo Dorst in his 2002 paper
 This module uses unicode symbols as infix operators, but a two-ASCII letters
 form is also available.
 
-## What you can find here
-
 | name              | infix notation  | method notation |
 |-------------------|-----------------|-----------------|
 | outer product     | $a ∧ $b         | $a.op($b)       |
