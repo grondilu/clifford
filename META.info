@@ -11,7 +11,7 @@
         "BasisBlade":                          "lib/BasisBlade.pm6",
         "MultiVector::BitEncoded":             "lib/MultiVector/BitEncoded.pm6",
         "MultiVector::BitEncoded::Default":    "lib/MultiVector/BitEncoded/Default.pm6",
-        "MultiVector::BitEncoded::Optimized":  "lib/MultiVector/BitEncoded/Optimized.pm6",
+        "MultiVector::BitEncoded::Optimized":  "lib/MultiVector/BitEncoded/Optimized.pm6"
     },
     "authors" : [ "Lucien Grondin" ],
     "depends" : [ ],
