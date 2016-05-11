@@ -81,15 +81,19 @@ sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
 	}.classify(*.key)
 	.map({ (.key) => .value».value })
 	.sort(*.key);
-	@classif ?? -> $x, $y {
-	    $x.new:
-	    :basis[@classif».key],
-	    :reals[
-		@classif».value.map({
-		    [+] .map({.<sign>*$x.reals[.<i>]*$y.reals[.<j>]});
-		})
-	    ]
-	} !! -> $x, $ { $x.new(0) }
+	if @classif {
+	    my @keys = @classif».key;
+	    my @values = @classif».value;
+	    -> $x, $y {
+		$x.new:
+		:basis[@keys],
+		:reals[
+		    @values.map({
+			[+] .map({.<sign>*$x.reals[.<i>]*$y.reals[.<j>]});
+		    })
+		]
+	    }
+	} else { -> $x, $y { $x.new(0) } }
     }
 }
 
