@@ -141,7 +141,7 @@ calculated by a function such as:
 This would be very efficient but we would have to use a different function for
 all possible kinds of products, and there are infinitely many of them.  Since
 it's not possible to precompute an infinity of things, the module starts from
-nothing and generates a product at runtime, every time it encounters a product
+nothing and generates a function at runtime, every time it encounters a product
 type it has never seen before.
 
 To generate a function, early versions of this module were simply generating the literal string that defines it in
