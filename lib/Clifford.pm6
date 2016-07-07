@@ -42,6 +42,7 @@ multi infix:<**>(MultiVector $A, UInt $n where $n %% 2) returns MultiVector is e
 multi infix:<**>(MultiVector $A, UInt $n) returns MultiVector is export {
     return $A * ($A ** ($n div 2)) ** 2;
 }
+multi infix:<**>(Vector $V, 2) returns Real is export { ($V*$V).narrow }
 
 # COMPARISON
 multi infix:<==>(MultiVector $A, MultiVector $B) returns Bool is export { $A - $B == 0 }
