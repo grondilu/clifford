@@ -45,23 +45,23 @@ multi method gist($self where $self !~~ InDiagonalBasis:) {
     my int $n = 0;
     return $!bit-encoding == 0 ?? ~$!weight !!
     (
-	$!weight == 1 ?? '' !!
-	$!weight == -1 ?? '-' !!
-	"$!weight*"
+        $!weight == 1 ?? '' !!
+        $!weight == -1 ?? '-' !!
+        "$!weight*"
     ) ~ join '∧',
     gather {
-	take '𝑜' if $b +& origin;
-	take '∞' if $b +& infinity;
-	$b +>= 2;
-	while $b > 0 {
-	    $n++;
-	    if $b +& 1 {
-		take ($n % 2) ??
-		"e{($n-1) div 2}" !!
-		"ē{($n div 2)-1}"
-	    }
-	    $b +>= 1;
-	}
+        take '𝑜' if $b +& origin;
+        take '∞' if $b +& infinity;
+        $b +>= 2;
+        while $b > 0 {
+            $n++;
+            if $b +& 1 {
+                take ($n % 2) ??
+                "e{($n-1) div 2}" !!
+                "ē{($n div 2)-1}"
+            }
+            $b +>= 1;
+        }
     }
 }
 
@@ -96,88 +96,88 @@ method involution returns ::?CLASS {
 
 method push-to-diagonal-basis($self where $self !~~ InDiagonalBasis:) {
     if $!bit-encoding +& oriinf == 0|oriinf {
-	return self.new(:$!bit-encoding, :$!weight, :in-diagonal-basis);
+        return self.new(:$!bit-encoding, :$!weight, :in-diagonal-basis);
     } elsif $!bit-encoding +& origin {
-	my $b = $!bit-encoding +^ origin;
-	return
-	self.new(:bit-encoding($b +^ eplus),  :weight($!weight/2), :in-diagonal-basis),
-	self.new(:bit-encoding($b +^ eminus), :weight($!weight/2), :in-diagonal-basis);
+        my $b = $!bit-encoding +^ origin;
+        return
+        self.new(:bit-encoding($b +^ eplus),  :weight($!weight/2), :in-diagonal-basis),
+        self.new(:bit-encoding($b +^ eminus), :weight($!weight/2), :in-diagonal-basis);
     } elsif $!bit-encoding +& infinity {
-	my $b = $!bit-encoding +^ infinity;
-	return
-	self.new(:bit-encoding($b +^ eplus),  :weight(-$!weight), :in-diagonal-basis),
-	self.new(:bit-encoding($b +^ eminus), :weight(+$!weight), :in-diagonal-basis);
+        my $b = $!bit-encoding +^ infinity;
+        return
+        self.new(:bit-encoding($b +^ eplus),  :weight(-$!weight), :in-diagonal-basis),
+        self.new(:bit-encoding($b +^ eminus), :weight(+$!weight), :in-diagonal-basis);
     } else { die "unexpected case" }
 }
 
 role InDiagonalBasis {
     method pop-from-diagonal-basis {
-	if self.bit-encoding +& eplane == 0|eplane {
-	    return self.new(:bit-encoding(self.bit-encoding), :weight(self.weight));
-	} elsif self.bit-encoding +& eplus {
-	    my $b = self.bit-encoding +^ eplus;
-	    return
-	    self.new(:bit-encoding($b +^ origin),  :weight(self.weight)),
-	    self.new(:bit-encoding($b +^ infinity), :weight(-self.weight/2));
-	} elsif self.bit-encoding +& eminus {
-	    my $b = self.bit-encoding +^ eminus;
-	    return
-	    self.new(:bit-encoding($b +^ origin),  :weight(self.weight)),
-	    self.new(:bit-encoding($b +^ infinity), :weight(self.weight/2));
-	} else { die "unexpected case" }
+        if self.bit-encoding +& eplane == 0|eplane {
+            return self.new(:bit-encoding(self.bit-encoding), :weight(self.weight));
+        } elsif self.bit-encoding +& eplus {
+            my $b = self.bit-encoding +^ eplus;
+            return
+            self.new(:bit-encoding($b +^ origin),  :weight(self.weight)),
+            self.new(:bit-encoding($b +^ infinity), :weight(-self.weight/2));
+        } elsif self.bit-encoding +& eminus {
+            my $b = self.bit-encoding +^ eminus;
+            return
+            self.new(:bit-encoding($b +^ origin),  :weight(self.weight)),
+            self.new(:bit-encoding($b +^ infinity), :weight(self.weight/2));
+        } else { die "unexpected case" }
     }
     method geometric-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	$a.new:
-	:bit-encoding($a.bit-encoding +^ $b.bit-encoding),
-	:weight(
-	    [*] $a.weight, $b.weight,
-	    sign($a.bit-encoding, $b.bit-encoding),
-	    |grep +*, (
-		|(1, -1) xx * Z*
-		($a.bit-encoding +& $b.bit-encoding).polymod(2 xx *)
-	    )
-	),
-	:in-diagonal-basis;
+        $a.new:
+        :bit-encoding($a.bit-encoding +^ $b.bit-encoding),
+        :weight(
+            [*] $a.weight, $b.weight,
+            sign($a.bit-encoding, $b.bit-encoding),
+            |grep +*, (
+                |(1, -1) xx * Z*
+                ($a.bit-encoding +& $b.bit-encoding).polymod(2 xx *)
+            )
+        ),
+        :in-diagonal-basis;
     }
     method outer-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	$a.bit-encoding +& $b.bit-encoding ??
-	$a.new(0, :in-diagonal-basis) !!
-	$a.geometric-product($b);
+        $a.bit-encoding +& $b.bit-encoding ??
+        $a.new(0, :in-diagonal-basis) !!
+        $a.geometric-product($b);
     }
     method inner-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	my $r = $a.geometric-product($b);
-	my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
-	if $ga|$gb == 0 or $gr !== abs($ga - $gb) {
-	    return $a.new(0, :in-diagonal-basis)
-	} else {
-	    return $r;
-	}
+        my $r = $a.geometric-product($b);
+        my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
+        if $ga|$gb == 0 or $gr !== abs($ga - $gb) {
+            return $a.new(0, :in-diagonal-basis)
+        } else {
+            return $r;
+        }
     }
     method left-contraction($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	my $r = $a.geometric-product($b);
-	my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
-	if $ga > $gb or $gr !== $gb - $ga {
-	    return $a.new(0, :in-diagonal-basis);
-	} else {
-	    return $r;
-	}
+        my $r = $a.geometric-product($b);
+        my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
+        if $ga > $gb or $gr !== $gb - $ga {
+            return $a.new(0, :in-diagonal-basis);
+        } else {
+            return $r;
+        }
     }
     method scalar-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	my $r = $a.geometric-product($b);
-	if $r.grade == 0 {
-	    return $r;
-	} else {
-	    return $a.new(0, :in-diagonal-basis);
-	}
+        my $r = $a.geometric-product($b);
+        if $r.grade == 0 {
+            return $r;
+        } else {
+            return $a.new(0, :in-diagonal-basis);
+        }
     }
     method dot-product($a: InDiagonalBasis $b) returns InDiagonalBasis {
-	my $r = $a.geometric-product($b);
-	my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
-	if $gr !== abs($gb - $ga) {
-	    return $a.new(0, :in-diagonal-basis);
-	} else {
-	    return $r;
-	}
+        my $r = $a.geometric-product($b);
+        my ($ga, $gb, $gr) = map { grade(.bit-encoding) }, $a, $b, $r;
+        if $gr !== abs($gb - $ga) {
+            return $a.new(0, :in-diagonal-basis);
+        } else {
+            return $r;
+        }
     }
 }
 
