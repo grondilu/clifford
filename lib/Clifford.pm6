@@ -10,10 +10,6 @@ our @ē is export = map { MV.new("ē$_") }, ^Inf;
 our constant no is export = MV.new("no");
 our constant ni is export = MV.new("ni");
 
-sub optimize(MultiVector::BitEncoded::Default $M) returns MultiVector::BitEncoded::Optimized is export {
-    MultiVector::BitEncoded::Optimized.new: $M.bitEncoding
-}
-
 # ADDITION
 multi infix:<+>(MultiVector $A, Real $x) returns MultiVector is export { $A.add($x) }
 multi infix:<+>(Real $x, MultiVector $B) returns MultiVector is export { $B.add($x) }
