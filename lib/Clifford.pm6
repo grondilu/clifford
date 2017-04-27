@@ -1,6 +1,5 @@
 unit module Clifford;
 use MultiVector;
-use MultiVector::BitEncoded::Default;
 use MultiVector::BitEncoded::Optimized;
 subset Vector of MultiVector where .grades.all == 1;
 
