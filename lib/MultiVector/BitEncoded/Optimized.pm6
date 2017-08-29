@@ -62,38 +62,38 @@ sub basis-product(UInt $a, UInt $b, Product $op) {
             use MultiVector::BitEncoded::Default;
             MultiVector::BitEncoded::Default.new: $^x.MixHash;
         }, $a, $b;
-	$A."$op"($B).pairs;
+        $A."$op"($B).pairs;
     }
 }
 sub get-block(::?CLASS $A, ::?CLASS $B, Product $op) returns Block {
     use nqp;
     (state %){
-	nqp::sha1( "{$A.basis.join(',')} $op {$B.basis.join(',')}" ); 
+        nqp::sha1( "{$A.basis.join(',')} $op {$B.basis.join(',')}" );
     } //= do {
-	my @classif = gather
-	for ^$A.basis -> $i {
-	    for ^$B.basis -> $j {
-		for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
-		    die "unexpected value" unless .value == 1|-1;
-		    take (.key) => ( :sign(.value), :$i, :$j ).Hash
-		}
-	    }
-	}.classify(*.key)
-	.map({ (.key) => .value».value })
-	.sort(*.key);
-	if @classif {
-	    my @keys = @classif».key;
-	    my @values = @classif».value;
-	    -> $x, $y {
-		$x.new:
-		:basis[@keys],
-		:reals[
-		    @values.map({
-			[+] .map({.<sign>*$x.reals[.<i>]*$y.reals[.<j>]});
-		    })
-		]
-	    }
-	} else { -> $x, $y { $x.new(0) } }
+        my @classif = gather
+        for ^$A.basis -> $i {
+            for ^$B.basis -> $j {
+                for @(basis-product($A.basis[$i], $B.basis[$j], $op)) {
+                    die "unexpected value" unless .value == 1|-1;
+                    take (.key) => ( :sign(.value), :$i, :$j ).Hash
+                }
+            }
+        }.classify(*.key)
+        .map({ (.key) => .value».value })
+        .sort(*.key);
+        if @classif {
+            my @keys = @classif».key;
+            my @values = @classif».value;
+            -> $x, $y {
+                $x.new:
+                :basis[@keys],
+                :reals[
+                    @values.map({
+                        [+] .map({.<sign>*$x.reals[.<i>]*$y.reals[.<j>]});
+                    })
+                ]
+            }
+        } else { -> $x, $y { $x.new(0) } }
     }
 }
 
