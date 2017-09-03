@@ -76,13 +76,13 @@ also available.
 
 | name              |digraph| infix notation  | method notation |
 |-------------------|-------|-----------------|-----------------|
-| outer product     | AN    | `$a ∧ $b`       | `$a.op($b)`     |
-| inner product     | .M    | `$a · $b`       | `$a.ip($b)`     |
-| scalar product    |       | `$a ∗ $b`       | `$a.sp($b)`     |
-| commutator        | *X    | `$a × $b`       | `$a.co($b)`     |
-| left contraction  | 7>    | `$a ⌋ $b`       | `$a.lc($b)`     |
-| right contraction | 7<    | `$a ⌊ $b`       | `$a.rc($b)`     |
-| dot product       | Sb    | `$a ∙ $b`       | `$a.dp($b)`     |
+| outer product     | `AN`  | `$a ∧ $b`       | `$a.op($b)`     |
+| inner product     | `.M`  | `$a · $b`       | `$a.ip($b)`     |
+| scalar product    | `*-`  | `$a ∗ $b`       | `$a.sp($b)`     |
+| commutator        | `*X`  | `$a × $b`       | `$a.co($b)`     |
+| left contraction  | `7>`  | `$a ⌋ $b`       | `$a.lc($b)`     |
+| right contraction | `7<`  | `$a ⌊ $b`       | `$a.rc($b)`     |
+| dot product       | `Sb`  | `$a ∙ $b`       | `$a.dp($b)`     |
 
 All those infix operators are tighter than `&infix:<*>`.
 
