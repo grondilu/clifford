@@ -74,15 +74,15 @@ They are extensively discussed by Leo Dorst in his 2002 paper
 This module uses unicode symbols as infix operators, but a ASCII method form is
 also available.
 
-| name              | infix notation  | method notation |
-|-------------------|-----------------|-----------------|
-| outer product     | `$a ∧ $b`       | `$a.op($b)`     |
-| inner product     | `$a · $b`       | `$a.ip($b)`     |
-| scalar product    | `$a ∗ $b`       | `$a.sp($b)`     |
-| commutator        | `$a × $b`       | `$a.co($b)`     |
-| left contraction  | `$a ⌋ $b`       | `$a.lc($b)`     |
-| right contraction | `$a ⌊ $b`       | `$a.rc($b)`     |
-| dot product       | `$a ∙ $b`       | `$a.dp($b)`     |
+| name              |digraph| infix notation  | method notation |
+|-------------------|-------|-----------------|-----------------|
+| outer product     | AN    | `$a ∧ $b`       | `$a.op($b)`     |
+| inner product     | .M    | `$a · $b`       | `$a.ip($b)`     |
+| scalar product    |       | `$a ∗ $b`       | `$a.sp($b)`     |
+| commutator        | *X    | `$a × $b`       | `$a.co($b)`     |
+| left contraction  | 7>    | `$a ⌋ $b`       | `$a.lc($b)`     |
+| right contraction | 7<    | `$a ⌊ $b`       | `$a.rc($b)`     |
+| dot product       | Sb    | `$a ∙ $b`       | `$a.dp($b)`     |
 
 All those infix operators are tighter than `&infix:<*>`.
 
@@ -92,7 +92,7 @@ Beware of the symbol used for the scalar product.  It is the asterisk operator
 (digraph `*-`), not the usual multiplication sign (`*`).  Here they are besides
 one an other: `∗*`.  Also the symbols for inner product ("centered dot") and
 dot product ("bullet operator", or "fat dot") look very similar in certain
-fonts, apparently.  
+fonts, apparently.
 
 ### Involutions
 
@@ -121,7 +121,7 @@ two vectors `X = x1*e1 + x2*e2 + x3*e3` and `Y = y1*e1 + y2*e2 + y3*e3`:
           (x1*y2-x2*y1)*e1∧e2 +
           (x2*y3-x3*y2)*e2∧e3 +
           (x3*y1-x1*y3)*e3∧e1
-     
+
 This multivector is a linear combination of the unit scalar and the basis
 bivectors `e1∧e2`, `e2∧e3` and `e3∧e1`.  It would have been possible to know
 that beforehand by taking all possible products from `e1`, `e2` and `e3` and
