@@ -122,7 +122,6 @@ class Parser {
                 factor.divide(this.convertToFraction(devfactor))
             );
         } else if (this.done()) {
-            console.log("done!");
             return factor;
         } else {
             //a missing operator between terms is treated like a multiplier
