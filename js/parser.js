@@ -22,26 +22,12 @@
  **/
 
 let Lexer            = require('./lexer'),
-
+    Fraction         = require('./fractions'),
     $tokens          = require('./tokens'),
-    LiteralNumber    = $tokens.LiteralNumber,
-    Addition         = $tokens.Addition,
-    Subtraction      = $tokens.Subtraction,
-    Multiplication   = $tokens.Multiplication,
-    Division         = $tokens.Division,
-    Exponentiation   = $tokens.Exponentiation,
-    LeftParenthesis  = $tokens.LeftParenthesis,
-    RightParenthesis = $tokens.RightParenthesis,
-    Identifier       = $tokens.Identifier,
-
     $expressions     = require('./expressions'),
-    Expression       = $expressions.Expression,
-
     $helper          = require('./helper'),
-    isInt            = $helper.isInt,
-
-    Fraction         = require('./fractions')
-
+    Expression       = $expressions.Expression,
+    isInt            = $helper.isInt
 ;
 
 class Parser {
@@ -64,18 +50,18 @@ class Parser {
     parseExpr() { return this.parseExprRest(this.parseTerm()); }
     parseTerm() { return this.parseTermRest(this.parseFactor()); }
     parseFactor() {
-        if (this.token instanceof LiteralNumber) {
+        if (this.token instanceof $tokens.LiteralNumber) {
             let num = this.parseNumber();
             this.update();
             return num;
-        } else if (this.token instanceof Identifier) {
+        } else if (this.token instanceof $tokens.Identifier) {
             let identifier = new Expression(this.token.name);
             this.update();
             return identifier;
-        } else if (this.token instanceof LeftParenthesis) {
+        } else if (this.token instanceof $tokens.LeftParenthesis) {
             this.update();
             let expr = this.parseExpr();
-            if (this.token instanceof RightParenthesis) {
+            if (this.token instanceof $tokens.RightParenthesis) {
                 this.update();
                 return expr;
             } else {
@@ -102,12 +88,12 @@ class Parser {
         }
     }
     parseExprRest(term) {
-        if (this.token instanceof Addition) {
+        if (this.token instanceof $tokens.Addition) {
             this.update();
             let plusterm = this.parseTerm();
             if(term === undefined || plusterm === undefined) throw new SyntaxError('Missing operand');
             return this.parseExprRest(term.add(plusterm));
-        } else if (this.token instanceof Subtraction) {
+        } else if (this.token instanceof $tokens.Subtraction) {
             this.update();
             let minusterm = this.parseTerm();
             //This case is entered when a negative number is parsed e.g. x = -4
@@ -121,13 +107,13 @@ class Parser {
         }
     }
     parseTermRest(factor) {
-        if (this.token instanceof Multiplication) {
+        if (this.token instanceof $tokens.Multiplication) {
             this.update();
             let mulfactor = this.parseFactor(),
                 termRest  = this.parseTermRest(mulfactor),
                 product   = factor.multiply(termRest);
             return product;
-        } else if (this.token instanceof Exponentiation) {
+        } else if (this.token instanceof $tokens.Exponentiation) {
             this.update();
             let powfactor = this.parseFactor();
             //WORKAROUND: algebra.js only allows integers and fractions for
@@ -135,7 +121,7 @@ class Parser {
             return this.parseTermRest(
                 factor.pow(parseInt(powfactor.toString()))
             );
-        } else if (this.token instanceof Division) {
+        } else if (this.token instanceof $tokens.Division) {
             this.update();
             let devfactor = this.parseFactor();
             //WORKAROUND: algebra.js only allows integers and fractions for division
