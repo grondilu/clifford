@@ -1138,5 +1138,5 @@ var parser = new Parser();
 parser.input = "3.14*(foo + x∧y)";
 // for (let token of parser.tokens) { console.log(token); }
 parser.update();
-console.log(parser.parseNumber());
+console.log(parser.parseFactor());
 
