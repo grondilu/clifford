@@ -1,6 +1,21 @@
+const examples = [
+    '1',
+    '3.14',
+    '-1',
+    'a',
+    'foo',
+    'a + b',
+    'x+y',
+    'a*(b+c)',
+    '2/3',
+    '2/7 + x**2/2',
+    '(a - b)(a + b)'
+];
 let Parser = require('./parser');
 
 let parser = new Parser();
 
-console.log(parser.parse('(a-b)**2').toString());
+for (let example of examples) {
+    console.log(parser.parse(example).toString());
+}
 
