@@ -49,6 +49,7 @@ const IDENTIFIER = Symbol('identifier');
  *
  */
 class Token { constructor(pos) { this.pos = pos; } }
+class Epsilon extends Token {}
 class Identifier extends Token {
     constructor(pos, name) { super(pos); this.name = name; }
 }
@@ -60,16 +61,23 @@ class Parenthesis extends Token { constructor(pos) { super(pos); } }
 class LeftParenthesis  extends Parenthesis { constructor(pos) { super(pos); } }
 class RightParenthesis extends Parenthesis { constructor(pos) { super(pos); } }
 
-class Operator extends Token { constructor(pos) { super(pos); } }
+class Operator extends Token {
+    constructor(pos) { super(pos); }
+    get size() { 1 }
+}
 class Addition extends Operator { constructor(pos) { super(pos); } }
 class Subtraction extends Operator { constructor(pos) { super(pos); } }
 class Multiplication extends Operator { constructor(pos) { super(pos); } }
 class Division extends Operator { constructor(pos) { super(pos); } }
-class Exponentiation extends Operator { constructor(pos) { super(pos); } }
+class Exponentiation extends Operator {
+    constructor(pos) { super(pos); }
+
+    // exponentiation is '**', so two characters instead of 1
+    get size() { 2 }
+}
 class OuterProduct extends Operator { constructor(pos) { super(pos); } }
 class InnerProduct extends Operator { constructor(pos) { super(pos); } }
 class Equality extends Operator { constructor(pos) { super(pos); } }
-
 
 class Lexer {
     constructor() {
@@ -222,39 +230,21 @@ class Parser {
 
     constructor() { this.lexer = new Lexer(); }
     set input(input) { this.lexer.input = input; }
-    parse() { this.tokens = this.lexer.tokens(); }
+    parse() {
+        this.tokens = this.lexer.tokens();
+    }
     update() { this.token_iteration = this.tokens.next(); }
 
-    match(symbol) {
-        if (this.token_iteration.done) { return symbol === ε; }
-        let token = this.token_iteration.value;
-        switch (symbol) {
-            case PLUS:
-                return (token instanceof Operator) && (token.symbol === PLUS);
-            case MINUS:
-                return (token instanceof Operator) && (token.symbol === MINUS);
-            case MULT:
-                return (token instanceof Operator) && (token.symbol === MULT);
-            case POWER:
-                return (token instanceof Operator) && (token.symbol === POWER);
-            case WEDGE:
-                return (token instanceof Operator) && (token.symbol === WEDGE);
-            case DIVIDE:
-                return (token instanceof Operator) && (token.symbol === DIVIDE);
-            case EQUALS:
-                return (token instanceof Operator) && (token.symbol === EQUALS);
-            case LPAREN:
-                return (token instanceof Parenthesis) && (token.symbol === LPAREN);
-            case RPAREN:
-                return (token instanceof Parenthesis) && (token.symbol === RPAREN);
-            case NUMBER:
-                return token instanceof LiteralNumber;
-            case IDENTIFIER:
-                return token instanceof Identifier;
-            default:
-                return false;
+    match(token_class) {
+        // dummy instance just for type checking
+        let dummy = new token_class();
+        if (!(dummy instanceof Token)) {
+            throw new TypeError("Token class was expected");
+        } else if (this.token_iteration.done) {
+            return dummy instanceof Epsilon;
+        } else {
+            return this.token_iteration.value instanceof token_class;
         }
-
     }
 
     parseExpr() { return this.parseExprRest(this.parseTerm); }
@@ -1126,7 +1116,6 @@ class Fraction {
 var parser = new Parser();
 parser.input = "3.14*(foo + x∧y)";
 parser.parse();
-for (let tok of parser.tokens) { console.log(tok); }
+parser.update();
+console.log(parser.match(LeftParenthesis));
 
-class Foo {}
-if (Foo) { console.log("true!"); }
