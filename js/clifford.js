@@ -52,6 +52,7 @@ class Token { constructor(pos) { this.pos = pos; } }
 class Epsilon extends Token {}
 class Identifier extends Token {
     constructor(pos, name) { super(pos); this.name = name; }
+    toString() { return this.name; }
 }
 class LiteralNumber extends Token {
     constructor(pos, string) { super(pos); this.string = string; }
@@ -229,17 +230,21 @@ class Lexer {
 class Parser {
 
     constructor() { this.lexer = new Lexer(); }
-    set input(input) { this.lexer.input = input; }
-    parse() {
+    set input(input) {
+        this.lexer.input = input;
         this.tokens = this.lexer.tokens();
+        this.token_iteration = null;
     }
     update() { this.token_iteration = this.tokens.next(); }
 
     match(token_class) {
         // dummy instance just for type checking
         let dummy = new token_class();
+
         if (!(dummy instanceof Token)) {
             throw new TypeError("Token class was expected");
+        } else if (!this.token_iteration) {
+            throw new Error("parser is not ready");
         } else if (this.token_iteration.done) {
             return dummy instanceof Epsilon;
         } else {
@@ -250,14 +255,30 @@ class Parser {
     parseExpr() { return this.parseExprRest(this.parseTerm); }
     parseTerm() { return this.parseTermRest(this.parseFactor()); }
     parseFactor() {
-        if (this.match(NUMBER)) {
-            var num = this.parseNumber();
-            this.update();
-            return num;
-        } else if (this.match(IDENTIFIER)) {
-            var id = new Expression(this.token_iteration.value.string);
-            this.update();
-            return id;
+        if (this.match(LiteralNumber)) {
+            return this.parseNumber();
+        } else if (this.match(Identifier)) {
+            return new Expression(this.token_iteration.value.name);
+        }
+        this.update();
+    }
+    parseNumber() {
+        let token = this.token_iteration.value,
+            intValue = parseInt(token.string);
+        //Integer conversion
+        if (intValue == token.string) {
+            return new Expression(intValue);      
+        } else {
+            //Split the decimal number to integer and decimal parts
+            let splits = token.string.split('.');
+            //count the digits of the decimal part
+            let decimals = splits[1].length;
+            //determine the multiplication factor
+            let factor = Math.pow(10,decimals);
+            let float_op = parseFloat(token.string);
+            //multiply the float with the factor and divide it again afterwards 
+            //to create a valid expression object
+            return new Expression(parseInt(float_op * factor)).divide(factor);
         }
     }
 }
@@ -1115,7 +1136,7 @@ class Fraction {
 
 var parser = new Parser();
 parser.input = "3.14*(foo + x∧y)";
-parser.parse();
+// for (let token of parser.tokens) { console.log(token); }
 parser.update();
-console.log(parser.match(LeftParenthesis));
+console.log(parser.parseNumber());
 
