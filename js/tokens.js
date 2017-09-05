@@ -1,7 +1,6 @@
 'use strict';
 
 class Token { constructor(pos) { this.pos = pos; } }
-class Epsilon extends Token {}
 class Identifier extends Token {
     constructor(pos, name) { super(pos); this.name = name; }
     toString() { return this.name; }
@@ -45,7 +44,7 @@ const optable = {
 module.exports = {
     optable,
     Token, Operator, Parenthesis,
-    LiteralNumber, Epsilon,
+    LiteralNumber,
     Addition, Subtraction,
     Multiplication, Division,
     Exponentiation,
