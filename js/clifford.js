@@ -21,16 +21,6 @@ function round(decimal, places) {
  * some symbolic names
  *
  */
-const PLUS   = Symbol('addition');
-const MINUS  = Symbol('substraction/negation');
-const MULT   = Symbol('multiplication');
-const DIVIDE = Symbol('division');
-const POWER  = Symbol('exponentiation');
-const WEDGE  = Symbol('outer product');
-const CDOT   = Symbol('inner product');
-const LPAREN = Symbol('left parenthesis');
-const RPAREN = Symbol('rigtht parenthesis');
-const EQUALS = Symbol('equality/affectation');
 
 const _                    = Symbol("underscore");
 const _skipnontokens       = Symbol("skip non-tokens");
@@ -41,8 +31,6 @@ const _process_operator    = Symbol("process operator");
 const _process_identifier  = Symbol("process identifier");
 
 const ε          = Symbol('epsilon');
-const NUMBER     = Symbol('number');
-const IDENTIFIER = Symbol('identifier');
 
 /*
  * Token class and its children
@@ -233,52 +221,114 @@ class Parser {
     set input(input) {
         this.lexer.input = input;
         this.tokens = this.lexer.tokens();
-        this.token_iteration = null;
+        this._token_iteration = null;
     }
-    update() { this.token_iteration = this.tokens.next(); }
+    update() { this._token_iteration = this.tokens.next(); }
+    get token() { return this._token_iteration.value; }
 
-    match(token_class) {
-        // dummy instance just for type checking
-        let dummy = new token_class();
-
-        if (!(dummy instanceof Token)) {
-            throw new TypeError("Token class was expected");
-        } else if (!this.token_iteration) {
-            throw new Error("parser is not ready");
-        } else if (this.token_iteration.done) {
-            return dummy instanceof Epsilon;
-        } else {
-            return this.token_iteration.value instanceof token_class;
-        }
-    }
-
-    parseExpr() { return this.parseExprRest(this.parseTerm); }
+    parse()     { this.update(); return this.parseExpr(); }
+    parseExpr() { return this.parseExprRest(this.parseTerm()); }
     parseTerm() { return this.parseTermRest(this.parseFactor()); }
     parseFactor() {
-        if (this.match(LiteralNumber)) {
-            return this.parseNumber();
-        } else if (this.match(Identifier)) {
-            return new Expression(this.token_iteration.value.name);
-        }
-        this.update();
+        if (this.token instanceof LiteralNumber) {
+            let num = this.parseNumber();
+            this.update();
+            return num;
+        } else if (this.token instanceof Identifier) {
+            let identifier = new Expression(this.token.name);
+            this.update();
+            return identifier;
+        } else if (this.token instanceof LeftParenthesis) {
+            this.update();
+            let expr = this.parseExpr();
+            if (this.token instanceof RightParenthesis) {
+                this.update();
+                return expr;
+            } else {
+                throw new SyntaxError('Unbalanced Parenthesis');
+            }
+        } else { return undefined; }
     }
     parseNumber() {
-        let token = this.token_iteration.value,
-            intValue = parseInt(token.string);
+        let intValue = parseInt(this.token.string);
         //Integer conversion
-        if (intValue == token.string) {
+        if (intValue == this.token.string) {
             return new Expression(intValue);      
         } else {
             //Split the decimal number to integer and decimal parts
-            let splits = token.string.split('.');
+            let splits = this.token.string.split('.');
             //count the digits of the decimal part
             let decimals = splits[1].length;
             //determine the multiplication factor
             let factor = Math.pow(10,decimals);
-            let float_op = parseFloat(token.string);
+            let float_op = parseFloat(this.token.string);
             //multiply the float with the factor and divide it again afterwards 
             //to create a valid expression object
             return new Expression(parseInt(float_op * factor)).divide(factor);
+        }
+    }
+    parseExprRest(term) {
+        if (this.token instanceof Addition) {
+            this.update();
+            let plusterm = this.parseTerm();
+            if(term === undefined || plusterm === undefined) throw new SyntaxError('Missing operand');
+            return this.parseExprRest(term.add(plusterm));
+        } else if (this.token instanceof Subtraction) {
+            this.update();
+            let minusterm = this.parseTerm();
+            //This case is entered when a negative number is parsed e.g. x = -4
+            if (term === undefined) {
+                return this.parseExprRest(minusterm.multiply(-1));
+            } else {
+                return this.parseExprRest(term.subtract(minusterm));
+            }
+        } else {
+            return term;
+        }
+    }
+    parseTermRest(factor) {
+        if (this.token instanceof Multiplication) {
+            this.update();
+            let mulfactor = this.parseFactor(),
+                termRest  = this.parseTermRest(mulfactor),
+                product   = factor.multiply(termRest);
+            return product;
+        } else if (this.token instanceof Exponentiation) {
+            this.update();
+            let powfactor = this.parseFactor();
+            //WORKAROUND: algebra.js only allows integers and fractions for
+            //raising
+            return this.parseTermRest(
+                factor.pow(parseInt(powfactor.toString()))
+            );
+        } else if (this.token instanceof Division) {
+            this.update();
+            let devfactor = this.parseFactor();
+            //WORKAROUND: algebra.js only allows integers and fractions for division
+            return this.parseTermRest(
+                factor.divide(this.convertToFraction(devfactor))
+            );
+        } else if (this.token instanceof Epsilon) {
+            return factor;
+        } else {
+            //a missing operator between terms is treated like a multiplier
+            let mulfactor2 = this.parseFactor();
+            if (mulfactor2 === undefined) {
+                return factor;
+            } else {
+                return factor.multiply(this.parseTermRest(mulfactor2));
+            }
+        }
+    }
+    convertToFraction(expression) {
+        if(expression.terms.length > 0){
+            throw new TypeError(
+                'Invalid Argument (' + expression.toString() +
+                '): Divisor must be of type Integer or Fraction.'
+            );
+        } else {
+            let c = expression.constants[0];
+            return new Fraction(c.numer, c.denom);
         }
     }
 }
@@ -370,7 +420,7 @@ class Expression {
             let thatExp = a.copy(),
                 newTerms = [];
 
-            for (let thisTerm of thisExpr.terms) {
+            for (let thisTerm of thisExp.terms) {
                 for (let thatTerm of thatExp.terms) {
                     newTerms.push(thisTerm.multiply(thatTerm, simplify));
                 }
@@ -715,7 +765,7 @@ class Variable {
             this.name = name;
         } else {
             throw new TypeError(
-                `Invalid Argument (${variable.toString()}):`+
+                `Invalid Argument (${name.toString()}):`+
                 "Variable initalizer must be of type String."
             );
         }
@@ -775,10 +825,10 @@ class Term {
     combineVars() {
         let uniqueVars = {};
         for (let v of this.variables) {
-            if (v.variable in uniqueVars) {
-                uniqueVars[v.variable] += v.degree;
+            if (v.name in uniqueVars) {
+                uniqueVars[v.name] += v.degree;
             } else {
-                uniqueVars[v.variable] = v.degree;
+                uniqueVars[v.name] = v.degree;
             }
         }
 
@@ -824,16 +874,15 @@ class Term {
     multiply(a, simplify = true) {
         let $term = this.copy();
 
-        if (isInt(a)) {
-            return this.multiply(new Fraction(a, 1), simplify);
-        } else if (a instanceof Term) {
+        if (a instanceof Term) {
             $term.variables = $term.variables.concat(a.variables);
             $term.coefficients = a.coefficients.concat($term.coefficients);
-        } else if (a instanceof Fraction) {
+        } else if (isInt(a) || a instanceof Fraction) {
+            let $coeff = isInt(a) ? new Fraction(a, 1) : a;
             if ($term.variables.length === 0) {
-                $term.coefficients.push(a);
+                $term.coefficients.push($coeff);
             } else {
-                $term.coefficients.unshift(a);
+                $term.coefficients.unshift($coeff);
             }
         } else {
             throw new TypeError(
@@ -870,8 +919,8 @@ class Term {
         for(let v of copy.variables) {
             let ev;
 
-            if (v.variable in values) {
-                let sub = values[v.variable];
+            if (v.name in values) {
+                let sub = values[v.name];
 
                 if(sub instanceof Fraction || sub instanceof Expression) {
                     ev = sub.pow(v.degree);
@@ -881,7 +930,7 @@ class Term {
                     throw new TypeError("Invalid Argument (" + sub + "): Can only evaluate Expressions or Fractions.");
                 }
             } else {
-                ev = new Expression(v.variable).pow(v.degree);
+                ev = new Expression(v.name).pow(v.degree);
             }
 
             exp = exp.multiply(ev, simplify);
@@ -910,8 +959,8 @@ class Term {
         }
 
         let matches = 0;
-        for(thisVar of thisVars) {
-            for(thatVar of thatVars) {
+        for(let thisVar of thisVars) {
+            for(let thatVar of thatVars) {
                 if(thisVar.name === thatVar.name && thisVar.degree === thatVar.degree) {
                     matches++;
                 }
@@ -1134,9 +1183,4 @@ class Fraction {
 
 }
 
-var parser = new Parser();
-parser.input = "3.14*(foo + x∧y)";
-// for (let token of parser.tokens) { console.log(token); }
-parser.update();
-console.log(parser.parseFactor());
-
+module.exports = Parser;
