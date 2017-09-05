@@ -1,4 +1,25 @@
 'use strict';
+/**
+ * Grammar without left recursion
+ *
+ * eqn         -> expr = expr
+ * expr        -> term expr_rest
+ * expr_rest   -> + term expr_rest
+ *             | - term expr_rest
+ *             | ε
+ *
+ * term        -> factor term_rest
+ * term_rest   -> * term term_rest
+ *             |   term term_rest
+ *             | ^ term term_rest
+ *             | / term term_rest
+ *             | ε
+ *
+ * factor      -> (expr)
+ *             | num
+ *             | id
+ *
+ **/
 
 let Lexer            = require('./lexer'),
 
