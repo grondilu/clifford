@@ -4,7 +4,6 @@ let Lexer            = require('./lexer'),
 
     $tokens          = require('./tokens'),
     LiteralNumber    = $tokens.LiteralNumber,
-    Epsilon          = $tokens.Epsilon,
     Addition         = $tokens.Addition,
     Subtraction      = $tokens.Subtraction,
     Multiplication   = $tokens.Multiplication,
@@ -34,6 +33,7 @@ class Parser {
     }
     update() { this._token_iteration = this.tokens.next(); }
     get token() { return this._token_iteration.value; }
+    done() { return this._token_iteration.done; }
 
     parse(string)     {
         this.input = string;
@@ -121,7 +121,8 @@ class Parser {
             return this.parseTermRest(
                 factor.divide(this.convertToFraction(devfactor))
             );
-        } else if (this.token instanceof Epsilon || !this.token) {
+        } else if (this.done()) {
+            console.log("done!");
             return factor;
         } else {
             //a missing operator between terms is treated like a multiplier

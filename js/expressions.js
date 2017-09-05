@@ -672,7 +672,7 @@ class Term {
                 },
                 this.coefficients
                 .filter(
-                    c => coef.abs().numer !== 1 || coef.abs().denom !== 1
+                    c => c.abs().numer !== 1 || c.abs().denom !== 1
                 )
                 .join(' * ')
             );
