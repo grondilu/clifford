@@ -11,9 +11,8 @@ const examples = [
     '2/7 + x**2/2',
     '(a - b)(a + b)'
 ];
-let Parser = require('./parser');
-
-let parser = new Parser();
+let Parser = require('./parser'),
+    parser = new Parser();
 
 for (let example of examples) {
     console.log(parser.parse(example).toString());
