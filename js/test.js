@@ -1,15 +1,20 @@
 const examples = [
+    '355/113',
+    'pi=355/113',
+    '1/2 + 3',
     '1+2',
     '2*(3+4)',
     '3.14e0',
     'a',
     'a+b',
     '(a+b)**2',
+    'a**b**c',
     'foo*(a-b)',
     '3.14*r**2',
     'u·v',
     'no·ni',
     'x=pi/3',
+    'y = pi/5',
     '355/113*x',
     '(a-b)(a+b)',
     '1+u∧v',
@@ -18,10 +23,8 @@ const examples = [
     'a·b∧c',
 ];
 
-let $clifford = require('./clifford'),
-    parser    = $clifford.parser;
-
-let errors = 0;
+let parser = require('./clifford').parser,
+    errors = 0;
 for (let example of examples) {
     try {
         parser.parse(example);
@@ -32,5 +35,3 @@ for (let example of examples) {
     }
 }
 console.log(`${errors} errors out of ${examples.length} attempts`);
-
-console.log(parser.parse('x'));
