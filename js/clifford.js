@@ -13,6 +13,7 @@ class MultiVector {
         } else if (typeof(name) === 'symbol') {
             this.symbol = name;
         } else { throw new TypeError(); }
+        SymbolTable[this.symbol] = this;
     }
     get grade() { return new Grade(this); }
     simplify() { return this; }
@@ -284,15 +285,8 @@ exponential
 
 primary
     = LiteralNumber
-    / name:BaseVector { return new $clifford.Vector(name); }
     / Identifier
     / "(" additive:additive ")" { return additive; }
-
-BaseVector
-    = e_n / 'no' / 'ni'
-
-e_n
-    = 'e' digit:[0-9]* { return 'e' + digit; }
 
 LiteralNumber "number"
     = DecimalLiteral {
