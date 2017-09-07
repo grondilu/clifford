@@ -15,6 +15,7 @@ class MultiVector {
         } else { throw new TypeError(); }
     }
     get grade() { return new Grade(this); }
+    simplify() { return this; }
 }
 class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
@@ -84,7 +85,7 @@ class InnerProduct extends Real {
     }
 }
 
-class BinaryMorphism extends MultiVector {
+class BinaryInternalOperator extends MultiVector {
     constructor(a, b, name) {
         if (a instanceof MultiVector && b instanceof MultiVector) {
             super(name);
@@ -94,12 +95,33 @@ class BinaryMorphism extends MultiVector {
         }
     }
 }
-class Addition         extends BinaryMorphism {}
-class Subtraction      extends BinaryMorphism {}
-class OuterProduct     extends BinaryMorphism {}
-class Product          extends BinaryMorphism {}
-class Division         extends BinaryMorphism {}
-class Exponential      extends BinaryMorphism {}
+class Addition         extends BinaryInternalOperator {
+    toString() {
+    }
+}
+class Subtraction      extends BinaryInternalOperator {}
+class OuterProduct     extends BinaryInternalOperator {}
+class Product          extends BinaryInternalOperator {}
+class Division         extends BinaryInternalOperator {
+    simplify() {
+        let left  = this.left.simplify(),
+            right = this.right.simplify();
+        if (left instanceof Int && right instanceof Int) {
+            return new Fraction(left, right).simplify();
+        } else if (
+            left  instanceof Fraction &&
+            right instanceof Fraction
+        ) {
+            console.log("ratio of fractions!");
+            // (a/b) / (c/d)
+            let [a, b, c, d] = [...left.nude, ...right.nude];
+            return new Fraction(a*d, b*c).simplify();
+        } else {
+            return super.simplify();
+        }
+    }
+}
+class Exponential      extends BinaryInternalOperator {}
 
 class Involution extends MultiVector {
     constructor(multivector, name) {
@@ -117,7 +139,7 @@ const grammar = `
     let $clifford = require('/usr/local/src/clifford/js/clifford');
 }
 start
-    = statement / expression 
+    = statement / expression
 
 expression
     = additive
@@ -141,7 +163,7 @@ multiplicative
     divisive
 
 divisive
-    = left: cdot "/" right:divisive {
+    = left:cdot "/" right:divisive {
         return new $clifford.Division(left, right);
     }
     / cdot
