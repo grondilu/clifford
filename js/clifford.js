@@ -31,8 +31,9 @@ class ConformalPoint extends Vector {
     constructor(vector3D, name) {
         if (vector3D instanceof Vector3D) {
             super(name);
-            throw new Error('NYI');
             this.vector3D = vector3D;
+        } else {
+            throw new TypeError();
         }
     }
     get norm() { return new Real(0); }
@@ -70,9 +71,11 @@ class Fraction extends Real {
             return new Fraction(...this.nude.map(x => x/$gcd));
         }
     }
+    toString() { return `${this.numerator}/${this.denominator}`; }
 }
 class Int extends Fraction {
     constructor(n, name) { super(n, 1, name); }
+    toString() { return this.numerator.toString(); }
 }
 class Grade extends Int {
     constructor(multivector, grade, name) {
@@ -220,7 +223,13 @@ wedge
 exponential
     =  left:primary '**' right:exponential {
         return new $clifford.Exponential(left, right);
-    } / primary
+    }
+    / left:primary '²' {
+        return new $clifford.Exponential(
+        left, new $clifford.Int(2)
+        );
+    }
+    / primary
 
 primary
     = LiteralNumber
