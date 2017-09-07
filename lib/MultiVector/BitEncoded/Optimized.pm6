@@ -4,6 +4,10 @@ unit class MultiVector::BitEncoded::Optimized does MultiVector::BitEncoded;
 
 has UInt @.basis;
 has Real @.reals;
+submethod TWEAK {
+    fail "expected strictly increasing basis order" unless [<] @!basis;
+    fail "unexpected number of coefficients" unless @!basis == @!reals;
+}
 
 # overides any previously defined reals and values methods
 method reals  { @!reals }
@@ -11,13 +15,6 @@ method values { @!reals }
 
 # required by MultiVector::BitEncoded
 method bitEncoding { (@!basis Z=> @!reals).MixHash }
-
-submethod BUILD(:@basis, :@reals) {
-    fail "expected strictly increasing basis order" unless [<] @basis;
-    fail "unexpected number of coefficients" unless @basis == @reals;
-    @!basis = @basis;
-    @!reals = @reals;
-}
 
 multi method new(Real $s) { self.new: :basis[0], :reals[$s] }
 multi method new(UIntHash $ where !*  ) { self.new(0) }
