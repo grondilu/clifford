@@ -1,20 +1,36 @@
 const examples = [
-    '1',
-    '3.14',
-    '-1',
+    '1+2',
+    '2*(3+4)',
+    '3.14e0',
     'a',
-    'foo',
-    'a + b',
-    'x+y',
-    'a*(b+c)',
-    '2/3',
-    '2/7 + x**2/2',
-    '(a - b)(a + b)'
+    'a+b',
+    '(a+b)**2',
+    'foo*(a-b)',
+    '3.14*r**2',
+    'u·v',
+    'no·ni',
+    'x=pi/3',
+    '355/113*x',
+    '(a-b)(a+b)',
+    '1+u∧v',
+    'no∧ni',
+    'e0**2',
+    'a·b∧c',
 ];
-let Parser = require('./parser'),
-    parser = new Parser();
 
+let $clifford = require('./clifford'),
+    parser    = $clifford.parser;
+
+let errors = 0;
 for (let example of examples) {
-    console.log(parser.parse(example).toString());
+    try {
+        parser.parse(example);
+        console.log(`"${example}" parsed`);
+    } catch (e) {
+        errors++;
+        console.log(`"${example}": ${e}`);
+    }
 }
+console.log(`${errors} errors out of ${examples.length} attempts`);
 
+console.log(parser.parse('x=a(b+c)'));
