@@ -96,6 +96,8 @@ class InnerProduct extends Real {
 }
 
 class BinaryInternalOperator extends MultiVector {
+    get operatorCharacter() {}
+    get classesWithLowerOperatorPrecedence() { return [] }
     constructor(a, b, name) {
         if (a instanceof MultiVector && b instanceof MultiVector) {
             super(name);
@@ -110,12 +112,43 @@ class BinaryInternalOperator extends MultiVector {
             this.right.simplify()
         );
     }
+    toString() {
+        let [left, right] = 
+            [this.left, this.right].map(
+                element => this
+                .classesWithLowerOperatorPrecedence
+                .map(C => element instanceof C)
+                .includes(true) ? `(${element})` : `${element}`
+            );
+        return left + this.operatorCharacter + right;
+    }
 }
-class Addition         extends BinaryInternalOperator {}
-class Subtraction      extends BinaryInternalOperator {}
-class OuterProduct     extends BinaryInternalOperator {}
-class Product          extends BinaryInternalOperator {}
+class Addition         extends BinaryInternalOperator {
+    get operatorCharacter() { return '+'; }
+}
+class Subtraction      extends BinaryInternalOperator {
+    get operatorCharacter() { return '-'; }
+}
+class OuterProduct     extends BinaryInternalOperator {
+    get operatorCharacter() { return '∧'; }
+    get classesWithLowerOperatorPrecedence() {
+        return [ Addition, Subtraction,
+            Product, Division,
+            InnerProduct
+        ];
+    }
+}
+class Product          extends BinaryInternalOperator {
+    get operatorCharacter() { return '*'; }
+    get classesWithLowerOperatorPrecedence() {
+        return [ Addition, Subtraction ];
+    }
+}
 class Division         extends BinaryInternalOperator {
+    get operatorCharacter() { return '/'; }
+    get classesWithLowerOperatorPrecedence() {
+        return [ Addition, Subtraction ];
+    }
     simplify() {
         let superSimplified = super.simplify(),
             left  = superSimplified.left,
@@ -134,7 +167,14 @@ class Division         extends BinaryInternalOperator {
         }
     }
 }
-class Exponential extends BinaryInternalOperator {}
+class Exponential extends BinaryInternalOperator {
+    get operatorCharacter() { return '**'; }
+    get classesWithLowerOperatorPrecedence() {
+        return [ Addition, Subtraction,
+            Product, InnerProduct, OuterProduct
+        ];
+    }
+}
 
 class Involution extends MultiVector {
     constructor(multivector, name) {
@@ -250,10 +290,10 @@ LiteralNumber "number"
             return new $clifford.Int(number);
         } else {
             let factor = Math.pow(10,
-                number.toString().split('.').length
+                text().split('.').length
             );
             return new $clifford.Fraction(
-            ...[number * factor, factor].map(parseInt)
+                ...[number * factor, factor]
             )
         }
     }
