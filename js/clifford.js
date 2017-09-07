@@ -94,26 +94,29 @@ class BinaryInternalOperator extends MultiVector {
             throw new TypeError();
         }
     }
-}
-class Addition         extends BinaryInternalOperator {
-    toString() {
+    simplify() {
+        return new this.constructor(
+            this.left.simplify(),
+            this.right.simplify()
+        );
     }
 }
+class Addition         extends BinaryInternalOperator {}
 class Subtraction      extends BinaryInternalOperator {}
 class OuterProduct     extends BinaryInternalOperator {}
 class Product          extends BinaryInternalOperator {}
 class Division         extends BinaryInternalOperator {
     simplify() {
-        let left  = this.left.simplify(),
-            right = this.right.simplify();
+        let superSimplified = super.simplify(),
+            left  = superSimplified.left,
+            right = superSimplified.right;
         if (left instanceof Int && right instanceof Int) {
             return new Fraction(left, right).simplify();
         } else if (
             left  instanceof Fraction &&
             right instanceof Fraction
         ) {
-            console.log("ratio of fractions!");
-            // (a/b) / (c/d)
+            // (a/b) / (c/d) = a*d/(b*c)
             let [a, b, c, d] = [...left.nude, ...right.nude];
             return new Fraction(a*d, b*c).simplify();
         } else {
@@ -121,7 +124,7 @@ class Division         extends BinaryInternalOperator {
         }
     }
 }
-class Exponential      extends BinaryInternalOperator {}
+class Exponential extends BinaryInternalOperator {}
 
 class Involution extends MultiVector {
     constructor(multivector, name) {
@@ -172,20 +175,20 @@ statement
     }
 
 additive
-    = left:multiplicative "+" right:additive {
+    = left:multiplicative __ "+" __ right:additive {
         return new $clifford.Addition(left, right);
     } / left:multiplicative "-" right:additive {
         return new $clifford.Subtraction(left, right);
     } / multiplicative
 
 multiplicative
-    = left:divisive "*"? right:multiplicative {
+    = left:divisive __ "*"? __ right:multiplicative {
         return new $clifford.Product(left, right);
     } /
     divisive
 
 divisive
-    = head:cdot tail:(__ "/" __ right:cdot)* {
+    = head:cdot tail:(__ "/" __ right:cdot)+ {
         return tail.reduce(
             (left, element) => {
                 return new $clifford.Division(
@@ -208,7 +211,7 @@ wedge
     } / exponential
 
 exponential
-    =  left:primary '**' right: primary {
+    =  left:primary '**' right:exponential {
         return new $clifford.Exponential(left, right);
     } / primary
 
