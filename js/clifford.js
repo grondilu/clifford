@@ -16,6 +16,7 @@ class MultiVector {
     }
     get grade() { return new Grade(this); }
     simplify() { return this; }
+    toString() { return Symbol.keyFor(this.symbol) || super.toString(); }
 }
 class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
@@ -43,6 +44,12 @@ class Real extends MultiVector {
     }
     get grade() { return new Grade(this, 0); }
     valueOf() { return this[_floatingPointValue]; }
+    toString() {
+        return this.valueOf() === undefined ?
+            super.toString() :
+            this.valueOf().toString();
+    }
+
 }
 class Fraction extends Real {
     constructor(numerator, denominator = 1, name) {
