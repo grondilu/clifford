@@ -84,20 +84,14 @@ class Grade extends Int {
     }
 }
 
-class InnerProduct extends Real {
-    constructor(a, b, name) {
-        if (a instanceof Vector && b instanceof Vector) {
-            super(name);
-            this.left = a, this.right = b;
-        } else {
-            throw new TypeError();
-        }
-    }
-}
-
 class BinaryInternalOperator extends MultiVector {
+    // Those two class methods are used
+    // by toString().
+    // 'classesWithLowerOperatorPrecedence'
+    // is used to decide whether or not to use parenthesis.
     get operatorCharacter() {}
     get classesWithLowerOperatorPrecedence() { return [] }
+
     constructor(a, b, name) {
         if (a instanceof MultiVector && b instanceof MultiVector) {
             super(name);
@@ -128,6 +122,14 @@ class Addition         extends BinaryInternalOperator {
 }
 class Subtraction      extends BinaryInternalOperator {
     get operatorCharacter() { return '-'; }
+}
+class InnerProduct extends BinaryInternalOperator {
+    get operatorCharacter() { return '·'; }
+    get classesWithLowerOperatorPrecedence() {
+        return [ Addition, Subtraction,
+            Product, Division
+        ];
+    }
 }
 class OuterProduct     extends BinaryInternalOperator {
     get operatorCharacter() { return '∧'; }
