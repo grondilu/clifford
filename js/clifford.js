@@ -21,6 +21,15 @@ class MultiVector {
 class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
 }
+class NilpotentVector extends Vector {}
+let no = new NilpotentVector('no'),
+    ni = new NilpotentVector('ni'),
+    e0 = new Vector('e0'),
+    e1 = new Vector('e1'),
+    e2 = new Vector('e2'),
+    e3 = new Vector('e3'),
+    e4 = new Vector('e4');
+
 class Vector3D extends Vector {
     constructor(x, y, z, name) {
         super(name);
@@ -434,6 +443,7 @@ Zs = [\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u202F\\u205F\\u3000]
 
 module.exports = {
     parser: require('pegjs').generate(grammar),
+    no, ni, e0, e1, e2, e3, e4,
     SymbolTable,
     MultiVector, Vector, Vector3D, ConformalPoint, Real, Fraction, Int, Grade,
     InnerProduct, Addition, Subtraction, OuterProduct,
