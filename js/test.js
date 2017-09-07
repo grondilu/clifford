@@ -33,4 +33,4 @@ for (let example of examples) {
 }
 console.log(`${errors} errors out of ${examples.length} attempts`);
 
-console.log(parser.parse('x=a(b+c)'));
+console.log(parser.parse('x'));

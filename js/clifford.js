@@ -1,6 +1,7 @@
 function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
 function lcm(a, b) { return (a*b) / gcd(a, b); }
 
+let SymbolTable = {};
 const _floatingPointValue = Symbol("floating point value");
 
 class MultiVector {
@@ -113,8 +114,7 @@ class Dual      extends Involution {}
 
 const grammar = `
 {
-    let $clifford = require('/usr/local/src/clifford/js/clifford'),
-        SymbolTable = {};
+    let $clifford = require('/usr/local/src/clifford/js/clifford');
 }
 start
     = statement / expression 
@@ -124,7 +124,7 @@ expression
 
 statement
     = left:identifier '=' right:additive {
-        return SymbolTable[Symbol.for(left)] = right;
+        return $clifford.SymbolTable[left.symbol] = right;
     }
 
 additive
@@ -202,10 +202,14 @@ zero = "0"
 
 identifier
     = letters:[a-z]+ digits:[0-9]* {
-        return new $clifford.Real(
-            undefined,
-            letters.concat(digits).join('')
-        );
+        let name   = letters.concat(digits).join(''),
+            value  = $clifford.SymbolTable[Symbol.for(name)];
+
+        if (value === undefined) {
+            return new $clifford.Real(undefined, name);
+        } else {
+            return value;
+        }
     }
 
 DIGIT = [0-9]
@@ -213,6 +217,7 @@ DIGIT = [0-9]
 
 module.exports = {
     parser: require('pegjs').generate(grammar),
+    SymbolTable,
     MultiVector, Vector, Vector3D, ConformalPoint, Real, Fraction, Int, Grade,
     InnerProduct, Addition, Subtraction, OuterProduct,
     Product, Division, Exponential, Involution, Reversion, Dual
