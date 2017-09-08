@@ -19,10 +19,17 @@ class MultiVector {
 class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
 }
-class NilpotentVector extends Vector {}
+class NilpotentVector extends Vector {
+    constructor(order, name) {
+        super(name);
+        if (typeof(order) === 'number') {
+            this.order = order;
+        } else { throw new TypeError(); }
+    }
+}
 
-let no = new NilpotentVector('ο'),
-    ni = new NilpotentVector('∞');
+let no = new NilpotentVector(2, 'ο'),
+    ni = new NilpotentVector(2, '∞');
 
 class UnitVector extends Vector {}
 class BaseVector extends UnitVector {
@@ -239,6 +246,15 @@ class Exponential extends BinaryInternalOperator {
             Product, InnerProduct, OuterProduct
         ];
     }
+    simplify() {
+        if (this.left instanceof NilpotentVector &&
+            this.right >= this.left.order) {
+            return new Int(0);
+        } else {
+            return super.simplify();
+        }
+    }
+
 }
 
 class Involution extends MultiVector {
