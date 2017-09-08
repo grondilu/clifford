@@ -76,8 +76,21 @@ class Real extends MultiVector {
             super.toString() :
             this.valueOf().toString();
     }
-
 }
+
+class SquareRoot extends Real {
+    constructor(square, name) {
+        super(undefined, name);
+        if (square instanceof Real) {
+            this.square = square;
+        } else { throw new TypeError(); }
+    }
+    valueOf() { return Math.sqrt(this.square); }
+    toString() {
+        return `√${this.square.toString()}`;
+    }
+}
+
 class Fraction extends Real {
     constructor(numerator, denominator = 1, name) {
         if (denominator === 0) {
@@ -209,6 +222,15 @@ class Product extends BinaryInternalOperator {
             return left.index == right.index ?
                 new InnerProduct(left, right).simplify() :
                 new OuterProduct(left, right).simplify();
+        } else if (
+            this.left instanceof Fraction,
+            this.right instanceof Fraction
+        ) {
+            let [a, b, c, d] = [
+                ...this.left.nude,
+                ...this.right.nude
+            ];
+            return new Fraction(a*c, b*d).simplify();
         } else {
             return super.simplify();
         }
