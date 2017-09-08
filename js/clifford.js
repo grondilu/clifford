@@ -4,7 +4,6 @@ function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
 function lcm(a, b) { return (a*b) / gcd(a, b); }
 
 let SymbolTable = new Map();
-const _floatingPointValue = Symbol("floating point value");
 
 class MultiVector {
     constructor(name) {
@@ -62,10 +61,10 @@ class ConformalPoint extends Vector {
 class Real extends MultiVector {
     constructor(x, name) {
         super(name);
-        if (!(x === undefined)) this[_floatingPointValue] = x;
+        if (!(x === undefined)) this._floatingPointValue = x;
     }
     get grade() { return new Grade(this, 0); }
-    valueOf() { return this[_floatingPointValue]; }
+    valueOf() { return this._floatingPointValue; }
     toString() {
         return this.valueOf() === undefined ?
             super.toString() :
@@ -82,7 +81,7 @@ class Fraction extends Real {
         this.numerator = numerator;
         this.denominator = denominator;
     }
-    get [_floatingPointValue]() { return this.numerator / this.denominator }
+    get _floatingPointValue() { return this.numerator / this.denominator }
     get nude() { return [this.numerator, this.denominator]; }
     simplify() {
         let $gcd = gcd(...this.nude);
