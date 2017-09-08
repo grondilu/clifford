@@ -13,7 +13,7 @@ class MultiVector {
     }
     get grade() { return new Grade(this); }
     simplify() { return this; }
-    eval()  {
+    compute()  {
         // keep simplifying until stability is reached
         let [current, next] = [this, this.simplify()];
         while (!(current === next)) {
@@ -144,10 +144,7 @@ class BinaryInternalOperator extends MultiVector {
         if (left === this.left && right === this.right) {
             return super.simplify()
         } else {
-            return new this.constructor(
-                this.left.simplify(),
-                this.right.simplify()
-            );
+            return new this.constructor(left, right);
         }
     }
     toString() {

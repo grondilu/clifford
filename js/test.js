@@ -52,8 +52,8 @@ let parser = require('./clifford').parser,
     errors = 0;
 for (let example of examples) {
     try {
-        let ast = parser.parse(example);
-        console.log(`"${example}" parsed as ${ast.eval()}`);
+        let compute = parser.parse(example).compute();
+        console.log(`"${example}" parsed as ${compute}`);
     } catch (e) {
         errors++;
         console.log(`"${example}": ${e}`);
