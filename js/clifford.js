@@ -26,21 +26,8 @@ class MultiVector {
 class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
 }
-class NilpotentVector extends Vector {
-    constructor(order, name) {
-        super(name);
-        if (typeof(order) === 'number') {
-            this.order = order;
-        } else { throw new TypeError(); }
-    }
-}
-
-let no = new NilpotentVector(2, 'ο'),
-    ni = new NilpotentVector(2, '∞');
-
-class UnitVector extends Vector {}
-class BaseVector extends UnitVector {
-    get letter() {}
+class BaseVector extends Vector {}
+class NormalBaseVector extends BaseVector {
     constructor(index, name) {
         super(name);
         let parsedInt = parseInt(index);
@@ -48,12 +35,11 @@ class BaseVector extends UnitVector {
         this.index = parsedInt;
     }
 }
-class EuclideanBaseVector     extends BaseVector {
-    get letter() { return 'e'; }
-}
-class AntiEuclideanBaseVector extends BaseVector {
-    get letter() { return 'ē'; }
-}
+class EuclideanBaseVector     extends NormalBaseVector {}
+class AntiEuclideanBaseVector extends NormalBaseVector {}
+class NullBaseVector          extends BaseVector {}
+let no = new NullBaseVector('ο'),
+    ni = new NullBaseVector('∞');
 
 class Vector3D extends Vector {
     constructor(x, y, z, name) {
@@ -194,8 +180,23 @@ class InnerProduct extends BinaryInternalOperator {
     }
     simplify() {
         if (
-            this.left instanceof BaseVector &&
-            this.right instanceof BaseVector
+            (
+                this.left  instanceof NormalBaseVector &&
+                this.right instanceof NullBaseVector
+            ) || (
+                this.left  instanceof NullBaseVector &&
+                this.right instanceof NormalBaseVector
+            )
+        ) {
+            return new Int(0);
+        } else if (
+            (this.left === no && this.right === ni) ||
+            (this.left === ni && this.right === no)
+        ) {
+            return new Int(-1);
+        } else if (
+            this.left instanceof NormalBaseVector &&
+            this.right instanceof NormalBaseVector
         ) {
             let left = this.left,
                 right = this.right,
@@ -294,8 +295,10 @@ class Exponential extends BinaryInternalOperator {
             return new Fraction(
                 ...this.left.nude.map(x => Math.pow(x, this.right))
             );
-        } else if (this.left instanceof NilpotentVector &&
-            this.right >= this.left.order) {
+        } else if (
+            this.left instanceof NullBaseVector &&
+            this.right > 0
+        ) {
             return new Int(0);
         } else {
             return super.simplify();
