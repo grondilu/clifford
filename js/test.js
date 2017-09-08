@@ -23,6 +23,8 @@ const examples = [
     'u·v',
     'no',
     'ni',
+    'no²',
+    'ni²',
     'no·ni',
     'no·e0',
     'pi = 355/113',
