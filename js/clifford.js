@@ -24,12 +24,24 @@ class Vector extends MultiVector {
 }
 class NilpotentVector extends Vector {}
 class UnitVector extends Vector {}
+class BaseVector extends UnitVector {
+    get letter() {}
+    constructor(index, name) {
+        super(name);
+        let parsedInt = parseInt(index);
+        if (parsedInt === NaN) throw new TypeError();
+        this.index = parsedInt;
+    }
+}
+class EuclideanBaseVector     extends BaseVector {
+    get letter() { return 'e'; }
+}
+class AntiEuclideanBaseVector extends BaseVector {
+    get letter() { return 'ē'; }
+}
 
 let no = new NilpotentVector('no'),
-    ni = new NilpotentVector('ni'),
-    e1 = new UnitVector('e1'),
-    e2 = new UnitVector('e2'),
-    e3 = new UnitVector('e3');
+    ni = new NilpotentVector('ni');
 
 class Vector3D extends Vector {
     constructor(x, y, z, name) {
@@ -140,6 +152,33 @@ class InnerProduct extends BinaryInternalOperator {
             Product, Division
         ];
     }
+    simplify() {
+        if (
+            this.left instanceof BaseVector &&
+            this.right instanceof BaseVector
+        ) {
+            let left = this.left,
+                right = this.right,
+                leftAndRight = [left, right],
+                sameIndex = +(left.index == right.index);
+
+            return new Int(
+                leftAndRight.some(x => x instanceof EuclideanBaseVector) &&
+                leftAndRight.some(x => x instanceof AntiEuclideanBaseVector)
+                ? 0 :
+                left instanceof EuclideanBaseVector &&
+                right instanceof EuclideanBaseVector
+                ? sameIndex :
+                left instanceof AntiEuclideanBaseVector &&
+                right instanceof AntiEuclideanBaseVector
+                ? -sameIndex :
+                undefined
+            );
+        } else {
+            return super.simplify();
+        }
+    }
+
 }
 class OuterProduct     extends BinaryInternalOperator {
     get operatorCharacter() { return '∧'; }
@@ -155,6 +194,21 @@ class Product          extends BinaryInternalOperator {
     get classesWithLowerOperatorPrecedence() {
         return [ Addition, Subtraction ];
     }
+    simplify() {
+        if (
+            this.left instanceof BaseVector &&
+            this.right instanceof BaseVector
+        ) {
+            let left = this.left,
+                right = this.right;
+            return left.index == right.index ?
+                new InnerProduct(left, right).simplify() :
+                new OuterProduct(left, right).simplify();
+        } else {
+            return super.simplify();
+        }
+    }
+
 }
 class Division         extends BinaryInternalOperator {
     get operatorCharacter() { return '/'; }
@@ -285,8 +339,27 @@ exponential
 
 primary
     = LiteralNumber
+    / BaseVector
     / Identifier
     / "(" additive:additive ")" { return additive; }
+
+BaseVector = EuclideanBaseVector / AntiEuclideanBaseVector
+
+EuclideanBaseVector
+    = "e" index:BaseVectorIndex {
+        return new $clifford.EuclideanBaseVector(index, text());
+    }
+
+AntiEuclideanBaseVector
+    = "ē" index:BaseVectorIndex {
+        return new $clifford.AntiEuclideanBaseVector(index, text());
+    }
+
+BaseVectorIndex
+    = index:DecimalIntegerLiteral {
+        return parseInt(index);
+    }
+
 
 LiteralNumber "number"
     = DecimalLiteral {
@@ -437,9 +510,11 @@ Zs = [\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u202F\\u205F\\u3000]
 
 module.exports = {
     parser: require('pegjs').generate(grammar),
-    no, ni, e1, e2, e3,
+    no, ni,
     SymbolTable,
-    MultiVector, Vector, Vector3D, ConformalPoint, Real, Fraction, Int, Grade,
+    MultiVector, Vector, Vector3D,
+    BaseVector, EuclideanBaseVector, AntiEuclideanBaseVector,
+    ConformalPoint, Real, Fraction, Int, Grade,
     InnerProduct, Addition, Subtraction, OuterProduct,
     Product, Division, Exponential, Involution, Reversion, Dual
 }
