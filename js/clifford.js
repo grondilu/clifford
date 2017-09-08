@@ -11,7 +11,6 @@ class MultiVector {
             SymbolTable[this.name = name] = this;
         }
     }
-    get grade() { return new Grade(this); }
     simplify() { return this; }
     compute()  {
         // keep simplifying until stability is reached
@@ -23,9 +22,7 @@ class MultiVector {
     }
     toString() { return this.name || super.toString(); }
 }
-class Vector extends MultiVector {
-    get grade() { return new Grade(this, 1); }
-}
+class Vector extends MultiVector {}
 class BaseVector extends Vector {}
 class NormalBaseVector extends BaseVector {
     constructor(index, name) {
@@ -58,7 +55,6 @@ class ConformalPoint extends Vector {
     }
 }
 class Real extends MultiVector {
-    get grade() { return new Grade(this, 0); }
     valueOf() { return NaN; }
     simplify() { return SymbolTable[this.name] || this; }
 }
@@ -101,12 +97,6 @@ class Int extends Fraction {
     constructor(n, name) { super(n, 1, name); }
     toString() { return this.numerator.toString(); }
     simplify() { return this; }
-}
-class Grade extends Int {
-    constructor(multivector, grade, name) {
-        super(grade, name);
-        this.multivector = multivector;
-    }
 }
 
 class BinaryInternalOperator extends MultiVector {
@@ -578,7 +568,7 @@ module.exports = {
     ni, no,
     MultiVector, Vector, Vector3D,
     BaseVector, EuclideanBaseVector, AntiEuclideanBaseVector,
-    ConformalPoint, Real, Fraction, Int, Grade,
+    ConformalPoint, Real, Fraction, Int, 
     InnerProduct, Addition, Subtraction, OuterProduct,
     Product, Division, Exponential, Involution, Reversion, Dual
 }
