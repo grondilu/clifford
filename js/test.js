@@ -1,6 +1,5 @@
 const examples = [
     '355/113',
-    'pi=355/113',
     '1/2 + 3',
     '1+2',
     '2*(3+4)',
@@ -20,6 +19,8 @@ const examples = [
     'a**b**c',
     'foo*(a-b)',
     '3.14*r**2',
+    '1/2*3/5',
+    '1+1',
     'u·v',
     'no',
     'ni',
@@ -28,6 +29,7 @@ const examples = [
     'no·ni',
     'no·e0',
     'pi = 355/113',
+    'pi',
     '(a-b)(a+b)',
     '1+u∧v',
     'no∧ni',
@@ -51,7 +53,7 @@ let parser = require('./clifford').parser,
 for (let example of examples) {
     try {
         let ast = parser.parse(example);
-        console.log(`"${example}" parsed as ${ast.simplify()}`);
+        console.log(`"${example}" parsed as ${ast.eval()}`);
     } catch (e) {
         errors++;
         console.log(`"${example}": ${e}`);

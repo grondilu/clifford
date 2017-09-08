@@ -13,6 +13,14 @@ class MultiVector {
     }
     get grade() { return new Grade(this); }
     simplify() { return this; }
+    eval()  {
+        // keep simplifying until stability is reached
+        let [current, next] = [this, this.simplify()];
+        while (!(current === next)) {
+            [current, next] = [next, next.simplify()];
+        }
+        return current;
+    }
     toString() { return this.name || super.toString(); }
 }
 class Vector extends MultiVector {
@@ -96,15 +104,16 @@ class Fraction extends Real {
         let $gcd = gcd(...this.nude);
         if (this.denominator == $gcd) {
             return new Int(this.numerator / $gcd);
-        } else {
+        } else if ($gcd > 1) {
             return new Fraction(...this.nude.map(x => x/$gcd));
-        }
+        } else { return super.simplify(); }
     }
     toString() { return `${this.numerator}/${this.denominator}`; }
 }
 class Int extends Fraction {
     constructor(n, name) { super(n, 1, name); }
     toString() { return this.numerator.toString(); }
+    simplify() { return this; }
 }
 class Grade extends Int {
     constructor(multivector, grade, name) {
@@ -129,12 +138,17 @@ class BinaryInternalOperator extends MultiVector {
             throw new TypeError();
         }
     }
-    get leftAndRight() { return [this.left, this.right]; }
     simplify() {
-        return new this.constructor(
-            this.left.simplify(),
-            this.right.simplify()
-        );
+        let left  = this.left.simplify(),
+            right = this.right.simplify();
+        if (left === this.left && right === this.right) {
+            return super.simplify()
+        } else {
+            return new this.constructor(
+                this.left.simplify(),
+                this.right.simplify()
+            );
+        }
     }
     toString() {
         let [left, right] =
@@ -149,6 +163,16 @@ class BinaryInternalOperator extends MultiVector {
 }
 class Addition         extends BinaryInternalOperator {
     get operatorCharacter() { return '+'; }
+    simplify() {
+        if (this.left instanceof Fraction &&
+            this.right instanceof Fraction) {
+            let [a, b, c, d] = [
+                ...this.left.nude,
+                ...this.right.nude
+            ];
+            return new Fraction(a*d + c*b, b*d).simplify();
+        } else { return super.simplify(); }
+    }
 }
 class Subtraction      extends BinaryInternalOperator {
     get operatorCharacter() { return '-'; }
@@ -207,7 +231,7 @@ class Product extends BinaryInternalOperator {
             this.left instanceof BaseVector &&
             this.right instanceof BaseVector
         ) {
-            let left = this.left,
+            let left  = this.left,
                 right = this.right;
             return left.index == right.index ?
                 new InnerProduct(left, right).simplify() :
@@ -233,18 +257,17 @@ class Division extends BinaryInternalOperator {
         return [ Addition, Subtraction ];
     }
     simplify() {
-        let superSimplified = super.simplify(),
-            left  = superSimplified.left,
-            right = superSimplified.right;
+        let left  = this.left,
+            right = this.right;
         if (left instanceof Int && right instanceof Int) {
-            return new Fraction(left, right).simplify();
+            return new Fraction(left, right);
         } else if (
             left  instanceof Fraction &&
             right instanceof Fraction
         ) {
             // (a/b) / (c/d) = a*d/(b*c)
             let [a, b, c, d] = [...left.nude, ...right.nude];
-            return new Fraction(a*d, b*c).simplify();
+            return new Fraction(a*d, b*c);
         } else {
             return super.simplify();
         }
