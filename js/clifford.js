@@ -470,14 +470,10 @@ zero = "0"
 
 Identifier
   = head:IdentifierStart tail:IdentifierPart* {
-        let name = head + tail.join(""),
-            value  = $clifford.SymbolTable[name];
+        let name  = head + tail.join("");
 
-        if (value === undefined) {
-            return new $clifford.Real(name);
-        } else {
-            return value;
-        }
+        return $clifford.SymbolTable[name] ||
+        new $clifford.Real(name);
     }
 
 DecimalDigit = [0-9]
