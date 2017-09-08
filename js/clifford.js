@@ -74,6 +74,7 @@ class ConformalPoint extends Vector {
 class Real extends MultiVector {
     get grade() { return new Grade(this, 0); }
     valueOf() { return NaN; }
+    simplify() { return SymbolTable[this.name] || this; }
 }
 
 class SquareRoot extends Real {
