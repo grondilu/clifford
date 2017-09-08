@@ -278,14 +278,18 @@ class Exponential extends BinaryInternalOperator {
         ];
     }
     simplify() {
-        if (this.left instanceof NilpotentVector &&
+        if (this.left instanceof Fraction &&
+            this.right instanceof Int) {
+            return new Fraction(
+                ...this.left.nude.map(x => Math.pow(x, this.right))
+            );
+        } else if (this.left instanceof NilpotentVector &&
             this.right >= this.left.order) {
             return new Int(0);
         } else {
             return super.simplify();
         }
     }
-
 }
 
 class Involution extends MultiVector {
@@ -393,7 +397,7 @@ BaseVector = EuclideanBaseVector
            / AntiEuclideanBaseVector
            / NilpotentBaseVector { return $clifford[text()]; }
 
-NilpotentBaseVector = "no" / "ni" 
+NilpotentBaseVector = "no" / "ni"
 
 EuclideanBaseVector
     = "e" index:BaseVectorIndex {
