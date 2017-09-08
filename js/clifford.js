@@ -1,23 +1,21 @@
+"use strict";
+
 function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
 function lcm(a, b) { return (a*b) / gcd(a, b); }
 
-let SymbolTable = {};
+let SymbolTable = new Map();
 const _floatingPointValue = Symbol("floating point value");
 
 class MultiVector {
     constructor(name) {
-        if (name === undefined) {
-            this.symbol = Symbol();
-        } else if (typeof(name) === 'string') {
-            this.symbol = Symbol.for(name);
-        } else if (typeof(name) === 'symbol') {
-            this.symbol = name;
-        } else { throw new TypeError(); }
-        SymbolTable[this.symbol] = this;
+        if (typeof(name) === 'string') {
+            this.name = name;
+            SymbolTable[name] = this;
+        }
     }
     get grade() { return new Grade(this); }
     simplify() { return this; }
-    toString() { return Symbol.keyFor(this.symbol) || super.toString(); }
+    toString() { return this.name || super.toString(); }
 }
 class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
@@ -289,7 +287,7 @@ expression
 
 statement
     = left:Identifier __ '=' __  right:additive {
-        return $clifford.SymbolTable[left.symbol] = right;
+        return $clifford.SymbolTable[left] = right;
     }
 
 additive
