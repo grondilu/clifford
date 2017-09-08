@@ -23,6 +23,10 @@ class Vector extends MultiVector {
     get grade() { return new Grade(this, 1); }
 }
 class NilpotentVector extends Vector {}
+
+let no = new NilpotentVector('ο'),
+    ni = new NilpotentVector('∞');
+
 class UnitVector extends Vector {}
 class BaseVector extends UnitVector {
     get letter() {}
@@ -39,9 +43,6 @@ class EuclideanBaseVector     extends BaseVector {
 class AntiEuclideanBaseVector extends BaseVector {
     get letter() { return 'ē'; }
 }
-
-let no = new NilpotentVector('no'),
-    ni = new NilpotentVector('ni');
 
 class Vector3D extends Vector {
     constructor(x, y, z, name) {
@@ -111,7 +112,7 @@ class BinaryInternalOperator extends MultiVector {
     // by toString().
     // 'classesWithLowerOperatorPrecedence'
     // is used to decide whether or not to use parenthesis.
-    get operatorCharacter() {}
+    get operatorCharacter() { throw new Error('virtual call'); }
     get classesWithLowerOperatorPrecedence() { return [] }
 
     constructor(a, b, name) {
@@ -122,6 +123,7 @@ class BinaryInternalOperator extends MultiVector {
             throw new TypeError();
         }
     }
+    get leftAndRight() { return [this.left, this.right]; }
     simplify() {
         return new this.constructor(
             this.left.simplify(),
@@ -160,7 +162,7 @@ class InnerProduct extends BinaryInternalOperator {
             let left = this.left,
                 right = this.right,
                 leftAndRight = [left, right],
-                sameIndex = +(left.index == right.index);
+                sameIndex = left.index == right.index;
 
             return new Int(
                 leftAndRight.some(x => x instanceof EuclideanBaseVector) &&
@@ -168,7 +170,7 @@ class InnerProduct extends BinaryInternalOperator {
                 ? 0 :
                 left instanceof EuclideanBaseVector &&
                 right instanceof EuclideanBaseVector
-                ? sameIndex :
+                ? +sameIndex :
                 left instanceof AntiEuclideanBaseVector &&
                 right instanceof AntiEuclideanBaseVector
                 ? -sameIndex :
@@ -180,7 +182,7 @@ class InnerProduct extends BinaryInternalOperator {
     }
 
 }
-class OuterProduct     extends BinaryInternalOperator {
+class OuterProduct extends BinaryInternalOperator {
     get operatorCharacter() { return '∧'; }
     get classesWithLowerOperatorPrecedence() {
         return [ Addition, Subtraction,
@@ -189,7 +191,7 @@ class OuterProduct     extends BinaryInternalOperator {
         ];
     }
 }
-class Product          extends BinaryInternalOperator {
+class Product extends BinaryInternalOperator {
     get operatorCharacter() { return '*'; }
     get classesWithLowerOperatorPrecedence() {
         return [ Addition, Subtraction ];
@@ -208,9 +210,9 @@ class Product          extends BinaryInternalOperator {
             return super.simplify();
         }
     }
-
 }
-class Division         extends BinaryInternalOperator {
+
+class Division extends BinaryInternalOperator {
     get operatorCharacter() { return '/'; }
     get classesWithLowerOperatorPrecedence() {
         return [ Addition, Subtraction ];
@@ -343,7 +345,11 @@ primary
     / Identifier
     / "(" additive:additive ")" { return additive; }
 
-BaseVector = EuclideanBaseVector / AntiEuclideanBaseVector
+BaseVector = EuclideanBaseVector
+           / AntiEuclideanBaseVector
+           / NilpotentBaseVector { return $clifford[text()]; }
+
+NilpotentBaseVector = "no" / "ni" 
 
 EuclideanBaseVector
     = "e" index:BaseVectorIndex {
@@ -510,8 +516,8 @@ Zs = [\\u0020\\u00A0\\u1680\\u2000-\\u200A\\u202F\\u205F\\u3000]
 
 module.exports = {
     parser: require('pegjs').generate(grammar),
-    no, ni,
     SymbolTable,
+    ni, no,
     MultiVector, Vector, Vector3D,
     BaseVector, EuclideanBaseVector, AntiEuclideanBaseVector,
     ConformalPoint, Real, Fraction, Int, Grade,
