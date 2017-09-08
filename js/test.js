@@ -46,7 +46,8 @@ const examples = [
     'ē0·e1',
     'e1·ē1',
     'a·b∧c',
-    'no + x*e1 + y*e2 + z*e3 + (x² + y² + z²)/2*ni'
+    'no + x*e1 + y*e2 + z*e3 + (x² + y² + z²)/2*ni',
+    '(1+e0)*e2'
 ];
 
 
@@ -54,8 +55,9 @@ let parser = require('./clifford').parser,
     errors = 0;
 for (let example of examples) {
     try {
-        let compute = parser.parse(example).compute();
-        console.log(`"${example}" parsed as ${compute}`);
+        let parse   = parser.parse(example),
+            compute = parse.compute();
+        console.log(`"${example}" parsed as ${parse}, computed as ${compute}`);
     } catch (e) {
         errors++;
         console.log(`"${example}": ${e}`);
