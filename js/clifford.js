@@ -173,6 +173,16 @@ class Addition         extends BinaryInternalOperator {
 }
 class Subtraction      extends BinaryInternalOperator {
     get operatorCharacter() { return '-'; }
+    simplify() {
+        if (this.left instanceof Fraction &&
+            this.right instanceof Fraction) {
+            let [a, b, c, d] = [
+                ...this.left.nude,
+                ...this.right.nude
+            ];
+            return new Fraction(a*d - c*b, b*d).simplify();
+        } else { return super.simplify(); }
+    }
 }
 class InnerProduct extends BinaryInternalOperator {
     get operatorCharacter() { return '·'; }
@@ -343,7 +353,7 @@ statement
 additive
     = left:multiplicative __ "+" __ right:additive {
         return new $clifford.Addition(left, right);
-    } / left:multiplicative "-" right:additive {
+    } / left:multiplicative __ "-" __ right:additive {
         return new $clifford.Subtraction(left, right);
     } / multiplicative
 
