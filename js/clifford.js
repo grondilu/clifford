@@ -8,8 +8,7 @@ let SymbolTable = new Map();
 class MultiVector {
     constructor(name) {
         if (typeof(name) === 'string') {
-            this.name = name;
-            SymbolTable[name] = this;
+            SymbolTable[this.name = name] = this;
         }
     }
     get grade() { return new Grade(this); }
@@ -426,7 +425,7 @@ zero = "0"
 Identifier
   = head:IdentifierStart tail:IdentifierPart* {
         let name = head + tail.join(""),
-            value  = $clifford.SymbolTable[Symbol.for(name)];
+            value  = $clifford.SymbolTable[name];
 
         if (value === undefined) {
             return new $clifford.Real(undefined, name);
