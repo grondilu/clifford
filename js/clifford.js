@@ -65,9 +65,9 @@ class ConformalPoint extends Vector {
     get norm() { return new Real(0); }
 }
 class Real extends MultiVector {
-    constructor(x, name) {
+    constructor(value, name) {
         super(name);
-        if (!(x === undefined)) this._floatingPointValue = x;
+        this._floatingPointValue = value;
     }
     get grade() { return new Grade(this, 0); }
     valueOf() { return this._floatingPointValue; }
@@ -83,11 +83,11 @@ class Fraction extends Real {
         if (denominator === 0) {
             throw new EvalError('division by zero');
         }
-        super(name);
+        super(undefined, name);
         this.numerator = numerator;
         this.denominator = denominator;
     }
-    get _floatingPointValue() { return this.numerator / this.denominator }
+    get valueOf() { return this.numerator / this.denominator }
     get nude() { return [this.numerator, this.denominator]; }
     simplify() {
         let $gcd = gcd(...this.nude);
