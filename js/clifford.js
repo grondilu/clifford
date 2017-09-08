@@ -62,20 +62,10 @@ class ConformalPoint extends Vector {
             throw new TypeError();
         }
     }
-    get norm() { return new Real(0); }
 }
 class Real extends MultiVector {
-    constructor(value, name) {
-        super(name);
-        this._floatingPointValue = value;
-    }
     get grade() { return new Grade(this, 0); }
-    valueOf() { return this._floatingPointValue; }
-    toString() {
-        return this.valueOf() === undefined ?
-            super.toString() :
-            this.valueOf().toString();
-    }
+    valueOf() { return NaN; }
 }
 
 class SquareRoot extends Real {
@@ -450,7 +440,7 @@ Identifier
             value  = $clifford.SymbolTable[name];
 
         if (value === undefined) {
-            return new $clifford.Real(undefined, name);
+            return new $clifford.Real(name);
         } else {
             return value;
         }
