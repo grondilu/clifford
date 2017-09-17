@@ -4,12 +4,12 @@ has Mix $.monomials;
 
 my subset Variable of Str where /^^<ident>$$/;
 my class Monomial {
-    has Bag  $.variables;
+    has Bag $.variables handles <WHICH>;
     submethod TWEAK {
         die "unexpected variable name" unless
         self.variables.keys.all ~~ Variable;
     }
-    method WHICH {
+    method Str {
         self.variables
         .pairs
         .sort(*.key)
@@ -25,7 +25,6 @@ my class Monomial {
         })
         .join("*")
     }
-    method Str { self.WHICH }
     method add($a: Monomial $b --> Polynomial) {
         Polynomial.new: :monomials(($a, $b).Mix)
     }
