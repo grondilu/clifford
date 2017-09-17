@@ -1,14 +1,14 @@
-unit class Polynomial;
-has Real $.constant = 0;
-has Mix $.monomials;
-
+unit class Polynomial does Real;
+has Mix $.monomials .= new;
+method degree { max self.monomials.keys».degree }
 my subset Variable of Str where /^^<ident>$$/;
 my class Monomial {
-    has Bag $.variables handles <WHICH>;
+    has Bag $.variables handles <WHICH Bool> .= new;
     submethod TWEAK {
         die "unexpected variable name" unless
         self.variables.keys.all ~~ Variable;
     }
+    method degree { $!variables.total }
     method Str {
         self.variables
         .pairs
@@ -33,16 +33,22 @@ my class Monomial {
     }
 }
 
-method Bridge { $!monomials ?? NaN !! $!constant }
-method constant { $!constant }
+method constant { self.monomials{Monomial.new} }
 submethod TWEAK {
     die "unexpected monomial" unless
     self.monomials.keys.all ~~ Monomial;
 }
+
+method Bridge {
+    self.monomials.keys.any ??
+    NaN !! self.constant
+}
 multi method Str {
-    if !$!monomials { return $!constant.Str }
+    if self.monomials.none { return ~self.constant }
     my Pair ($head, @tail) = self
-    .monomials.pairs.sort({.key.Str});
+    .monomials
+    .pairs.grep(*.key.degree > 0)
+    .sort({.key.Str});
 
     my $h = $head.value.abs == 1 ?? $head.key !!
     "{$head.value.abs}*{$head.key}";
@@ -55,13 +61,13 @@ multi method Str {
         "+ {.value.abs}*{.key}"
     }
     return
-        $!constant == 0 ??
+        self.constant == 0 ??
         join(' ',
             $head.value < 0 ?? "-$h" !! $h,
             @t
         ) !!
         join(' ',
-            $!constant,
+            self.constant,
             $head.value < 0 ?? "- $h" !! "+ $h",
             @t
         )
@@ -71,72 +77,46 @@ multi method new(Variable $x) {
         Monomial.new(:variables($x.Bag)).Mix
     );
 }
-
-method add($a: Polynomial $b --> Polynomial) {
-    self.new:
-    :constant($a.constant + $b.constant),
-    :monomials($a.monomials (+) $b.monomials)
-}
-multi method multiply(Real $x --> Polynomial) {
-    self.new:
-    :constant($!constant * $x),
-    :monomials($!monomials.pairs.map({.key => $x*.value}).Mix)
-}
-
-multi method multiply($a: Polynomial $b --> Polynomial) {
-    Polynomial.new:
-    :constant($a.constant*$b.constant),
-    :monomials(
-        gather {
-            take $b.multiply($a.constant).monomials.pairs;
-            take $a.multiply($b.constant).monomials.pairs;
-            for $a.monomials.pairs -> $ip {
-                for $b.monomials.pairs -> $jp {
-                    take
-                    $ip.key.multiply($jp.key)
-                    => $ip.value*$jp.value;
-                }
-            }
-        }.Mix
-    )
+multi method new(Real $x) {
+    self.new: :monomials((Monomial.new => $x).Mix)
 }
 
 multi infix:<+>(Polynomial $a, Polynomial $b --> Polynomial) is export {
-    $a.add($b);
+    Polynomial.new: :monomials($a.monomials (+) $b.monomials);
 }
 multi infix:<->(Polynomial $a, Polynomial $b --> Polynomial) is export {
-    $a.add($b.multiply(-1));
+    $a + -1*$b
 }
 multi infix:<*>(Polynomial $a, Polynomial $b --> Polynomial) is export {
-    $a.multiply($b);
+    Polynomial.new :monomials(
+        gather for $a.monomials.pairs -> $i {
+            for $b.monomials.pairs -> $j {
+                take $i.key.multiply($j.key) => $i.value*$j.value
+            }
+        }.Mix
+    );
 }
 multi infix:<*>(Polynomial $a, Real $x --> Polynomial) is export {
-    $a.multiply($x);
+    $a * Polynomial.new($x)
 }
 multi infix:<*>(Real $x, Polynomial $a --> Polynomial) is export {
-    $a.multiply($x);
+    $a * Polynomial.new($x)
 }
 multi infix:</>(Polynomial $a, Real $x --> Polynomial) is export {
-    $a.multiply(1/$x);
+    $a * Polynomial.new(1/$x)
 }
 multi infix:<**>(Polynomial $a, UInt $n --> Polynomial) is export {
-    reduce { $^a.multiply($^b) }, $a xx $n;
+    reduce &[*], $a xx $n;
 }
 
 multi infix:<+>(Real $x, Polynomial $a --> Polynomial) is export {
-    Polynomial.new:
-    :constant($a.constant + $x),
-    :monomials($a.monomials);
+    Polynomial.new($x) + $a
 }
 multi infix:<+>(Polynomial $a, Real $x --> Polynomial) is export {
-    Polynomial.new:
-    :constant($a.constant + $x),
-    :monomials($a.monomials);
+    Polynomial.new($x) + $a
 }
 multi infix:<->(Polynomial $a, Real $x --> Polynomial) is export {
-    Polynomial.new:
-    :constant($a.constant - $x),
-    :monomials($a.monomials);
+    $a - Polynomial.new($x)
 }
 multi prefix:<->(Polynomial $a --> Polynomial) is export { -1*$a }
 multi infix:<->(Real $x, Polynomial $a --> Polynomial) is export {
