@@ -8,6 +8,10 @@ my class Monomial {
         die "unexpected variable name" unless
         self.variables.keys.all ~~ Variable;
     }
+    method CALL-ME(*%args) {
+        [*] self.variables.pairs.map:
+        { %args{.key} ?? %args{.key}**.value !! 1 }
+    }
     method degree { $!variables.total }
     method Str {
         self.variables
@@ -33,6 +37,19 @@ my class Monomial {
     }
 }
 
+multi method closure() {
+    my Set $vars = self.monomials.pairs
+    .map(*.key.variables.Set)
+    .reduce(&[(+)])
+    .Set;
+    sub (*%args) {
+        fail "missing or extraneous arguments"
+        unless %args.keys.Set == $vars;
+        [+] gather for self.monomials.pairs {
+            take .value * .key.(|%args)
+        }
+    }
+}
 method constant { self.monomials{Monomial.new} }
 submethod TWEAK {
     die "unexpected monomial" unless
@@ -44,7 +61,7 @@ method Bridge {
     NaN !! self.constant
 }
 multi method Str {
-    if self.monomials.none { return ~self.constant }
+    if self.degree == 0 { return ~self.constant }
     my Pair ($head, @tail) = self
     .monomials
     .pairs.grep(*.key.degree > 0)
