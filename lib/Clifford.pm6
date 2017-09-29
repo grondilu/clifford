@@ -153,6 +153,10 @@ class Blade {...}
 class MultiVector does Algebra {...}
 subset Vector of MultiVector where *.grade == 1;
 
+multi infix:<==>(MultiVector $a, MultiVector $b --> Bool) is export {
+    $a.blades === $b.blades
+}
+
 #--- infix operators prototypes
 proto infix:<·>(MultiVector $, MultiVector $   --> Real       ) is tighter(&infix:<*>) is tighter(&[*]) is export {*}
 proto infix:<∧>(MultiVector $, MultiVector $x? --> MultiVector) is tighter(&infix:<·>) is export {*}
@@ -346,7 +350,7 @@ class MultiVector {
     }
 
     #--- narrowing method
-    method narrow { self.rank == 0 ?? self{0}.narrow !! self }
+    method narrow { self.grade == 0 ?? self{0}.narrow !! self }
 
     #--- constructor from Real (required by Algebra)
     multi method new(Real $x) {
