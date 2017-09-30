@@ -23,6 +23,8 @@ multi infix:<+>(Algebra $a, Algebra $b) is export { $a.add($b) }
 multi infix:<+>(Algebra $a, Real $b) is export { $a.add($b) }
 multi infix:<+>(Real $a, Algebra $b) is export { $b.add($a) }
 multi infix:<->(Algebra $a, Algebra $b) is export { $a.add($b.multiply(-1)) }
+multi infix:<->(Real $a, Algebra $b) is export { $b.new($a).add(-$b) }
+multi infix:<->(Algebra $a, Real $b) is export { $a.add($a.new(-$b)) }
 
 multi infix:<*>(Algebra $a) is export { $a }
 multi infix:<*>(Algebra $a, Algebra $b) is export { $a.multiply($b) }
@@ -35,7 +37,7 @@ multi infix:<**>(Algebra $a, 1) is export { $a }
 multi infix:<**>(Algebra $a, UInt $n) is export { ($a*$a)**($n div 2) * $a**($n mod 2) }
 
 #--- Polynomial
-class Polynomial does Algebra {
+class Polynomial does Algebra is export {
     has Mix $.monomials .= new;
     method degree { max self.monomials.keys».degree }
     my subset Variable of Str where /^^<ident>$$/;
@@ -50,7 +52,7 @@ class Polynomial does Algebra {
             { %args{.key} ?? %args{.key}**.value !! 1 }
         }
         method degree { $!variables.total }
-        method Str {
+        method gist {
             self.variables
             .pairs
             .sort(*.key)
@@ -93,22 +95,22 @@ class Polynomial does Algebra {
         self.monomials.keys.all ~~ Monomial;
     }
 
-    multi method Str {
+    multi method gist {
         if self.degree == 0 { return ~self.constant }
         my Pair ($head, @tail) = self
         .monomials
         .pairs.grep(*.key.degree > 0)
-        .sort({.key.Str});
+        .sort({.key});
 
-        my $h = $head.value.abs == 1 ?? $head.key !!
-        "{$head.value.abs}*{$head.key}";
+        my Str $h = $head.value.abs == 1 ?? $head.key.gist !!
+        "{$head.value.abs}*{$head.key.gist}";
 
         my Str @t = @tail.map: {
             .value < 0 && .value !== -1 ??
             "- {.value.abs}*{.key}" !!
             .value == -1 ?? "- {.key}" !!
             .value ==  1 ?? "+ {.key}" !!
-            "+ {.value.abs}*{.key}"
+            "+ {.value.abs}*{.key.gist}"
         }
         return
         self.constant == 0 ??
@@ -172,20 +174,20 @@ role BasisVector[Sign $square] is export {
 class Euclidean does BasisVector[1] {
     has $.index where UInt|Inf;
     method rank { 1 - 1/(2 + self.index) }
-    method Str { "e$!index" }
+    method gist { "e$!index" }
 }
 class AntiEuclidean does BasisVector[-1] {
     has $.index where UInt|Inf;
     method rank { 2 + self.index }
-    method Str { "ē$!index" }
+    method gist { "ē$!index" }
 }
 our class No does BasisVector[0] {
     method rank { -1 }
-    method Str { "\c[MATHEMATICAL ITALIC SMALL O]" }
+    method gist { "\c[MATHEMATICAL ITALIC SMALL O]" }
 }
 our class Ni does BasisVector[0] {
     method rank { 0 }
-    method Str { "∞" }
+    method gist { "∞" }
 }
 
 class Blade {
@@ -193,7 +195,7 @@ class Blade {
     method TWEAK {
         fail "wrong frame" unless $!frame.keys.all ~~ BasisVector;
     }
-    method Str { self.frame.keys.sort(*.rank).join('∧') }
+    method gist { self.frame.keys.sort(*.rank)».gist.join('∧') }
     method grade(--> UInt) { $!frame ?? $!frame.total !! 0 }
 
     method MultiVector(--> MultiVector) {
@@ -361,7 +363,7 @@ class MultiVector {
     my $ni = Ni.new.MultiVector;
 
     #--- Str method candidates
-    multi method Str(Heterogeneous:) {
+    multi method gist(Heterogeneous:) {
         ([+] gather for self.blades.pairs {
             my $a = Blade.new(:frame(
                 .key.frame.keys.grep(*.square > 0).Set (-) $eInf.Set
@@ -372,10 +374,10 @@ class MultiVector {
             )).MultiVector;
             if $ēInf ∈ .key.frame { $a = $a∧($no + $ni/2) }
             take .value*$a;
-        }).Str;
+        }).gist;
     }
-    multi method Str($self where $self.grade == 0:) { ~self{0} }
-    multi method Str($self where $self{0} == 0:) {
+    multi method gist($self where $self.grade == 0:) { self{0}.gist }
+    multi method gist($self where $self{0} == 0:) {
         self.blades.pairs
         .sort(*.key.grade)
         .map(
@@ -383,13 +385,13 @@ class MultiVector {
                 (.value == -1 ?? "- " !!
                 .value == 1  ?? "+ " !!
                 .value < 0   ?? "- {.value.abs}*" !!
-                "+ {.value}*") ~ .key
+                "+ {.value}*") ~ .key.gist
             }
         ).join(' ')
         .subst(/^'- '/, '-')
         .subst(/^'+ '/, '')
     }
-    multi method Str($self where $self{0} !== 0:) {
+    multi method gist($self where $self{0} !== 0:) {
         self{0} ~ ' ' ~
         self.blades.pairs
         .grep(*.key.frame)
@@ -399,7 +401,7 @@ class MultiVector {
                 (.value == -1 ?? "- " !!
                 .value == 1  ?? "+ " !!
                 .value < 0   ?? "- {.value.abs}" !!
-                "+ {.value}*") ~ .key
+                "+ {.value}*") ~ .key.gist
             }
         ).join(' ')
     }
@@ -423,3 +425,6 @@ multi infix:<∧>($a, $b --> MultiVector) {
     }
 }
 
+constant 𝑥 is export = Polynomial.new('x');
+constant 𝑦 is export = Polynomial.new('y');
+constant 𝑧 is export = Polynomial.new('z');
