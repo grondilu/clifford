@@ -1,4 +1,10 @@
 unit module Clifford;
+#--- roles, classes and subsets predeclarations
+role Algebra {...}
+class Blade {...}
+class MultiVector does Algebra {...}
+subset Vector of MultiVector where *.grade == 1;
+
 #--- Algebra
 role Algebra {
 
@@ -39,7 +45,7 @@ multi infix:<**>(Algebra $a, UInt $n) is export { ($a*$a)**($n div 2) * $a**($n 
 #--- Polynomial
 class Polynomial does Algebra is export {
     has Mix $.monomials .= new;
-    method degree { max self.monomials.keys».degree }
+    method degree { max 0, |self.monomials.keys».degree }
     my subset Variable of Str where /^^<ident>$$/;
     my class Monomial {
         has Bag $.variables handles <WHICH Bool> .= new;
@@ -76,25 +82,22 @@ class Polynomial does Algebra is export {
         }
     }
 
-    multi method closure() {
-        my Set $vars = self.monomials.pairs
+    multi method CALL-ME(*%args) {
+        state Set $vars = self.monomials.pairs
         .map(*.key.variables.Set)
         .reduce(&[(+)])
         .Set;
-        sub (*%args) {
-            fail "missing or extraneous arguments"
-            unless %args.keys.Set == $vars;
-            [+] gather for self.monomials.pairs {
-                take .value * .key.(|%args)
-            }
+        fail "missing or extraneous arguments"
+        unless %args.keys.Set == $vars;
+        return [+] gather for self.monomials.pairs {
+            take .value * .key.(|%args)
         }
     }
-    method constant { self.monomials{Monomial.new} }
+    method constant { self.monomials{Monomial.new} || 0 }
     submethod TWEAK {
         die "unexpected monomial" unless
         self.monomials.keys.all ~~ Monomial;
     }
-
     multi method gist {
         if self.degree == 0 { return ~self.constant }
         my Pair ($head, @tail) = self
@@ -102,14 +105,16 @@ class Polynomial does Algebra is export {
         .pairs.grep(*.key.degree > 0)
         .sort({.key});
 
+        die "unexpected empty head" unless $head;
+
         my Str $h = $head.value.abs == 1 ?? $head.key.gist !!
         "{$head.value.abs}*{$head.key.gist}";
 
         my Str @t = @tail.map: {
             .value < 0 && .value !== -1 ??
-            "- {.value.abs}*{.key}" !!
-            .value == -1 ?? "- {.key}" !!
-            .value ==  1 ?? "+ {.key}" !!
+            "- {.value.abs}*{.key.gist}" !!
+            .value == -1 ?? "- {.key.gist}" !!
+            .value ==  1 ?? "+ {.key.gist}" !!
             "+ {.value.abs}*{.key.gist}"
         }
         return
@@ -148,16 +153,29 @@ class Polynomial does Algebra is export {
             }.Mix
         );
     }
+    multi method multiply(MultiVector $m --> MultiVector) {
+        $m.multiply(self)
+    }
 }
 
-#--- class predeclarations
-class Blade {...}
-class MultiVector does Algebra {...}
-subset Vector of MultiVector where *.grade == 1;
-
+#--- equality operators
 multi infix:<==>(MultiVector $a, MultiVector $b --> Bool) is export {
     $a.blades === $b.blades
 }
+multi infix:<==>(Real $a, MultiVector $b --> Bool) is export {
+    MultiVector.new($a) == $b
+}
+multi infix:<==>(MultiVector $a, Real $b --> Bool) is export {
+    MultiVector.new($b) == $a
+}
+multi infix:<==>(Polynomial $a, Real $b --> Bool) is export {
+    $a.degree == 0 and $a.constant == $b
+}
+multi infix:<==>(Real $a, Polynomial $b --> Bool) is export {
+    $b.degree == 0 and $b.constant == $a
+}
+multi infix:<==>(Polynomial $a, Polynomial $b --> Bool) is export { $a - $b == 0 }
+
 
 #--- infix operators prototypes
 proto infix:<·>(MultiVector $, MultiVector $   --> Real       ) is tighter(&infix:<*>) is tighter(&[*]) is export {*}
@@ -199,7 +217,8 @@ class Blade {
     method grade(--> UInt) { $!frame ?? $!frame.total !! 0 }
 
     method MultiVector(--> MultiVector) {
-        MultiVector.new: :blades(self.Mix);
+        my Polynomial %blades{Blade} = (self) => Polynomial.new(1);
+        MultiVector.new: :%blades;
     }
 }
 
@@ -214,16 +233,15 @@ multi wedge(BasisVector $a, BasisVector $b where $a.rank > $b.rank --> MultiVect
 
 multi wedge(Blade $a, Blade $b where ?($a.frame (&) $b.frame) --> Real) { 0 }
 multi wedge(Blade $a, Blade $b where !($a.frame (&) $b.frame) --> MultiVector) {
-    MultiVector.new: :blades(
-        (
-            (Blade.new: :frame($a.frame (|) $b.frame)) =>
-            (-1)**(
-                [+] gather for $b.frame.keys {
-                    take +$a.frame.keys.grep(*.rank > .rank)
-                }
-            )
-        ).Mix
-    )
+    my Polynomial %blades{Blade} =
+    (Blade.new: :frame($a.frame (|) $b.frame)) =>
+    Polynomial.new:
+    (-1)**(
+        [+] gather for $b.frame.keys {
+            take +$a.frame.keys.grep(*.rank > .rank)
+        }
+    );
+    MultiVector.new: :%blades;
 }
 
 proto cdot(BasisVector $a, BasisVector $b --> Real) {*}
@@ -248,22 +266,21 @@ multi cdot(BasisVector $a, BasisVector $b --> Real) {
 proto multiply($a, $b --> MultiVector) {*}
 multi multiply(Blade $a, Blade $b --> MultiVector) {
     my Bag $bag = $a.frame (+) $b.frame;
-    MultiVector.new: blades =>
-    (
-        Blade.new(
-            :frame($bag.pairs.grep(*.value < 2)».key.Set)
-        ) => [*] |(
-            $bag
-            .pairs
-            .grep(*.value == 2)
-            .map(*.key.square)
-        ),
-        (-1)**(
-            [+] gather for $b.frame.keys {
-                take +$a.frame.keys.grep(*.rank > .rank)
-            }
-        )
-    ).Mix
+    my Polynomial %blades{Blade} =
+    Blade.new(
+        :frame($bag.pairs.grep(*.value < 2)».key.Set)
+    ) => Polynomial.new: [*] |(
+        $bag
+        .pairs
+        .grep(*.value == 2)
+        .map(*.key.square)
+    ),
+    (-1)**(
+        [+] gather for $b.frame.keys {
+            take +$a.frame.keys.grep(*.rank > .rank)
+        }
+    );
+    MultiVector.new: :%blades;
 }
 
 #--- basis vectors arrays
@@ -316,30 +333,40 @@ class MultiVector {
         .any == Inf
     }
 
-    has Mix $.blades;
-    submethod TWEAK { fail "unexpected blade" unless $!blades.keys.all ~~ Blade; }
+    has Polynomial %.blades{Blade};
+
+    method cleaned {
+        my Polynomial %blades{Blade} = grep
+        *.value !== 0, self.blades.pairs;
+        self.new: :%blades
+    }
 
     #--- grade method
     method grade(--> Int) { max 0, |self.blades.keys.map(*.grade) }
 
     #--- grade projection
-    multi method AT-KEY(0 --> Real) { $!blades{Blade.new: :frame(set())} || 0 }
+    multi method AT-KEY(0 --> Polynomial) { self.blades{Blade.new: :frame(set())} || 0 }
     multi method AT-KEY(UInt $n --> MultiVector) {
         MultiVector.new: :blades(
-            $!blades.pairs.grep({ .key.grade == $n })
+            self.blades.pairs.grep({ .key.grade == $n })
             .Mix
         );
     }
 
     multi method add(MultiVector $b --> MultiVector) {
-        MultiVector.new: :blades(self.blades (+) $b.blades)
+        my Polynomial %blades{Blade};
+        %blades{.key} += .value for flat (self.blades, $b.blades)».pairs;
+        MultiVector.new: :%blades;
     }
     multi method multiply(Real $a --> MultiVector) {
-        MultiVector.new: :blades(
-            self.blades.pairs
-            .map({ .key => $a*.value })
-            .Mix
-        );
+        self.multiply(Polynomial.new($a));
+    }
+    multi method multiply(Polynomial $p --> MultiVector) {
+        my Polynomial %blades{Blade} =
+        self.blades.pairs
+        .map({ .key => $p*.value })
+        ;
+        MultiVector.new: :%blades;
     }
     multi method multiply(Vector $a, Vector $b --> MultiVector) { $a·$b + $a∧$b }
     multi method multiply(MultiVector $b --> MultiVector) {
@@ -356,7 +383,12 @@ class MultiVector {
 
     #--- constructor from Real (required by Algebra)
     multi method new(Real $x) {
-        self.new: :blades((Blade.new(:frame(set())) => $x).Mix)
+        self.new: Polynomial.new: $x;
+    }
+    #--- constructor from Polynomial
+    multi method new(Polynomial $p) {
+        my Polynomial %blades{Blade} = Blade.new(:frame(set())) => $p;
+        self.new: :%blades;
     }
 
     my $no = No.new.MultiVector;
@@ -374,34 +406,50 @@ class MultiVector {
             )).MultiVector;
             if $ēInf ∈ .key.frame { $a = $a∧($no + $ni/2) }
             take .value*$a;
-        }).gist;
+        }).cleaned.gist;
     }
     multi method gist($self where $self.grade == 0:) { self{0}.gist }
     multi method gist($self where $self{0} == 0:) {
         self.blades.pairs
         .sort(*.key.grade)
         .map(
-            {
-                (.value == -1 ?? "- " !!
-                .value == 1  ?? "+ " !!
-                .value < 0   ?? "- {.value.abs}*" !!
-                "+ {.value}*") ~ .key.gist
+            sub ($_) {
+                if .value.degree == 0 {
+                    my Real $value = .value.constant;
+                    return
+                    ($value == -1 ?? "- " !!
+                    $value == 1  ?? "+ " !!
+                    $value < 0   ?? "- {$value.abs}*" !!
+                    "+ $value*") ~ .key.gist
+                } elsif .value.monomials.elems == 1 {
+                    return "{.value.gist}*{.key.gist}";
+                } else {
+                    return "({.value.gist})*{.key.gist}";
+                }
             }
         ).join(' ')
         .subst(/^'- '/, '-')
         .subst(/^'+ '/, '')
     }
     multi method gist($self where $self{0} !== 0:) {
-        self{0} ~ ' ' ~
+        self{0}.gist ~ ' ' ~
         self.blades.pairs
         .grep(*.key.frame)
         .sort(*.key.grade)
         .map(
-            {
-                (.value == -1 ?? "- " !!
-                .value == 1  ?? "+ " !!
-                .value < 0   ?? "- {.value.abs}" !!
-                "+ {.value}*") ~ .key.gist
+            sub ($_) {
+                if .value.degree == 0 {
+                    my Real $value = .value.constant;
+                    return
+                    ($value == -1 ?? "- " !!
+                    $value == 1  ?? "+ " !!
+                    $value < 0   ?? "- {$value.abs}*" !!
+                    "+ $value*") ~ .key.gist
+                } elsif .value.monomials.elems == 1 {
+                    return "+ {.value.gist}*{.key.gist}";
+                } else {
+                    return "+ ({.value.gist})*{.key.gist}";
+                }
             }
         ).join(' ')
     }
