@@ -82,6 +82,9 @@ class Polynomial does Algebra is export {
         }
     }
 
+    method narrow {
+        self.degree == 0 ?? self.constant.narrow !! self
+    }
     multi method CALL-ME(*%args) {
         state Set $vars = self.monomials.pairs
         .map(*.key.variables.Set)
@@ -160,7 +163,9 @@ class Polynomial does Algebra is export {
 
 #--- equality operators
 multi infix:<==>(MultiVector $a, MultiVector $b --> Bool) is export {
-    $a.blades === $b.blades
+    $a.blades.keys.Set === $b.blades.keys.Set and
+    [==] $a.blades.keys
+    .map({$a.blades{$_} == $b.blades{$_}})
 }
 multi infix:<==>(Real $a, MultiVector $b --> Bool) is export {
     MultiVector.new($a) == $b
@@ -345,7 +350,7 @@ class MultiVector {
     method grade(--> Int) { max 0, |self.blades.keys.map(*.grade) }
 
     #--- grade projection
-    multi method AT-KEY(0 --> Polynomial) { self.blades{Blade.new: :frame(set())} || 0 }
+    multi method AT-KEY(0 --> Polynomial) { self.blades{Blade.new: :frame(set())} || Polynomial.new: 0 }
     multi method AT-KEY(UInt $n --> MultiVector) {
         MultiVector.new: :blades(
             self.blades.pairs.grep({ .key.grade == $n })
@@ -356,7 +361,7 @@ class MultiVector {
     multi method add(MultiVector $b --> MultiVector) {
         my Polynomial %blades{Blade};
         %blades{.key} += .value for flat (self.blades, $b.blades)».pairs;
-        MultiVector.new: :%blades;
+        MultiVector.new(:%blades).cleaned;
     }
     multi method multiply(Real $a --> MultiVector) {
         self.multiply(Polynomial.new($a));
@@ -366,16 +371,16 @@ class MultiVector {
         self.blades.pairs
         .map({ .key => $p*.value })
         ;
-        MultiVector.new: :%blades;
+        MultiVector.new(:%blades).cleaned;
     }
     multi method multiply(Vector $a, Vector $b --> MultiVector) { $a·$b + $a∧$b }
     multi method multiply(MultiVector $b --> MultiVector) {
-        [+] gather for self.blades.pairs -> $i {
+        ([+] gather for self.blades.pairs -> $i {
             for $b.blades.pairs -> $j {
                 take $i.value*$j.value*
                 multiply($i.key, $j.key)
             }
-        }
+        }).cleaned
     }
 
     #--- narrowing method
