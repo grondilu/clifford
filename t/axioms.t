@@ -6,10 +6,10 @@ my @e = flat no, |@Clifford::e Z ni, |@Clifford::ē;
 plan 4;
 
 sub randRat { (0.5 - rand).round(.01) }
-sub random {
+sub random($N = 5) {
     my $a = 0;
     $a += randRat if rand < .5;
-    $a += randRat() * [∧] @e[^16].pick($_) for 1..10;
+    $a += randRat() * [∧] @e[^$N].pick($_) for 1..10;
     return $a;
 }
 
