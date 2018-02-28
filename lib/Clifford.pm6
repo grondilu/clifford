@@ -183,7 +183,7 @@ multi infix:<==>(Polynomial $a, Polynomial $b --> Bool) is export { $a - $b == 0
 
 
 #--- infix operators prototypes
-proto infix:<·>(MultiVector $, MultiVector $   --> Real       ) is tighter(&infix:<*>) is tighter(&[*]) is export {*}
+proto infix:<·>(MultiVector $, MultiVector $   --> Real       ) is tighter(&infix:<*>) is export {*}
 proto infix:<∧>(MultiVector $, MultiVector $x? --> MultiVector) is tighter(&infix:<·>) is export {*}
 
 #--- Basis Vector definitions
