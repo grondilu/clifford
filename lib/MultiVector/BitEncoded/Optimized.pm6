@@ -16,7 +16,7 @@ method values { @!reals }
 # required by MultiVector::BitEncoded
 method bitEncoding { (@!basis Z=> @!reals).MixHash }
 
-multi method new(Real $s) { self.new: :basis[0], :reals[$s] }
+multi method new(Real $s) returns MultiVector { self.new: :basis[0], :reals[$s] }
 multi method new(UIntHash $ where !*  ) { self.new(0) }
 multi method new(UIntHash $bitEncoding) {
     my @basis = sort $bitEncoding.keys;
@@ -44,7 +44,7 @@ multi method add(Real $s) {
 }
 
 my enum Product <gp ip op sp lc dp>;
-multi method scale(Real $s) { self.new: :@!basis, :reals[@!reals X* $s] }
+multi method scale(Real $s) returns MultiVector { self.new: :@!basis, :reals[@!reals X* $s] }
 
 method gp($A: ::?CLASS $B) { get-block($A, $B, gp)($A, $B) }
 method ip($A: ::?CLASS $B) { get-block($A, $B, ip)($A, $B) }

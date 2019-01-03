@@ -5,13 +5,13 @@ unit class MultiVector::BitEncoded::Default does MultiVector::BitEncoded;
 has UIntHash $.bitEncoding;
 
 # Constructors required by roles
-multi method new(Real $s) { self.new: :bitEncoding((0 => $s).MixHash) }
+multi method new(Real $s) returns MultiVector { self.new: :bitEncoding((0 => $s).MixHash) }
 multi method new(UIntHash $bitEncoding) { self.new: :$bitEncoding }
 
 multi method add(::?CLASS $A) { self.new: (flat self.pairs, $A.pairs).MixHash }
 multi method add(Real $s) { self.new: (0 => $s, |self.pairs).MixHash }
 
-multi method scale(Real $s) {
+multi method scale(Real $s) returns MultiVector {
     self.new: self.pairs.map({ Pair.new: .key, $s*.value }).MixHash
 }
 
