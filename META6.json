@@ -13,6 +13,7 @@
         "MultiVector::BitEncoded::Default":    "lib/MultiVector/BitEncoded/Default.pm6",
         "MultiVector::BitEncoded::Optimized":  "lib/MultiVector/BitEncoded/Optimized.pm6"
     },
+    "tags": [ "Math" ],
     "authors" : [ "Lucien Grondin" ],
     "depends" : [ ],
     "source-url" : "git://github.com/grondilu/clifford.git"
