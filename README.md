@@ -1,10 +1,10 @@
-Geometric Algebra in Perl 6
+Geometric Algebra in Raku
 ===========================
 
 [![Build Status](https://travis-ci.org/grondilu/clifford.svg)](https://travis-ci.org/grondilu/clifford)
 
 This module is an attempt to implement basic [Geometric
-Algebra](http://en.wikipedia.org/wiki/Geometric_Algebra) in Perl 6.
+Algebra](http://en.wikipedia.org/wiki/Geometric_Algebra) in Raku.
 
 With this module you can create euclidean and anti-euclidean vectors of
 arbitrary size.  You can then add and substract them, as well as multiplying
