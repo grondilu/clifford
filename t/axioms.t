@@ -1,19 +1,15 @@
 use Clifford;
 use Test;
 
-
-sub random {
-  given rand {
-    when * < .2 { return random() * random(); }
-    when * < .3 { return random() + random(); }
-    when * < .5 { return @e[^10 .pick] }
-    when * < .6 { return @ē[^10 .pick] }
-    default { return (-2, -1, 1, 2).pick }
-  }
+sub random($_ = rand) {
+  when * < .1 { return (rand - .5).round(.1) }
+  when * < .2 { return @e[^10 .pick] }
+  when * < .3 { return @ē[^10 .pick] }
+  when * < .5 { return random(rand/2) * random(rand/2); }
+  default     { return random(4*rand/5) + random(2*rand/3); }
 }
 
 constant N = 1000;
-
 plan N;
 
 for ^N {
