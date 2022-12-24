@@ -21,4 +21,4 @@ my @coeff = (.5 - rand) xx 4;
 my $v = [+] @coeff Z* @e[^4];
 ok ($v**2).narrow ~~ Real, 'contraction';
 
-# vim: ft=perl6
+# vi: ft=raku
