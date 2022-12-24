@@ -1,10 +1,10 @@
 unit role MultiVector does Numeric;
 
 # All implementations should be able to promote a Real
-multi method new(Real $s) returns MultiVector {...}
+multi method new(Real $s) returns ::?CLASS {...}
 
 # Grade projection
-proto method AT-POS(UInt $n) returns MultiVector {*}
+proto method AT-POS(UInt $n) returns ::?CLASS {*}
 
 # The grades method should return a list of grades where
 # the grade projection is not null.
@@ -42,7 +42,7 @@ method narrow returns Numeric {
 proto method add($) returns MultiVector {*}
 
 # scalar multiplication prototype
-proto method scale(Real $) {*}
-multi method scale(0) returns MultiVector { self.new: 0 }
-multi method scale(1) returns MultiVector { self.clone }
-multi method scale(Real $) returns MultiVector {...}
+proto method scale(Real $) returns ::?CLASS {*}
+multi method scale(0) { self.new: 0 }
+multi method scale(1) { self.clone }
+multi method scale(Real $) {...}

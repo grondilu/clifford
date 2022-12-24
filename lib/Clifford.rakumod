@@ -1,11 +1,11 @@
 unit module Clifford;
 use MultiVector;
-use MultiVector::BitEncoded::Optimized;
+use MultiVector::BitEncoded;
 subset Vector of MultiVector where .grades.all == 1;
 
-class MV is MultiVector::BitEncoded::Optimized {}  # just an alias
+class MV is MultiVector::BitEncoded {}  # just an alias
 our @e is export = map { MV.new("e$_") }, ^Inf;
-our @ē is export = map { MV.new("ē$_") }, ^Inf;
+our @i is export = map { MV.new("i$_") }, ^Inf;
 our @o is export = map { MV.new("o$_") }, ^Inf;
 
 # ADDITION
@@ -16,7 +16,7 @@ multi infix:<+>(MultiVector $A, MultiVector $B) returns MultiVector is export { 
 # MULTIPLICATION
 multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export { $A.scale($s) }
 multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale($s) }
-multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.gp($B) }
+multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.geometric-product($B) }
 multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale(1/$s) }
 multi infix:</>($x, Vector $A) returns MultiVector is export { $x*$A/($A*$A).Real }
 

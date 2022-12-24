@@ -23,24 +23,20 @@ method sp(::?CLASS $A) { %product<sp>(self, $A) }
 method lc(::?CLASS $A) { %product<lc>(self, $A) }
 method dp(::?CLASS $A) { %product<dp>(self, $A) }
 
-%product = <gp ip op sp lc dp> Z=>
+%product = <gp> Z=>
 map -> &basis-blade-product {
     -> $A, $B {
-	my @a = (|.push-to-diagonal-basis for $A.basis-blades);
-	my @b = (|.push-to-diagonal-basis for $B.basis-blades);
+	my @a = $A.basis-blades;
+	my @b = $B.basis-blades;
 	$A.new: do for @a -> $a {
 	    |do for @b -> $b {
-		&basis-blade-product($a, $b);
+	      note &basis-blade-product($a, $b).raku;
+	      &basis-blade-product($a, $b);
 	    }
-	}.map(*.pop-from-diagonal-basis)
+	}
 	.flat
 	.map(*.pair)
 	.MixHash;
     }
 }, 
-{ $^a.geometric-product($^b) },
-{ $^a.inner-product($^b) },
-{ $^a.outer-product($^b) },
-{ $^a.scalar-product($^b) },
-{ $^a.left-contraction($^b) },
-{ $^a.dot-product($^b) };
+{ $^a.geometric-product($^b) };
