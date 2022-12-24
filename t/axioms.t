@@ -6,8 +6,8 @@ sub random($_ = rand) {
   when * < .2 { return @e[^10 .pick] }
   when * < .3 { return @i[^10 .pick] }
   when * < .4 { return @o[^10 .pick] }
-  when * < .5 { return random($_/2) * random($_/2); }
-  default     { return random(4*$_/5) + random(2*$_/3); }
+  when * < .5 { return random(rand/2) * random(rand/2); }
+  default     { return random(4*rand/5) + random(2*rand/3); }
 }
 
 constant N = 1000;
