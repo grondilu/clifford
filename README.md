@@ -16,7 +16,7 @@ Euclidean space
 ---------------
 
 The module exports an array constant `@e` which serves as an orthonormal basis
-for an Euclidean space of infinite, countable dimension.
+for an Euclidean space of infinite, albeit countable dimension.
 
     use Clifford;
 
