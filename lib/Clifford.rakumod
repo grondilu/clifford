@@ -6,8 +6,7 @@ subset Vector of MultiVector where .grades.all == 1;
 class MV is MultiVector::BitEncoded::Optimized {}  # just an alias
 our @e is export = map { MV.new("e$_") }, ^Inf;
 our @ē is export = map { MV.new("ē$_") }, ^Inf;
-our constant no is export = MV.new("no");
-our constant ni is export = MV.new("ni");
+our @o is export = map { MV.new("o$_") }, ^Inf;
 
 # ADDITION
 multi infix:<+>(MultiVector $A, Real $x) returns MultiVector is export { $A.add($x) }
@@ -46,16 +45,3 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
     my $narrowed = $A.narrow;
     $narrowed ~~ Real and $narrowed == $x;
 }
-
-# INVOLUTIONS
-sub postfix:<~>(MultiVector $A) returns MultiVector is export { $A.reversion }
-sub postfix:<^>(MultiVector $A) returns MultiVector is export { $A.involution }
-
-# DERIVED PRODUCTS
-sub infix:<·>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.ip($B) }
-sub infix:<∧>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.op($B) }
-sub infix:<⌋>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.lc($B) }
-sub infix:<⌊>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.rc($B) }
-sub infix:<∗>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.sp($B) }
-#sub infix:<×>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { 1/2*($A*$B - $B*$A) }
-sub infix:<∙>(MultiVector $A, MultiVector $B) returns MultiVector is tighter(&infix:<*>) is export { $A.dp($B) }
