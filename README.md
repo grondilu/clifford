@@ -2,6 +2,7 @@ Geometric Algebra in Raku
 ===========================
 
 [![Build Status](https://travis-ci.org/grondilu/clifford.svg)](https://travis-ci.org/grondilu/clifford)
+[![SparrowCI](https://ci.sparrowhub.io/project/gh-grondilu-clifford/badge)](https://ci.sparrowhub.io)
 
 This module is an attempt to implement basic [Geometric
 Algebra](http://en.wikipedia.org/wiki/Geometric_Algebra) in Raku.
