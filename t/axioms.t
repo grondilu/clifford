@@ -15,7 +15,7 @@ plan N;
 
 for ^N {
   my ($a, $b, $c) = random() xx 3;
-  subtest "a={$a.gist}, b={$b.gist}, c={$c.gist}", {
+  subtest  {
     ok ($a*$b)*$c == $a*($b*$c), 'associativity';
     ok $a*($b + $c) == $a*$b + $a*$c, 'left distributivity';
     ok ($a + $b)*$c == $a*$c + $b*$c, 'right distributivity';
