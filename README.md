@@ -24,9 +24,8 @@ use Clifford;
 
 say @e[0];         # e0
 say 1 + @e[4];     # 1 + e4
-say @i[3]*@e[2];   # e2∧i3
-say @o[3]*@i[2];   # i2∧o3
-say 1 + @e[3];     # 1 + e3
+say @i[3]*@e[2];   # -e2∧i3
+say @o[2]*@i[2];   # -i2∧o2
 
 say @e[1]**2;      # 1
 say @i[1]**2;      # -1
