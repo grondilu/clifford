@@ -1,12 +1,33 @@
 unit class MultiVector;
 
+role BasisBlade {
+  multi method gist(0:) { 1 }
+  multi method gist(UInt:) {
+    ((^Inf XR~ <e i o>) Z=> self.polymod(2 xx *))
+    .grep(+*.value)
+    .map(*.key)
+    .join('∧')
+    .trans(^10 => "₀".."₉")
+  }
+}
+
+method gist {
+  self.mix.pairs
+  .sort(*.key)
+  .map({ .value ~ '*' ~ (.key but BasisBlade).gist })
+  .join(' + ')
+  .subst(/'*1'/, '', :g)
+  .subst(/<<1\*/, '', :g)
+  .subst(/'+ -'/, ' - ', :g)
+  || '0'
+}
+  
 # L<https://github.com/rakudo/rakudo/issues/2544>
 #has Mix[Int] $.mix = (1, 2);
 has Mix $.mix;
 
-method grades { self.mix.keys.map(*.base(2).comb.sum) // 0 }
+method grades { self.mix.keys.map(*.base(2).comb.sum) // (0,) }
 
-subset BasisBlade of ::?CLASS is export where *.mix.elems == 1;
 
 # maybe .Real should fail unless .grades.max == 0??
 method Real { $!mix{0} // 0 }
@@ -26,7 +47,7 @@ my sub order(UInt:D $i is copy, UInt:D $j) {
 
 multi method new(Real $r) { samewith mix => (0 => $r).Mix }
 multi method new(Str $ where /^^(<[eio]>)(\d+)$$/) {
-  self.new: mix => (1 +< (3*$1 + enum <e i o>{$0})  => 1).Mix
+  self.new(mix => (1 +< (3*$1 + enum <e i o>{$0})  => 1).Mix)
 }
 
 multi method add($a: ::?CLASS $b) returns ::?CLASS {
@@ -41,7 +62,7 @@ multi method scale(Real $r) returns ::?CLASS {
   self.new: mix => self.mix.pairs.map({ .key => $r*.value }).Mix
 }
 multi method geometric-product($A: ::?CLASS $B) returns ::?CLASS {
-  self.new: mix => do for $A.mix.keys X $B.mix.keys -> ($a, $b) {
+  ::?CLASS.new: mix => do for $A.mix.keys X $B.mix.keys -> ($a, $b) {
     ($a +^ $b) => [*]
     $A.mix{$a}, $B.mix{$b},
     order($a, $b),
