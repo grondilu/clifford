@@ -15,10 +15,10 @@ method gist {
   self.mix.pairs
   .sort(*.key)
   .map({ .value ~ '*' ~ (.key but BasisBlade).gist })
-  .join(' + ')
+  .join('+')
   .subst(/'*1'/, '', :g)
-  .subst(/<<1\*/, '', :g)
-  .subst(/'+ -'/, ' - ', :g)
+  .subst(/<!after \.>1\*/, '', :g)
+  .subst(/'+-'/, '-', :g)
   || '0'
 }
   
@@ -26,7 +26,7 @@ method gist {
 #has Mix[Int] $.mix = (1, 2);
 has Mix $.mix;
 
-method grades { self.mix.keys.map(*.base(2).comb.sum) // (0,) }
+method grades { self.mix.keys.map(*.base(2).comb.sum) // 0 }
 
 
 # maybe .Real should fail unless .grades.max == 0??
@@ -70,6 +70,14 @@ multi method geometric-product($A: ::?CLASS $B) returns ::?CLASS {
     .grep(*.value)
     .map(*.key)
     .Slip
+  }.Mix
+}
+multi method outer-product($A: ::?CLASS $B) returns ::?CLASS {
+  ::?CLASS.new: mix => do for $A.mix.keys X $B.mix.keys -> ($a, $b) {
+    next if $a +& $b;
+    ($a +^ $b) => [*]
+    $A.mix{$a}, $B.mix{$b},
+    order($a, $b)
   }.Mix
 }
 
