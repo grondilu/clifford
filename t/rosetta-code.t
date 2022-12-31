@@ -10,7 +10,6 @@ use Test;
 # and we compute its pseudo-scalar and its square.
   my ($i, $j, $k) = @e;
   my $I = $i∧$j∧$k;
-  my $I2 = ($I**2).narrow;
 
 # Homogeneous coordinates of point (X,Y) are (X,Y,1)
   my $A =  4*$i +  0*$j + $k;
@@ -24,9 +23,9 @@ use Test;
 
 # The intersection is their meet, which we
 # compute by using the De Morgan law
-  my $ab = $AB*$I/$I2;
-  my $cd = $CD*$I/$I2;
-  my $M = ($ab ∧ $cd)*$I/$I2;
+  my $ab = $AB/$I;
+  my $cd = $CD/$I;
+  my $M = ($ab ∧ $cd)/$I;
 
 # Affine coordinates are (X/Z, Y/Z)
   is (($M / ($M·$k).narrow) X· $i, $j), (5, 5), "intersection of two lines";
