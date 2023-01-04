@@ -17,6 +17,7 @@ multi infix:<*>(Real $s, MultiVector $A) is export { $A.scale($s) }
 multi infix:<*>(MultiVector $A, Real $s) is export { $A.scale($s) }
 multi infix:<*>(MultiVector $A, MultiVector $B)   is export { $A.geometric-product($B) }
 multi infix:</>(MultiVector $A, Real $s) is export { $A.scale(1/$s) }
+multi infix:</>(     Vector $A, Real $s) is export { callsame().narrow }
 
 # SUBSTRACTION
 multi prefix:<->(MultiVector $A) is export { return -1 * $A }
@@ -45,6 +46,6 @@ multi infix:<==>(MultiVector $A, Real $x) returns Bool is export {
 }
 
 
-multi infix:<∧>(MultiVector $A, MultiVector $B) is export { $A.outer-product($B) }
+multi infix:<∧>(MultiVector $A, MultiVector $B) is tighter(&infix:<+>) is export { $A.outer-product($B) }
 multi infix:<·>(Vector $u, Vector $v) returns Real is export { (($u*$v+$v*$u)/2).narrow }
 multi infix:</>($A, MultiVector $B where *.mix.elems == 1) is export { $A*$B/($B**2).narrow }

@@ -1,6 +1,6 @@
 unit class MultiVector;
 
-role BasisBlade {
+role BasisBlade does Numeric {
   multi method gist(0:) { 1 }
   multi method gist(UInt:) {
     ((^Inf XR~ <e i o>) Z=> self.polymod(2 xx *))
@@ -28,6 +28,7 @@ has Mix $.mix;
 
 method grades { self.mix.keys.map(*.base(2).comb.sum) // 0 }
 
+method list { self.mix.pairs.map: { self.new: mix => .Mix } }
 
 # maybe .Real should fail unless .grades.max == 0??
 method Real { $!mix{0} // 0 }

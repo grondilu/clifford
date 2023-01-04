@@ -28,7 +28,7 @@ use Test;
   my $M = ($ab ∧ $cd)/$I;
 
 # Affine coordinates are (X/Z, Y/Z)
-  is (($M / ($M·$k).narrow) X· $i, $j), (5, 5), "intersection of two lines";
+  is ($M / ($M·$k) X· $i, $j), (5, 5), "intersection of two lines";
 }
 
 {
