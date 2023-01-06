@@ -1,7 +1,8 @@
 unit module Clifford;
 use MultiVector;
 use MultiVector::BitEncoded::Optimized;
-subset Vector of MultiVector where .grades.all == 1;
+subset Blade  of MultiVector where .reals.elems == 1;
+subset Vector of Blade       where .grades.all == 1;
 
 class MV is MultiVector::BitEncoded::Optimized {}  # just an alias
 our @e is export = map { MV.new("e$_") }, ^Inf;
@@ -19,7 +20,7 @@ multi infix:<*>(Real $s, MultiVector $A) returns MultiVector is export { $A.scal
 multi infix:<*>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale($s) }
 multi infix:<*>(MultiVector $A, MultiVector $B) returns MultiVector is export { $A.gp($B) }
 multi infix:</>(MultiVector $A, Real $s) returns MultiVector is export { $A.scale(1/$s) }
-multi infix:</>($x, Vector $A) returns MultiVector is export { $x*$A/($A*$A).Real }
+multi infix:</>($x, Blade $A) returns MultiVector is export { $x*$A/($A*$A).Real }
 
 # SUBSTRACTION
 multi prefix:<->(MultiVector $A) returns MultiVector is export { return -1 * $A }
