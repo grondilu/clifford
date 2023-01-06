@@ -1,20 +1,17 @@
 unit class MultiVector;
 
-role BasisBlade does Numeric {
-  multi method gist(0:) { 1 }
-  multi method gist(UInt:) {
-    ((^Inf XR~ <e i o>) Z=> self.polymod(2 xx *))
-    .grep(+*.value)
-    .map(*.key)
-    .join('∧')
-    .trans(^10 => "₀".."₉")
-  }
-}
-
 method gist {
   self.mix.pairs
   .sort(*.key)
-  .map({ .value ~ '*' ~ (.key but BasisBlade).gist })
+  .map({ .value ~ '*' ~ (
+    .key == 0 ?? '1' !!
+     ((^Inf XR~ <e i o>) Z=> .key.polymod(2 xx *))
+     .grep(+*.value)
+     .map(*.key)
+     .join('∧')
+     .trans(^10 => "₀".."₉")
+    )
+  })
   .join('+')
   .subst(/'*1'/, '', :g)
   .subst(/<!after \.>1\*/, '', :g)
@@ -28,7 +25,7 @@ has Mix $.mix;
 
 method grades { self.mix.keys.map(*.base(2).comb.sum) // 0 }
 
-method list { self.mix.pairs.map: { self.new: mix => .Mix } }
+method list { self.mix.pairs.map: { ::?CLASS.new: mix => .Mix } }
 
 # maybe .Real should fail unless .grades.max == 0??
 method Real { $!mix{0} // 0 }
@@ -48,19 +45,19 @@ my sub order(UInt:D $i is copy, UInt:D $j) {
 
 multi method new(Real $r) { samewith mix => (0 => $r).Mix }
 multi method new(Str $ where /^^(<[eio]>)(\d+)$$/) {
-  self.new(mix => (1 +< (3*$1 + enum <e i o>{$0})  => 1).Mix)
+  ::?CLASS.new(mix => (1 +< (3*$1 + enum <e i o>{$0})  => 1).Mix)
 }
 
 multi method add($a: ::?CLASS $b) returns ::?CLASS {
-  self.new: mix => ($a.mix.pairs, $b.mix.pairs).flat.Mix
+  ::?CLASS.new: mix => ($a.mix.pairs, $b.mix.pairs).flat.Mix
 }
-multi method add(Real $r)          returns ::?CLASS { samewith self.new: $r }
+multi method add(Real $r)          returns ::?CLASS { samewith ::?CLASS.new: $r }
 multi method negate                returns ::?CLASS { samewith self.scale: -1 }
 multi method subtract(::?CLASS $b) returns ::?CLASS { self.add: $b.negate }
 
 multi method divide(Real $r) returns ::?CLASS { self.scale: 1/$r }
 multi method scale(Real $r) returns ::?CLASS {
-  self.new: mix => self.mix.pairs.map({ .key => $r*.value }).Mix
+  ::?CLASS.new: mix => self.mix.pairs.map({ .key => $r*.value }).Mix
 }
 multi method geometric-product($A: ::?CLASS $B) returns ::?CLASS {
   ::?CLASS.new: mix => do for $A.mix.keys X $B.mix.keys -> ($a, $b) {
@@ -83,7 +80,7 @@ multi method outer-product($A: ::?CLASS $B) returns ::?CLASS {
 }
 
 multi method AT-POS(UInt $n) {
-  self.new: mix => ($!mix.pairs.grep(*.key.base(2).comb.sum == $n)).Mix
+  ::?CLASS.new: mix => ($!mix.pairs.grep(*.key.base(2).comb.sum == $n)).Mix
 }
 
 multi method Str($ where *.grades.max ≤ 0:) { self.narrow.Str }
