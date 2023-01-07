@@ -1,13 +1,18 @@
 use Clifford;
 use Test;
 
-sub random($_ = rand) {
-  when * < .1 { return (rand - .5).round(.1) }
-  when * < .2 { return @e[^10 .pick] }
-  when * < .3 { return @i[^10 .pick] }
-  when * < .4 { return @o[^10 .pick] }
-  when * < .5 { return random(rand/2) * random(rand/2); }
-  default     { return random(4*rand/5) + random(2*rand/3); }
+sub random($chance-of-ending = 0) {
+  if rand < $chance-of-ending {
+    given rand {
+      when * < 1/4 { return (rand - .5).round(.1) }
+      when * < 2/4 { return @e[^10 .pick] }
+      when * < 3/4 { return @i[^10 .pick] }
+      default      { return @o[^10 .pick] }
+    }
+  } else {
+    my $chance-of-continuing = 1 - $chance-of-ending;
+    (rand < .5 ?? &[+] !! &[*])(|(random(1 - .5*$chance-of-continuing) xx 2))
+  }
 }
 
 constant N = 1000;
