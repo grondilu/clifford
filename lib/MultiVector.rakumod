@@ -1,7 +1,25 @@
-unit class MultiVector;
+unit class MultiVector is Mix;
+
+subset BasisBlade of ::?CLASS is export where *.elems      < 2;
+subset Zero  of BasisBlade is export where *.elems == 0;
+subset Vector     of ::?CLASS is export where *.grades.all == 1;
+
+method Pair (BasisBlade: --> Pair) { self.pairs[0] }
+method grade(BasisBlade:)          { self.Pair.key.base(2).comb.sum }
+
+method list { (self.pairs || (0 => 0,)).map: { self.new-from-pairs: $_ } }
+
+our @e is export = map { ::?CLASS.new("e$_") }, ^Inf;
+our @i is export = map { ::?CLASS.new("i$_") }, ^Inf;
+our @o is export = map { ::?CLASS.new("o$_") }, ^Inf;
+
+method grades { self.list.map: *.grade }
+
+proto method Real returns Real {*}
+multi method Real(BasisBlade $ where *.grade == 0:) { self{0} }
 
 method gist {
-  self.mix.pairs
+  self.pairs
   .sort(*.key)
   .map({ .value ~ '*' ~ (
     .key == 0 ?? '1' !!
@@ -19,68 +37,92 @@ method gist {
   || '0'
 }
   
-# L<https://github.com/rakudo/rakudo/issues/2544>
-#has Mix[UInt] $.mix = (1, 2);
-has Mix $.mix;
-
-method grades { self.mix.keys.map(*.base(2).comb.sum) // 0 }
-
-method list { self.mix.pairs.map: { ::?CLASS.new: mix => .Mix } }
-
-# maybe .Real should fail unless .grades.max == 0??
-method Real { $!mix{0} // 0 }
-
-method narrow { self.grades.max ≤ 0 ?? self.Real.narrow !! self }
-
 my sub order(UInt:D $i is copy, UInt:D $j) {
-    (state %){$i}{$j} //= do {
-	my $n = 0;
-	repeat {
-	    $i +>= 1;
-	    $n += [+] ($i +& $j).polymod(2 xx *);
-	} until $i == 0;
-	$n +& 1 ?? -1 !! 1;
+  (state %){$i}{$j} //= do {
+    my $n = 0;
+    repeat {
+      $i +>= 1;
+      $n += [+] ($i +& $j).polymod(2 xx *);
+    } until $i == 0;
+    $n +& 1 ?? -1 !! 1;
+  }
+}
+
+multi method new(Real $r) { self.new-from-pairs: 0 => $r }
+multi method new(Str $ where /^^(<[eio]>)(\d+)$$/) { callwith 1 +< (3*$1 + enum <e i o>{$0}) }
+
+multi prefix:<+>(::?CLASS $M)             returns ::?CLASS is export { +$M }
+multi infix:<+>(::?CLASS $a, ::?CLASS $b) returns ::?CLASS is export { $a (+) $b }
+multi infix:<->(::?CLASS $a, ::?CLASS $b) returns ::?CLASS is export { $a + -1*$b }
+multi infix:<+>(::?CLASS $a, Real $r)     returns ::?CLASS is export { samewith $a, $a.new($r) }
+multi infix:<+>(Real $r, ::?CLASS $a)     returns ::?CLASS is export { samewith $a, $r }
+multi prefix:<->(BasisBlade $blade)       returns BasisBlade    is export { -1 * $blade }
+
+multi infix:<*>(Real $r, Zero $z) returns Zero is export { $z }
+multi infix:<*>(Real $r, BasisBlade $blade) returns BasisBlade    is export {
+  $blade.new-from-pairs: $blade.Pair.key => $r*$blade.Pair.value
+}
+
+multi infix:<*>(::?CLASS $a, Real $r) returns ::?CLASS is export { callwith $r, $a }
+multi infix:<*>(Real $r, ::?CLASS $a) returns ::?CLASS is export {
+  [+] $r X* $a.list
+}
+multi infix:</>(::?CLASS $a, Real $r) returns ::?CLASS is export { (1/$r)*$a }
+
+proto infix:<∧>(::?CLASS, ::?CLASS)   is tighter(&[*]) returns ::?CLASS is export {*}
+proto infix:<⟑>(::?CLASS, ::?CLASS)   is tighter(&[*]) returns ::?CLASS is export {*}
+
+
+multi infix:<∧>($, Zero $z) { $z }
+multi infix:<∧>(Zero $z, $) { $z }
+multi infix:<∧>(BasisBlade $A, BasisBlade $B where { $A.Pair.key +& $B.Pair.key }) { $ = ::?CLASS.new-from-pairs: 0 => 0 }
+multi infix:<∧>(BasisBlade $A, BasisBlade $B) {
+  my ($a, $b) = ($A, $B)».Pair;
+  ::?CLASS.new-from-pairs:
+    ($a.key +| $b.key) => $a.value*$b.value*order($a.key, $b.key)
+}
+
+multi infix:<⟑>(Zero $z, BasisBlade $) { $z }
+multi infix:<⟑>(BasisBlade $, Zero $z) { $z }
+multi infix:<⟑>(BasisBlade $A, BasisBlade $B) {
+  my $ab = $A.Pair.key +& $B.Pair.key;
+  my $prod =
+    [*]
+    $ab
+    .base(2)
+    .comb
+    .reverse
+    .pairs
+    .grep(?*.value)
+    .map: {
+      given .key % 3 {
+	when 0 { +1 }
+	when 1 { -1 }
+	when 2 {  0 }
+      }
     }
+  ;
+  return $prod * order($A.Pair.key, $B.Pair.key) *
+    ::?CLASS.new-from-pairs(($A.Pair.key +^ $B.Pair.key) => $A.Pair.value * $B.Pair.value)
 }
 
-multi method new(Real $r) { samewith mix => (0 => $r).Mix }
-multi method new(Str $ where /^^(<[eio]>)(\d+)$$/) {
-  ::?CLASS.new(mix => (1 +< (3*$1 + enum <e i o>{$0})  => 1).Mix)
-}
+multi infix:<∧>($A, $B) { [+] $A.list X∧ $B.list }
+multi infix:<⟑>($A, $B) { [+] $A.list X⟑ $B.list }
 
-multi method add($a: ::?CLASS $b) returns ::?CLASS {
-  ::?CLASS.new: mix => ($a.mix.pairs, $b.mix.pairs).flat.Mix
-}
-multi method add(Real $r)          returns ::?CLASS { samewith ::?CLASS.new: $r }
-multi method negate                returns ::?CLASS { samewith self.scale: -1 }
-multi method subtract(::?CLASS $b) returns ::?CLASS { self.add: $b.negate }
+sub infix:<·>(Vector $a, Vector $b) is tighter(&[*]) returns Real is export { (($a⟑$b + $b⟑$a)/2).Real }
+sub postfix:<²>(Vector $v) returns Real is export { $v·$v }
 
-multi method divide(Real $r) returns ::?CLASS { self.scale: 1/$r }
-multi method scale(Real $r) returns ::?CLASS {
-  ::?CLASS.new: mix => self.mix.pairs.map({ .key => $r*.value }).Mix
-}
-multi method geometric-product($A: ::?CLASS $B) returns ::?CLASS {
-  ::?CLASS.new: mix => do for $A.mix.keys X $B.mix.keys -> ($a, $b) {
-    ($a +^ $b) => [*]
-    $A.mix{$a}, $B.mix{$b},
-    order($a, $b),
-    (|(1,-1,0) xx * Z=> ($a +& $b).polymod(2 xx *))
-    .grep(*.value)
-    .map(*.key)
-    .Slip
-  }.Mix
-}
-multi method outer-product($A: ::?CLASS $B) returns ::?CLASS {
-  ::?CLASS.new: mix => do for $A.mix.keys X $B.mix.keys -> ($a, $b) {
+multi infix:<∧>($A, $B) {
+  ::?CLASS.new-from-pairs: do for $A.keys X $B.keys -> ($a, $b) {
     next if $a +& $b;
     ($a +^ $b) => [*]
-    $A.mix{$a}, $B.mix{$b},
+    $A{$a}, $B{$b},
     order($a, $b)
-  }.Mix
+  }
 }
 
 multi method AT-POS(UInt $n) {
-  ::?CLASS.new: mix => ($!mix.pairs.grep(*.key.base(2).comb.sum == $n)).Mix
+  ::?CLASS.new-from-pairs: self.pairs.grep: *.key.base(2).comb.sum == $n
 }
 
-multi method Str($ where *.grades.max ≤ 0:) { self.narrow.Str }
+multi infix:<==>(::?CLASS $A, ::?CLASS $B) { $A (==) $B }
