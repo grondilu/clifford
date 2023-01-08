@@ -18,8 +18,7 @@ sub random($chance-of-ending = 0) {
 constant N = 1000;
 plan N;
 
-for ^N {
-  my ($a, $b, $c) = random() xx 3;
+for (random() xx 3) xx N -> ($a, $b, $c) {
   subtest "a={$a.gist}, b={$b.gist}, c={$c.gist}", {
     ok ($a*$b)*$c == $a*($b*$c), 'associativity';
     ok $a*($b + $c) == $a*$b + $a*$c, 'left distributivity';
