@@ -24,8 +24,8 @@ use MultiVector;
 
 say @e[0];         # e₀
 say 1 + @e[4];     # 1+e₄
-say @i[3]∧@e[2];   # -e2∧i3
-say @o[2]∧@i[2];   # -i2∧o2
+say @i[3]∧@e[2];   # -e₂∧i₃
+say @o[2]∧@i[2];   # -i₂∧o₂
 
 say @e[1]²;      # 1
 say @i[1]²;      # -1
