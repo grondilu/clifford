@@ -20,7 +20,7 @@ method gist {
 }
   
 # L<https://github.com/rakudo/rakudo/issues/2544>
-#has Mix[Int] $.mix = (1, 2);
+#has Mix[UInt] $.mix = (1, 2);
 has Mix $.mix;
 
 method grades { self.mix.keys.map(*.base(2).comb.sum) // 0 }
