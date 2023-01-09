@@ -59,20 +59,21 @@ multi infix:<+>(::?CLASS $a, Real $r)     returns ::?CLASS is export { samewith 
 multi infix:<+>(Real $r, ::?CLASS $a)     returns ::?CLASS is export { samewith $a, $r }
 multi prefix:<->(BasisBlade $blade)       returns BasisBlade    is export { -1 * $blade }
 
-multi infix:<*>(0, ::?CLASS)      returns Zero is export { ::?CLASS.new }
-multi infix:<*>(::?CLASS, 0)      returns Zero is export { ::?CLASS.new }
+multi infix:<*>(Real $ where * == 0, BasisBlade $) returns Zero is export { ::?CLASS.new }
 multi infix:<*>(Real $r, Zero $z) returns Zero is export { $z }
 multi infix:<*>(Real $r, BasisBlade $blade) returns BasisBlade    is export {
   $blade.new-from-pairs: $blade.Pair.key => $r*$blade.Pair.value
 }
 
 multi infix:<*>(::?CLASS $a, Real $r) returns ::?CLASS is export { callwith $r, $a }
-multi infix:<*>(0, ::?CLASS $a)       returns Zero     is export { ::?CLASS.new }
+multi infix:<*>(Real $ where * == 0, ::?CLASS $a) returns Zero is export { ::?CLASS.new }
 multi infix:<*>(Real $r, ::?CLASS $a) returns ::?CLASS is export { [+] $r X* $a.list }
 multi infix:</>(::?CLASS $a, Real $r) returns ::?CLASS is export { (1/$r)*$a }
 
-proto infix:<∧>(::?CLASS, ::?CLASS)   is tighter(&[*]) returns ::?CLASS is export {*}
-proto infix:<⟑>(::?CLASS, ::?CLASS)   is tighter(&[*]) returns ::?CLASS is export {*}
+proto infix:<∧>(::?CLASS, ::?CLASS) is tighter(&[*]) returns ::?CLASS is export {*}
+proto infix:<⟑>(::?CLASS, ::?CLASS) is tighter(&[*]) returns ::?CLASS is export {*}
+
+multi infix:</>(::?CLASS $a, BasisBlade $b) returns ::?CLASS is export { $a⟑$b/$b² }
 
 multi infix:<∧>($, Zero $z) { $z }
 multi infix:<∧>(Zero $z, $) { $z }
@@ -95,7 +96,7 @@ multi infix:<⟑>(BasisBlade $A, BasisBlade $B) {
     .comb
     .reverse
     .pairs
-    .grep(?*.value)
+    .grep(+*.value)
     .map: {
       given .key % 3 {
 	when 0 { +1 }
@@ -108,20 +109,14 @@ multi infix:<⟑>(BasisBlade $A, BasisBlade $B) {
     ::?CLASS.new-from-pairs(($A.Pair.key +^ $B.Pair.key) => $A.Pair.value * $B.Pair.value)
 }
 
+multi infix:<∧>(BasisBlade $A where *.Pair == 0, $B) { $A.Real * $B }
+multi infix:<∧>($A, BasisBlade $B where *.Pair == 0) { $B.Real * $A }
 multi infix:<∧>($A, $B) { [+] $A.list X∧ $B.list }
 multi infix:<⟑>($A, $B) { [+] $A.list X⟑ $B.list }
 
 sub infix:<·>(Vector $a, Vector $b) is tighter(&[*]) returns Real is export { (($a⟑$b + $b⟑$a)/2).Real }
-sub postfix:<²>(Vector $v) returns Real is export { $v·$v }
-
-multi infix:<∧>($A, $B) {
-  ::?CLASS.new-from-pairs: do for $A.keys X $B.keys -> ($a, $b) {
-    next if $a +& $b;
-    ($a +^ $b) => [*]
-    $A{$a}, $B{$b},
-    order($a, $b)
-  }
-}
+multi postfix:<²>(Vector $v) returns Real is export { $v·$v }
+multi postfix:<²>(BasisBlade $b) returns Real is export { ($b⟑$b).Real }
 
 multi method AT-POS(UInt $n) {
   ::?CLASS.new-from-pairs: self.pairs.grep: *.key.base(2).comb.sum == $n
