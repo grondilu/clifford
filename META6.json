@@ -1,19 +1,14 @@
 {
     "name" : "Clifford",
     "description" : "Basic Geometric Algebra.",
-    "version" : "6.2.0",
+    "version" : "7.0.0",
     "perl"    : "6.c",
     "license" : "Artistic",
     "auth" : "github:grondilu",
     "provides": {
-        "Clifford":                            "lib/Clifford.rakumod",
-        "MultiVector":                         "lib/MultiVector.rakumod",
-        "BasisBlade":                          "lib/BasisBlade.rakumod",
-        "MultiVector::BitEncoded":             "lib/MultiVector/BitEncoded.rakumod",
-        "MultiVector::BitEncoded::Default":    "lib/MultiVector/BitEncoded/Default.rakumod",
-        "MultiVector::BitEncoded::Optimized":  "lib/MultiVector/BitEncoded/Optimized.rakumod"
+        "MultiVector": "lib/MultiVector.rakumod"
     },
-    "tags": [ "math" ],
+    "tags": [ "math", "geometry" ],
     "authors" : [ "Lucien Grondin" ],
     "depends" : [ ],
     "source-url" : "git://github.com/grondilu/clifford.git"
