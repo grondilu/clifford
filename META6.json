@@ -1,7 +1,11 @@
 {
     "name" : "Clifford",
     "description" : "Basic Geometric Algebra.",
+<<<<<<< HEAD
     "version" : "7.0.0",
+=======
+    "version" : "6.2.1",
+>>>>>>> master
     "perl"    : "6.c",
     "license" : "Artistic",
     "auth" : "github:grondilu",
