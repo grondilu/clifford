@@ -13,7 +13,7 @@ sub random($chance-of-ending = 0) returns MultiVector {
     my $chance-of-continuing = 1 - $chance-of-ending;
     my $new-chance-of-ending = 1 - .5*$chance-of-continuing;
     my ($a, $b) = random($new-chance-of-ending) xx 2;
-    return rand < .5 ?? $a + $b !! $a ⟑ $b;
+    return rand < .5 ?? $a + $b !! $a * $b;
   }
 }
 
@@ -22,9 +22,9 @@ plan N;
 
 for (random() xx 3) xx N -> ($a, $b, $c) {
   subtest "a={$a.gist}, b={$b.gist}, c={$c.gist}", {
-    ok ($a⟑$b)⟑$c == $a⟑($b⟑$c), 'associativity';
-    ok $a⟑($b + $c) == $a⟑$b + $a⟑$c, 'left distributivity';
-    ok ($a + $b)⟑$c == $a⟑$c + $b⟑$c, 'right distributivity';
+    ok ($a*$b)*$c == $a*($b*$c), 'associativity';
+    ok $a*($b + $c) == $a*$b + $a*$c, 'left distributivity';
+    ok ($a + $b)*$c == $a*$c + $b*$c, 'right distributivity';
 
     my $v = [+] (.5 - rand) xx 10 Z* @e;
     ok $v² ~~ Real, 'contraction';
