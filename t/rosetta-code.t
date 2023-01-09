@@ -1,5 +1,5 @@
 #!/usr/bin/env raku -Ilib
-use Clifford;
+use MultiVector;
 use Test;
 
 {
