@@ -1,24 +1,33 @@
-use Clifford;
+use MultiVector;
 use Test;
 
-plan 4;
-
-sub random {
-    (.5 - rand).round(.01) + 
-    (.5 - rand).round(.01)*@e[(^5).pick] +
-    (.5 - rand).round(.01)*@ē[(^5).pick] +
-    (.5 - rand).round(.01)*@ē[(^5).pick]*@e[(^5).pick] +
-    (.5 - rand).round(.01)*@e[(^5).pick]*@e[(^5).pick];
+sub random($chance-of-ending = 0) returns MultiVector {
+  if rand < $chance-of-ending {
+    given rand {
+      when * < 1/4 { return MultiVector.new: (rand - .5).round(.1) }
+      when * < 2/4 { return @e[^10 .pick] }
+      when * < 3/4 { return @i[^10 .pick] }
+      default      { return @o[^10 .pick] }
+    }
+  } else {
+    my $chance-of-continuing = 1 - $chance-of-ending;
+    my $new-chance-of-ending = 1 - .5*$chance-of-continuing;
+    my ($a, $b) = random($new-chance-of-ending) xx 2;
+    return rand < .5 ?? $a + $b !! $a * $b;
+  }
 }
 
-my ($a, $b, $c) = random() xx 3;
+constant N = 100;
+plan 4;
 
-ok ($a*$b)*$c == $a*($b*$c), 'associativity';
-ok $a*($b + $c) == $a*$b + $a*$c, 'left distributivity';
-ok ($a + $b)*$c == $a*$c + $b*$c, 'right distributivity';
-
-my @coeff = (.5 - rand) xx 4;
-my $v = [+] @coeff Z* @e[^4];
-ok ($v**2).narrow ~~ Real, 'contraction';
+subtest 'associativity',        { for (random() xx 3) xx N -> ($a, $b, $c) { ok ($a*$b)*$c == $a*($b*$c) } }
+subtest 'left distributivity',  { for (random() xx 3) xx N -> ($a, $b, $c) { ok $a*($b + $c) == $a*$b + $a*$c } }
+subtest 'right distributivity', { for (random() xx 3) xx N -> ($a, $b, $c) { ok ($a + $b)*$c == $a*$c + $b*$c } }
+subtest 'contraction',           {
+  for ^N {
+    my $v = [+] (.5 - rand).round(.1) xx 4 Z* @e;
+    ok $v² ~~ Real, "({$v.gist})² ~~ Real";
+  }
+}
 
 # vi: ft=raku
