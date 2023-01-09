@@ -7,13 +7,7 @@ method Pair (BasisBlade: --> Pair) { self.pairs[0] }
 method grade(BasisBlade:)          { self.Pair.key.base(2).comb.sum }
 
 multi method list { self.pairs.map: { self.new-from-pairs: $_ } }
-method add($a: ::?CLASS $b) returns ::?CLASS { $a (+) $b }
 
-proto method scale(Real) returns ::?CLASS {*}
-multi method scale(BasisBlade: Real $s) {
-  self.new-from-pairs: self.Pair.key => $s*self.Pair.value
-}
-multi method scale(Real $s) { [(+)] self.list.map: *.scale($s) }
 our @e is export = map { ::?CLASS.new("e$_") }, ^Inf;
 our @i is export = map { ::?CLASS.new("i$_") }, ^Inf;
 our @o is export = map { ::?CLASS.new("o$_") }, ^Inf;
@@ -61,7 +55,7 @@ multi method new(Str $ where /^^(<[eio]>)(\d+)$$/) {
   callwith 1 +< (3*$1 + enum <e i o>{$0})
 }
 
-multi prefix:<+>(::?CLASS $M)             returns ::?CLASS is export { +$M }
+multi prefix:<+>(::?CLASS $M)             returns ::?CLASS is export { $M }
 multi infix:<+>(::?CLASS $a, ::?CLASS $b) returns ::?CLASS is export { $a (+) $b }
 multi infix:<->(::?CLASS $a, ::?CLASS $b) returns ::?CLASS is export { $a + -1*$b }
 multi infix:<+>(::?CLASS $a, Real $r)     returns ::?CLASS is export { samewith $a, $a.new($r) }
@@ -76,7 +70,7 @@ multi infix:<∧>(BasisBlade $A, BasisBlade $B) {
     ($a.key +| $b.key) => $a.value*$b.value*order($a.key, $b.key)
 }
 
-multi infix:<*>(Real $r,   ::?CLASS $a) returns ::?CLASS is export { [+] $r X* $a.list }
+multi infix:<*>(Real $r,   ::?CLASS $a) returns ::?CLASS is export { ::?CLASS + [+] $r X* $a.list }
 multi infix:<*>(Real $r, BasisBlade $b) returns ::?CLASS is export { 
   ::?CLASS.new-from-pairs: $b.Pair.key => $r*$b.Pair.value
 }
