@@ -60,7 +60,7 @@ multi infix:<+>(::?CLASS $a, ::?CLASS $b) returns ::?CLASS is export { $a (+) $b
 multi infix:<->(::?CLASS $a, ::?CLASS $b) returns ::?CLASS is export { $a + -1*$b }
 multi infix:<+>(::?CLASS $a, Real $r)     returns ::?CLASS is export { samewith $a, $a.new($r) }
 multi infix:<+>(Real $r, ::?CLASS $a)     returns ::?CLASS is export { samewith $a, $r }
-multi prefix:<->(BasisBlade $blade)       returns BasisBlade    is export { -1 * $blade }
+multi prefix:<->(::?CLASS $M)             returns ::?CLASS is export { -1 * $M }
 
 proto infix:<∧>(::?CLASS, ::?CLASS) is tighter(&[*]) returns ::?CLASS is export {*}
 multi infix:<∧>(BasisBlade $A, BasisBlade $B where { $A.Pair.key +& $B.Pair.key }) { $ = ::?CLASS.new-from-pairs: 0 => 0 }
@@ -93,6 +93,11 @@ multi infix:<*>(BasisBlade $A, BasisBlade $B) is export {
 }
 multi infix:<*>(::?CLASS $A, ::?CLASS $B) returns ::?CLASS is export { ::?CLASS.new + [+] $A.list X* $B.list }
 
+sub infix:<·>(Vector $a, Vector $b) is tighter(&[*]) returns Real is export { (($a*$b + $b*$a)/2).Real }
+multi postfix:<²>(Vector $v) returns Real is export { $v·$v }
+multi infix:</>(::?CLASS $a, Vector     $v) returns ::?CLASS is export { $a*$v/$v² }
+
+multi postfix:<²>(BasisBlade $b) returns Real is export { ($b*$b).Real }
 multi infix:</>(::?CLASS $a, BasisBlade $b) returns ::?CLASS is export { $a*$b/$b² }
 multi infix:</>(::?CLASS $a, Real $r) returns ::?CLASS is export { (1/$r)*$a }
 
@@ -101,13 +106,7 @@ multi infix:<∧>(BasisBlade $A where *.grade == 0, $B) { $A.Real * $B }
 multi infix:<∧>($A, BasisBlade $B where *.grade == 0) { $B.Real * $A }
 multi infix:<∧>($A, $B) { ::?CLASS.new + [+] $A.list X∧ $B.list }
 
-sub infix:<·>(Vector $a, Vector $b) is tighter(&[*]) returns Real is export { (($a*$b + $b*$a)/2).Real }
-multi postfix:<²>(Vector $v) returns Real is export { $v·$v }
-multi postfix:<²>(BasisBlade $b) returns Real is export { ($b*$b).Real }
-
-multi method AT-POS(UInt $n) {
-  ::?CLASS.new-from-pairs: self.pairs.grep: *.key.base(2).comb.sum == $n
-}
+multi method AT-POS(UInt $n) { [+] self.list.grep: *.grade == $n }
 
 multi infix:<==>(::?CLASS $A, ::?CLASS $B) { $A (==) $B }
 multi infix:<==>(::?CLASS $A, Real $r) { callwith $A, ::?CLASS.new($r) }
