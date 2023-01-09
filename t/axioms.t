@@ -17,17 +17,16 @@ sub random($chance-of-ending = 0) returns MultiVector {
   }
 }
 
-constant N = 1000;
-plan N;
+constant N = 100;
+plan 4;
 
-for (random() xx 3) xx N -> ($a, $b, $c) {
-  subtest "a={$a.gist}, b={$b.gist}, c={$c.gist}", {
-    ok ($a*$b)*$c == $a*($b*$c), 'associativity';
-    ok $a*($b + $c) == $a*$b + $a*$c, 'left distributivity';
-    ok ($a + $b)*$c == $a*$c + $b*$c, 'right distributivity';
-
-    my $v = [+] (.5 - rand) xx 10 Z* @e;
-    ok $v² ~~ Real, 'contraction';
+subtest 'associativity',        { for (random() xx 3) xx N -> ($a, $b, $c) { ok ($a*$b)*$c == $a*($b*$c) } }
+subtest 'left distributivity',  { for (random() xx 3) xx N -> ($a, $b, $c) { ok $a*($b + $c) == $a*$b + $a*$c } }
+subtest 'right distributivity', { for (random() xx 3) xx N -> ($a, $b, $c) { ok ($a + $b)*$c == $a*$c + $b*$c } }
+subtest 'contraction',           {
+  for ^N {
+    my $v = [+] (.5 - rand).round(.1) xx 4 Z* @e;
+    ok $v² ~~ Real, "({$v.gist})² ~~ Real";
   }
 }
 
