@@ -109,8 +109,8 @@ multi infix:<⟑>(BasisBlade $A, BasisBlade $B) {
     ::?CLASS.new-from-pairs(($A.Pair.key +^ $B.Pair.key) => $A.Pair.value * $B.Pair.value)
 }
 
-multi infix:<∧>(BasisBlade $A where *.Pair == 0, $B) { $A.Real * $B }
-multi infix:<∧>($A, BasisBlade $B where *.Pair == 0) { $B.Real * $A }
+multi infix:<∧>(BasisBlade $A where *.grade == 0, $B) { $A.Real * $B }
+multi infix:<∧>($A, BasisBlade $B where *.grade == 0) { $B.Real * $A }
 multi infix:<∧>($A, $B) { [+] $A.list X∧ $B.list }
 multi infix:<⟑>($A, $B) { [+] $A.list X⟑ $B.list }
 
