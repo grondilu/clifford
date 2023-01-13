@@ -1,7 +1,9 @@
-unit class MultiVector is Mix;
+unit class MultiVector is Mix does Callable;
 
 subset BasisBlade of ::?CLASS is export where *.elems == 1;
 subset Vector     of ::?CLASS is export where *.grades.all == 1;
+
+method CALL-ME(::?CLASS $other --> Real) { (self (.) $other).total }
 
 method Pair (BasisBlade: --> Pair) { self.pairs[0] }
 method grade(BasisBlade:)          { self.Pair.key.base(2).comb.sum }
@@ -15,7 +17,7 @@ our @o is export = map { ::?CLASS.new("o$_") }, ^Inf;
 method grades { self.list.map: *.grade }
 
 proto method Real returns Real {*}
-multi method Real(:::U:) { 0 }
+multi method Real($ where *.elems == 0:) { 0 }
 multi method Real(BasisBlade $ where *.grade == 0:) { self{0} }
 
 method gist {

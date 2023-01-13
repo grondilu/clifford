@@ -36,6 +36,8 @@ say @o[2]∧@i[2];   # -i₂∧o₂
 say @e[1]²;      # 1
 say @i[1]²;      # -1
 say @o[1]²;      # 0
+
+say @o[0](@e[1] + 2*@o[0]);  # 2
 ```
 
 External links
