@@ -17,7 +17,7 @@ multi method gist {
 	"{.value}*"
       )
       ~ [~]
-      .key.pairs.map({ "{.key}{.value == 1 ?? '' !! .value.trans: 0..9 => <¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹>}" })
+      .key.pairs.map({ "{.key}{.value == 1 ?? '' !! .value.trans: 0..9 => <⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹>}" })
       .join('*')
       )
     }
